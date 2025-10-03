@@ -62,10 +62,21 @@ const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 async function addReminder(title, timestamp) {
   const { data, error } = await supabase
     .from('reminders')
+    .insert([{ title, timestamp }]);
+  if (error) {
+  } else {
+    fetchReminders();
+  }
+}
+
+// Fetch all reminders
+async function fetchReminders() {
+  const { data, error } = await supabase
+    .from('reminders')
+    .order('timestamp', { ascending: true });
   const list = document.getElementById('reminder-list');
   list.innerHTML = '';
   if (error) {
-    list.innerHTML = '<li>Error loading reminders.</li>';
     return;
   }
   if (!data || data.length === 0) {
@@ -730,42 +741,30 @@ const supabaseUrl = 'https://jxxnfsydrflnephmfjm.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-const cloudReminderForm = document.getElementById('cloud-reminder-form');
-const cloudReminderMsg = document.getElementById('cloud-reminder-message');
-const cloudReminderList = document.getElementById('cloud-reminder-list');
 
-function showCloudMsg(msg, type='') {
-  cloudReminderMsg.textContent = msg;
-  cloudReminderMsg.style.color = type === 'error' ? 'red' : 'green';
-  setTimeout(() => cloudReminderMsg.textContent = '', 4000);
 }
-async function addCloudReminder(title, datetime) {
   const { error } = await supabase
     .from('reminders')
-  cloudReminderList.innerHTML = '';
   if (error) {
-    cloudReminderList.innerHTML = '<li>Error loading reminders.</li>';
+  } else {
+  }
+}
+  const { data, error } = await supabase
+    .from('reminders')
+    .order('timestamp', { ascending: true });
+  if (error) {
     return;
   }
   if (!data || data.length === 0) {
-    cloudReminderList.innerHTML = '<li>No cloud reminders found.</li>';
     return;
   }
   data.forEach(reminder => {
     const li = document.createElement('li');
     li.innerText = `${reminder.title} - ${reminder.timestamp}`;
-    cloudReminderList.appendChild(li);
   });
 }
 document.addEventListener('DOMContentLoaded', () => {
-  fetchCloudReminders();
-  if(cloudReminderForm){
-    cloudReminderForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const title = document.getElementById('cloud-reminder-title').value;
-      const datetime = document.getElementById('cloud-reminder-datetime').value;
-      await addCloudReminder(title, datetime);
-      cloudReminderForm.reset();
     });
   }
 });
@@ -1071,7 +1070,6 @@ const remindersStr = localStorage.getItem(REMINDER_STORAGE_KEY);
 // We no longer filter out past reminders here, the interval checker will handle cleanup
 return remindersStr ? JSON.parse(remindersStr) : [];
 } catch (e) {
-console.error("Error loading reminders:", e);
 return [];
 }
 };
@@ -1080,7 +1078,6 @@ const saveReminders = (reminders) => {
 try {
 localStorage.setItem(REMINDER_STORAGE_KEY, JSON.stringify(reminders));
 } catch (e) {
-console.error("Error saving reminders:", e);
 }
 };
 
@@ -1497,3 +1494,4 @@ if (reminderForm) reminderForm.addEventListener('submit', handleReminderSubmit);
 </body>
 
 </html>
+
