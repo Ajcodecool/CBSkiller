@@ -48,7 +48,72 @@ padding-top: 65px;
 overflow-x: hidden;
 transition: background-color 0.3s, color 0.3s;
 }
+<!-- Add Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+<script>
+// --- Supabase Credentials ---
+const supabaseUrl = 'https://jxxnfsydrflnephmfjm.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+// --- Helper Functions ---
+// Insert a reminder
+async function addReminder(title, timestamp) {
+  const { data, error } = await supabase
+    .from('reminders')
+    .insert([{ title, timestamp }]);
+  if (error) {
+    alert('Error saving reminder: ' + error.message);
+  } else {
+    alert('Reminder saved!');
+    fetchReminders();
+  }
+}
+
+// Fetch all reminders
+async function fetchReminders() {
+  const { data, error } = await supabase
+    .from('reminders')
+    .select('*')
+    .order('timestamp', { ascending: true });
+  const list = document.getElementById('reminder-list');
+  list.innerHTML = '';
+  if (error) {
+    list.innerHTML = '<li>Error loading reminders.</li>';
+    return;
+  }
+  if (!data || data.length === 0) {
+    list.innerHTML = '<li>No reminders found.</li>';
+    return;
+  }
+  data.forEach(reminder => {
+    const li = document.createElement('li');
+    li.innerText = `${reminder.title} - ${reminder.timestamp}`;
+    list.appendChild(li);
+  });
+}
+
+// --- DOM Event Listeners ---
+document.addEventListener('DOMContentLoaded', () => {
+  fetchReminders();
+
+  document.getElementById('reminder-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('title').value;
+    const datetime = document.getElementById('datetime').value;
+    await addReminder(title, datetime);
+    e.target.reset();
+  });
+});
+</script>
+
+<!-- Simple Demo Form and List -->
+<form id="reminder-form">
+  <input type="text" id="title" placeholder="Reminder Title" required />
+  <input type="datetime-local" id="datetime" required />
+  <button type="submit">Add Reminder</button>
+</form>
+<ul id="reminder-list"></ul>
 /* SQUIGGLY BACKGROUND LINES (Adapt to current text color for visibility) */
 body::before {
 content: "";
@@ -1386,4 +1451,5 @@ if (reminderForm) reminderForm.addEventListener('submit', handleReminderSubmit);
 });
 </script>
 </body>
+
 </html>
