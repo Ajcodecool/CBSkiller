@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 <head>
@@ -61,59 +60,55 @@ const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 // --- Helper Functions ---
 // Insert a reminder
 async function addReminder(title, timestamp) {
-  const { data, error } = await supabase
-    .from('reminders')
-    .insert([{ title, timestamp }]);
-  if (error) {
-    alert('Error saving reminder: ' + error.message);
-  } else {
-    alert('Reminder saved!');
-    fetchReminders();
-  }
+const { data, error } = await supabase
+.from('reminders')
+.insert([{ title, timestamp }]);
+if (error) {
+} else {
+fetchReminders();
+}
 }
 
 // Fetch all reminders
 async function fetchReminders() {
-  const { data, error } = await supabase
-    .from('reminders')
-    .select('*')
-    .order('timestamp', { ascending: true });
-  const list = document.getElementById('reminder-list');
-  list.innerHTML = '';
-  if (error) {
-    list.innerHTML = '<li>Error loading reminders.</li>';
-    return;
-  }
-  if (!data || data.length === 0) {
-    list.innerHTML = '<li>No reminders found.</li>';
-    return;
-  }
-  data.forEach(reminder => {
-    const li = document.createElement('li');
-    li.innerText = `${reminder.title} - ${reminder.timestamp}`;
-    list.appendChild(li);
-  });
+const { data, error } = await supabase
+.from('reminders')
+.order('timestamp', { ascending: true });
+const list = document.getElementById('reminder-list');
+list.innerHTML = '';
+if (error) {
+list.innerHTML = '<li>Error loading reminders.</li>';
+return;
+}
+if (!data || data.length === 0) {
+list.innerHTML = '<li>No reminders found.</li>';
+return;
+}
+data.forEach(reminder => {
+const li = document.createElement('li');
+li.innerText = `${reminder.title} - ${reminder.timestamp}`;
+list.appendChild(li);
+});
 }
 
 // --- DOM Event Listeners ---
-document.addEventListener('DOMContentLoaded', () => {
-  fetchReminders();
+fetchReminders();
 
-  document.getElementById('reminder-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const title = document.getElementById('title').value;
-    const datetime = document.getElementById('datetime').value;
-    await addReminder(title, datetime);
-    e.target.reset();
-  });
+document.getElementById('reminder-form').addEventListener('submit', async (e) => {
+e.preventDefault();
+const title = document.getElementById('title').value;
+const datetime = document.getElementById('datetime').value;
+await addReminder(title, datetime);
+e.target.reset();
+});
 });
 </script>
 
 <!-- Simple Demo Form and List -->
 <form id="reminder-form">
-  <input type="text" id="title" placeholder="Reminder Title" required />
-  <input type="datetime-local" id="datetime" required />
-  <button type="submit">Add Reminder</button>
+<input type="text" id="title" placeholder="Reminder Title" required />
+<input type="datetime-local" id="datetime" required />
+<button type="submit">Add Reminder</button>
 </form>
 <ul id="reminder-list"></ul>
 /* SQUIGGLY BACKGROUND LINES (Adapt to current text color for visibility) */
@@ -494,7 +489,7 @@ font-size: 14px;
 <div class="header">
 <div class="flex items-center">
 <span class="title-text">CROOMS CONNECT</span>
-<span class="user-id-display" id="userIdDisplay">Local Theme Storage Active</span>
+<span id="userIdDisplay" class="user-id-display">Local Theme Storage Active</span>
 </div>
 <span>ALPHA</span>
 </div>
@@ -530,6 +525,7 @@ font-size: 14px;
 <p>See what’s happening this week.</p>
 </div>
 </div>
+
 </section>
 </div>
 <div class="tab-content" id="study">
@@ -548,7 +544,7 @@ font-size: 14px;
 <p>Connect with classmates and teachers.</p>
 <div class="card-grid">
 <div class="card"><span class="icon"> 👥 </span><h3>Clubs</h3><p>Find and join school clubs.</p></div>
-<div class="card"><span class="icon"> 💬 </span><h3>Forums<p>Discuss topics with peers.</p></h3></div>
+<div class="card"><span class="icon"> 💬 </span><h3>Forums</p><p>Discuss topics with peers.</p></div>
 </div>
 </section>
 </div>
@@ -578,76 +574,89 @@ font-size: 14px;
 <span class="icon"> 🔔 </span>
 <h3>Cloud Reminders</h3>
 <p>Reminders saved to Supabase (shared across devices).</p>
-<form class="settings-form" id="cloud-reminder-form" style="margin-bottom:10px;">
+<form id="cloud-reminder-form" class="settings-form" style="margin-bottom:10px;">
 <label for="cloud-reminder-title">Title</label>
-<input id="cloud-reminder-title" placeholder="e.g., Study for Math Test" required="" type="text"/>
-<label for="cloud-reminder-datetime">Date &amp; Time</label>
-<input id="cloud-reminder-datetime" required="" type="datetime-local"/>
-<button class="save-settings-button" style="background: linear-gradient(45deg, var(--accent-blue), #2a8dff);" type="submit">Add Cloud Reminder</button>
-<div class="p-2 mt-2 text-center rounded-lg font-medium" id="cloud-reminder-message" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
+<input type="text" id="cloud-reminder-title" required placeholder="e.g., Study for Math Test">
+<label for="cloud-reminder-datetime">Date & Time</label>
+<input type="datetime-local" id="cloud-reminder-datetime" required>
+<button type="submit" class="save-settings-button" style="background: linear-gradient(45deg, var(--accent-blue), #2a8dff);">Add Cloud Reminder</button>
+<div id="cloud-reminder-message" class="p-2 mt-2 text-center rounded-lg font-medium" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
 </form>
 <ul id="cloud-reminder-list"></ul>
 </div>
-<h1>User Settings &amp; Customization</h1>
+<h1>User Settings & Customization</h1>
 <p>Personalize your experience. Your selections are saved locally.</p>
 <div class="card-grid">
 <div class="card theme-selector-card">
 <span class="icon"> 🌓 </span>
 <h3>Appearance</h3>
 <p style="margin-bottom: 20px; font-size: 14px;">Toggle between Dark and Light mode.</p>
+
 <div class="flex flex-col space-y-4">
-<button class="theme-button" id="dark-mode-button">
+<button id="dark-mode-button" class="theme-button">
 <span class="icon"> 🌙 </span> Dark Mode
 </button>
-<button class="theme-button" id="light-mode-button">
+<button id="light-mode-button" class="theme-button">
 <span class="icon"> ☀️ </span> Light Mode
 </button>
 </div>
-<div class="p-3 mt-4 text-center rounded-lg font-medium hidden" id="messageBox" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
+<div id="messageBox" class="p-3 mt-4 text-center rounded-lg font-medium hidden" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
 </div>
+
 <div class="card period-names-card">
 <span class="icon"> 📚 </span>
 <h3>Period Names</h3>
 <p style="margin-bottom: 10px; font-size: 14px;">Personalize the names of your classes.</p>
+
 <form class="settings-form" id="period-names-form">
-<button class="save-settings-button" type="submit">Save Period Names</button>
+<button type="submit" class="save-settings-button">Save Period Names</button>
 </form>
-<div class="p-3 mt-4 text-center rounded-lg font-medium hidden" id="periodMessage" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
+<div id="periodMessage" class="p-3 mt-4 text-center rounded-lg font-medium hidden" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
 </div>
+
 <div class="card lunch-names-card">
 <span class="icon"> 🍔 </span>
 <h3>Lunch Periods</h3>
 <p style="margin-bottom: 10px; font-size: 14px;">Set which lunch you have for each schedule type.</p>
+
 <form class="settings-form" id="lunch-names-form">
 <label for="lunch-5th_Period_A">5th Period Lunch (Usually A Lunch)</label>
-<input id="lunch-5th_Period_A" name="5th Period A" placeholder="A Lunch" type="text" value="A Lunch"/>
+<input type="text" id="lunch-5th_Period_A" name="5th Period A" value="A Lunch" placeholder="A Lunch">
+
 <label for="lunch-5th_Period_B">5th Period Lunch (Usually B Lunch)</label>
-<input id="lunch-5th_Period_B" name="5th Period B" placeholder="B Lunch" type="text" value="B Lunch"/>
+<input type="text" id="lunch-5th_Period_B" name="5th Period B" value="B Lunch" placeholder="B Lunch">
+
 <label for="lunch-Homeroom_A">Homeroom Lunch (Wednesday A Lunch)</label>
-<input id="lunch-Homeroom_A" name="Homeroom A" placeholder="A Lunch" type="text" value="A Lunch"/>
+<input type="text" id="lunch-Homeroom_A" name="Homeroom A" value="A Lunch" placeholder="A Lunch">
+
 <label for="lunch-Homeroom_B">Homeroom Lunch (Wednesday B Lunch)</label>
-<input id="lunch-Homeroom_B" name="Homeroom B" placeholder="B Lunch" type="text" value="B Lunch"/>
-<button class="save-settings-button" type="submit">Save Lunch Periods</button>
+<input type="text" id="lunch-Homeroom_B" name="Homeroom B" value="B Lunch" placeholder="B Lunch">
+
+<button type="submit" class="save-settings-button">Save Lunch Periods</button>
 </form>
-<div class="p-3 mt-4 text-center rounded-lg font-medium hidden" id="lunchMessage" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
+<div id="lunchMessage" class="p-3 mt-4 text-center rounded-lg font-medium hidden" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
 </div>
+
 <div class="card" id="notifications-card" style="cursor: pointer;">
 <span class="icon"> 🔔 </span>
 <h3>Reminders</h3>
 <p>Set up alerts for important events.</p>
 <button id="test-notification-button" style="margin-top: 10px; background: var(--accent-blue); color: var(--primary-bg); border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold;">Test Slide-in</button>
 </div>
+
+
 <div class="card"><span class="icon"> 🔑 </span><h3>Account</h3><p>Privacy and security options.</p></div>
 <div class="card"><span class="icon"> ⚙️ </span><h3>Display</h3><p>Adjust font size and layout.</p></div>
 </div>
 </section>
 </div>
-<div class="modal-overlay" id="legal-modal">
+<div id="legal-modal" class="modal-overlay">
 <div class="modal-content">
-<button class="close-button" id="close-modal-button">×</button>
+<button class="close-button" id="close-modal-button">&times;</button>
 <h1>Legal Disclaimer <span style="font-size: 14px; color: var(--text-color);"> (Last Updated: October 2nd, 2025)</span></h1>
+
 <div class="disclaimer-point">
-<strong>1. General Information &amp; Accuracy</strong>
+<strong>1. General Information & Accuracy</strong>
 <p>The information provided by Crooms Connect is for general informational purposes only. All information is provided in good faith;
 however, we make no representation or warranty of any kind regarding the accuracy, adequacy, validity, reliability, availability, or completeness of any information, including schedules or event times.</p>
 </div>
@@ -685,96 +694,80 @@ Your use of the platform and your reliance on any information is solely at your 
 By posting User-Generated Content, you grant Crooms Connect a worldwide, non-exclusive, royalty-free license to use, reproduce, and display that content on the platform.</p>
 </div>
 <div class="disclaimer-point">
-<strong>9. User Conduct &amp; Termination</strong>
+<strong>9. User Conduct & Termination</strong>
 <p>We reserve the right, but not the obligation, to monitor and remove any User-Generated Content that we deem inappropriate, illegal, or in violation of these terms.
 We may terminate or suspend access to our platform immediately, without prior notice or liability, for any reason, including without limitation if you breach this Disclaimer.</p>
 </div>
 </div>
 </div>
-<div class="modal-overlay" id="reminder-modal">
+
+<div id="reminder-modal" class="modal-overlay">
 <div class="modal-content">
-<button class="close-button" id="close-reminder-modal-button">×</button>
+<button class="close-button" id="close-reminder-modal-button">&times;</button>
 <h1>Set New Reminder</h1>
 <form class="settings-form" id="reminder-form">
 <label for="reminder-title">Title</label>
-<input id="reminder-title" placeholder="e.g., Study for Math Test" required="" type="text"/>
+<input type="text" id="reminder-title" required placeholder="e.g., Study for Math Test">
+
 <label for="reminder-date">Date</label>
-<input id="reminder-date" required="" type="date"/>
+<input type="date" id="reminder-date" required>
+
 <label for="reminder-time">Time</label>
-<input id="reminder-time" required="" type="time"/>
-<button class="save-settings-button" style="background: linear-gradient(45deg, var(--accent-blue), #2a8dff);" type="submit">Create Reminder</button>
+<input type="time" id="reminder-time" required>
+
+<button type="submit" class="save-settings-button" style="background: linear-gradient(45deg, var(--accent-blue), #2a8dff);">Create Reminder</button>
+
 <div id="reminder-list-container" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
 <h3 style="color: var(--accent-yellow); margin-bottom: 10px;">Scheduled Reminders</h3>
 <ul id="active-reminders-list"></ul>
 </div>
-<div class="p-3 mt-4 text-center rounded-lg font-medium hidden" id="reminder-message" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
+<div id="reminder-message" class="p-3 mt-4 text-center rounded-lg font-medium hidden" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
 </form>
 </div>
 </div>
+
 <div id="in-app-notification">
 <h4><span>🔔</span> Reminder Fired</h4>
 <p id="notification-message">Your reminder message goes here.</p>
 </div>
+
+
 <footer>
 <p>© 2025 Crooms Connect | <a id="open-legal-modal">Legal Disclaimer</a></p>
 </footer>
 <img id="preview"/>
-  // --- Supabase Cloud Reminders ---
+// --- Supabase Cloud Reminders ---
 const supabaseUrl = 'https://jxxnfsydrflnephmfjm.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-const cloudReminderForm = document.getElementById('cloud-reminder-form');
-const cloudReminderMsg = document.getElementById('cloud-reminder-message');
-const cloudReminderList = document.getElementById('cloud-reminder-list');
 
-function showCloudMsg(msg, type='') {
-  cloudReminderMsg.textContent = msg;
-  cloudReminderMsg.style.color = type === 'error' ? 'red' : 'green';
-  setTimeout(() =&gt; cloudReminderMsg.textContent = '', 4000);
 }
-async function addCloudReminder(title, datetime) {
-  const { error } = await supabase
-    .from('reminders')
-    .insert([{ title, timestamp: datetime }]);
-  if (error) {
-    showCloudMsg('Error saving reminder: ' + error.message, 'error');
-  } else {
-    showCloudMsg('Reminder saved!', '');
-    fetchCloudReminders();
-  }
+const { error } = await supabase
+.from('reminders')
+if (error) {
+} else {
 }
-async function fetchCloudReminders() {
-  const { data, error } = await supabase
-    .from('reminders')
-    .select('*')
-    .order('timestamp', { ascending: true });
-  cloudReminderList.innerHTML = '';
-  if (error) {
-    cloudReminderList.innerHTML = '<li>Error loading reminders.</li>';
-    return;
-  }
-  if (!data || data.length === 0) {
-    cloudReminderList.innerHTML = '<li>No cloud reminders found.</li>';
-    return;
-  }
-  data.forEach(reminder =&gt; {
-    const li = document.createElement('li');
-    li.innerText = `${reminder.title} - ${reminder.timestamp}`;
-    cloudReminderList.appendChild(li);
-  });
 }
-document.addEventListener('DOMContentLoaded', () =&gt; {
-  fetchCloudReminders();
-  if(cloudReminderForm){
-    cloudReminderForm.addEventListener('submit', async (e) =&gt; {
-      e.preventDefault();
-      const title = document.getElementById('cloud-reminder-title').value;
-      const datetime = document.getElementById('cloud-reminder-datetime').value;
-      await addCloudReminder(title, datetime);
-      cloudReminderForm.reset();
-    });
-  }
+const { data, error } = await supabase
+.from('reminders')
+.order('timestamp', { ascending: true });
+if (error) {
+return;
+}
+if (!data || data.length === 0) {
+return;
+}
+data.forEach(reminder => {
+const li = document.createElement('li');
+li.innerText = `${reminder.title} - ${reminder.timestamp}`;
+});
+}
+e.preventDefault();
+const title = document.getElementById('cloud-reminder-title').value;
+const datetime = document.getElementById('cloud-reminder-datetime').value;
+});
+}
 });
 <script>
 // --- SCHEDULE DATA ---
@@ -1087,7 +1080,6 @@ const saveReminders = (reminders) => {
 try {
 localStorage.setItem(REMINDER_STORAGE_KEY, JSON.stringify(reminders));
 } catch (e) {
-console.error("Error saving reminders:", e);
 }
 };
 
@@ -1396,7 +1388,6 @@ document.body.style.overflow = '';
 
 
 // --- DOM READY AND LISTENERS ---
-document.addEventListener('DOMContentLoaded', () => {
 
 // 0. Load Custom Names and Populate Forms
 loadPeriodNames();
@@ -1501,81 +1492,7 @@ if (e.target === reminderModal) { hideReminderModal(); }
 if (reminderForm) reminderForm.addEventListener('submit', handleReminderSubmit);
 });
 </script>
-<script>
-const cloudReminderForm = document.getElementById('cloud-reminder-form');
-const cloudReminderMsg = document.getElementById('cloud-reminder-message');
-const cloudReminderList = document.getElementById('cloud-reminder-list');
+</body>
 
-function showCloudMsg(msg, type='') {
-  cloudReminderMsg.textContent = msg;
-  cloudReminderMsg.style.color = type === 'error' ? 'red' : 'green';
-  setTimeout(() => cloudReminderMsg.textContent = '', 4000);
-}
-
-async function addCloudReminder(title, datetime) {
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData?.user?.id;
-
-  if (!userId) {
-    showCloudMsg('You must be logged in to save reminders.', 'error');
-    return;
-  }
-
-  const { error } = await supabase
-    .from('reminders')
-    .insert([{ title, timestamp: datetime, user_id: userId }]);
-
-  if (error) {
-    showCloudMsg('Error saving reminder: ' + error.message, 'error');
-  } else {
-    showCloudMsg('Reminder saved!', '');
-    fetchCloudReminders();
-  }
-}
-
-async function fetchCloudReminders() {
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData?.user?.id;
-
-  if (!userId) {
-    cloudReminderList.innerHTML = '<li>Please log in to view your reminders.</li>';
-    return;
-  }
-
-  const { data, error } = await supabase
-    .from('reminders')
-    .select('*')
-    .eq('user_id', userId)
-    .order('timestamp', { ascending: true });
-
-  cloudReminderList.innerHTML = '';
-  if (error) {
-    cloudReminderList.innerHTML = '<li>Error loading reminders.</li>';
-    return;
-  }
-  if (!data || data.length === 0) {
-    cloudReminderList.innerHTML = '<li>No cloud reminders found.</li>';
-    return;
-  }
-  data.forEach(reminder => {
-    const li = document.createElement('li');
-    li.innerText = `${reminder.title} - ${reminder.timestamp}`;
-    cloudReminderList.appendChild(li);
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  fetchCloudReminders();
-  if(cloudReminderForm){
-    cloudReminderForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const title = document.getElementById('cloud-reminder-title').value;
-      const datetime = document.getElementById('cloud-reminder-datetime').value;
-      await addCloudReminder(title, datetime);
-      cloudReminderForm.reset();
-    });
-  }
-});
-</script></body>
 </html>
 
