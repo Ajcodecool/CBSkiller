@@ -60,55 +60,44 @@ const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 // --- Helper Functions ---
 // Insert a reminder
 async function addReminder(title, timestamp) {
-const { data, error } = await supabase
-.from('reminders')
-.insert([{ title, timestamp }]);
-if (error) {
-} else {
-fetchReminders();
-}
-}
-
-// Fetch all reminders
-async function fetchReminders() {
-const { data, error } = await supabase
-.from('reminders')
-.order('timestamp', { ascending: true });
-const list = document.getElementById('reminder-list');
-list.innerHTML = '';
-if (error) {
-list.innerHTML = '<li>Error loading reminders.</li>';
-return;
-}
-if (!data || data.length === 0) {
-list.innerHTML = '<li>No reminders found.</li>';
-return;
-}
-data.forEach(reminder => {
-const li = document.createElement('li');
-li.innerText = `${reminder.title} - ${reminder.timestamp}`;
-list.appendChild(li);
-});
+  const { data, error } = await supabase
+    .from('reminders')
+  const list = document.getElementById('reminder-list');
+  list.innerHTML = '';
+  if (error) {
+    list.innerHTML = '<li>Error loading reminders.</li>';
+    return;
+  }
+  if (!data || data.length === 0) {
+    list.innerHTML = '<li>No reminders found.</li>';
+    return;
+  }
+  data.forEach(reminder => {
+    const li = document.createElement('li');
+    li.innerText = `${reminder.title} - ${reminder.timestamp}`;
+    list.appendChild(li);
+  });
 }
 
 // --- DOM Event Listeners ---
-fetchReminders();
+document.addEventListener('DOMContentLoaded', () => {
+  fetchReminders();
 
-document.getElementById('reminder-form').addEventListener('submit', async (e) => {
-e.preventDefault();
-const title = document.getElementById('title').value;
-const datetime = document.getElementById('datetime').value;
-await addReminder(title, datetime);
-e.target.reset();
-});
+  document.getElementById('reminder-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('title').value;
+    const datetime = document.getElementById('datetime').value;
+    await addReminder(title, datetime);
+    e.target.reset();
+  });
 });
 </script>
 
 <!-- Simple Demo Form and List -->
 <form id="reminder-form">
-<input type="text" id="title" placeholder="Reminder Title" required />
-<input type="datetime-local" id="datetime" required />
-<button type="submit">Add Reminder</button>
+  <input type="text" id="title" placeholder="Reminder Title" required />
+  <input type="datetime-local" id="datetime" required />
+  <button type="submit">Add Reminder</button>
 </form>
 <ul id="reminder-list"></ul>
 /* SQUIGGLY BACKGROUND LINES (Adapt to current text color for visibility) */
@@ -570,19 +559,19 @@ font-size: 14px;
 </div>
 <div class="tab-content" id="settings">
 <section>
-<div class="card" id="supabase-reminders-card">
-<span class="icon"> 🔔 </span>
-<h3>Cloud Reminders</h3>
-<p>Reminders saved to Supabase (shared across devices).</p>
-<form id="cloud-reminder-form" class="settings-form" style="margin-bottom:10px;">
-<label for="cloud-reminder-title">Title</label>
-<input type="text" id="cloud-reminder-title" required placeholder="e.g., Study for Math Test">
-<label for="cloud-reminder-datetime">Date & Time</label>
-<input type="datetime-local" id="cloud-reminder-datetime" required>
-<button type="submit" class="save-settings-button" style="background: linear-gradient(45deg, var(--accent-blue), #2a8dff);">Add Cloud Reminder</button>
-<div id="cloud-reminder-message" class="p-2 mt-2 text-center rounded-lg font-medium" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
-</form>
-<ul id="cloud-reminder-list"></ul>
+  <div class="card" id="supabase-reminders-card">
+  <span class="icon"> 🔔 </span>
+  <h3>Cloud Reminders</h3>
+  <p>Reminders saved to Supabase (shared across devices).</p>
+  <form id="cloud-reminder-form" class="settings-form" style="margin-bottom:10px;">
+    <label for="cloud-reminder-title">Title</label>
+    <input type="text" id="cloud-reminder-title" required placeholder="e.g., Study for Math Test">
+    <label for="cloud-reminder-datetime">Date & Time</label>
+    <input type="datetime-local" id="cloud-reminder-datetime" required>
+    <button type="submit" class="save-settings-button" style="background: linear-gradient(45deg, var(--accent-blue), #2a8dff);">Add Cloud Reminder</button>
+    <div id="cloud-reminder-message" class="p-2 mt-2 text-center rounded-lg font-medium" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
+  </form>
+  <ul id="cloud-reminder-list"></ul>
 </div>
 <h1>User Settings & Customization</h1>
 <p>Personalize your experience. Your selections are saved locally.</p>
@@ -736,38 +725,49 @@ We may terminate or suspend access to our platform immediately, without prior no
 <p>© 2025 Crooms Connect | <a id="open-legal-modal">Legal Disclaimer</a></p>
 </footer>
 <img id="preview"/>
-// --- Supabase Cloud Reminders ---
+  // --- Supabase Cloud Reminders ---
 const supabaseUrl = 'https://jxxnfsydrflnephmfjm.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+const cloudReminderForm = document.getElementById('cloud-reminder-form');
+const cloudReminderMsg = document.getElementById('cloud-reminder-message');
+const cloudReminderList = document.getElementById('cloud-reminder-list');
 
+function showCloudMsg(msg, type='') {
+  cloudReminderMsg.textContent = msg;
+  cloudReminderMsg.style.color = type === 'error' ? 'red' : 'green';
+  setTimeout(() => cloudReminderMsg.textContent = '', 4000);
 }
-const { error } = await supabase
-.from('reminders')
-if (error) {
-} else {
+async function addCloudReminder(title, datetime) {
+  const { error } = await supabase
+    .from('reminders')
+  cloudReminderList.innerHTML = '';
+  if (error) {
+    cloudReminderList.innerHTML = '<li>Error loading reminders.</li>';
+    return;
+  }
+  if (!data || data.length === 0) {
+    cloudReminderList.innerHTML = '<li>No cloud reminders found.</li>';
+    return;
+  }
+  data.forEach(reminder => {
+    const li = document.createElement('li');
+    li.innerText = `${reminder.title} - ${reminder.timestamp}`;
+    cloudReminderList.appendChild(li);
+  });
 }
-}
-const { data, error } = await supabase
-.from('reminders')
-.order('timestamp', { ascending: true });
-if (error) {
-return;
-}
-if (!data || data.length === 0) {
-return;
-}
-data.forEach(reminder => {
-const li = document.createElement('li');
-li.innerText = `${reminder.title} - ${reminder.timestamp}`;
-});
-}
-e.preventDefault();
-const title = document.getElementById('cloud-reminder-title').value;
-const datetime = document.getElementById('cloud-reminder-datetime').value;
-});
-}
+document.addEventListener('DOMContentLoaded', () => {
+  fetchCloudReminders();
+  if(cloudReminderForm){
+    cloudReminderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('cloud-reminder-title').value;
+      const datetime = document.getElementById('cloud-reminder-datetime').value;
+      await addCloudReminder(title, datetime);
+      cloudReminderForm.reset();
+    });
+  }
 });
 <script>
 // --- SCHEDULE DATA ---
@@ -1080,6 +1080,7 @@ const saveReminders = (reminders) => {
 try {
 localStorage.setItem(REMINDER_STORAGE_KEY, JSON.stringify(reminders));
 } catch (e) {
+console.error("Error saving reminders:", e);
 }
 };
 
@@ -1388,6 +1389,7 @@ document.body.style.overflow = '';
 
 
 // --- DOM READY AND LISTENERS ---
+document.addEventListener('DOMContentLoaded', () => {
 
 // 0. Load Custom Names and Populate Forms
 loadPeriodNames();
@@ -1495,4 +1497,3 @@ if (reminderForm) reminderForm.addEventListener('submit', handleReminderSubmit);
 </body>
 
 </html>
-
