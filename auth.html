@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Crooms Connect - Sign In</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-bg: #1a1b2f;
+            --content-bg: #2b2d42;
+            --text-color: #f8f9fa;
+            --accent-blue: #4cc9f0;
+            --shadow: 0 4px 12px rgba(0,0,0,0.4);
+            --radius: 15px;
+        }
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .card {
+            background-color: var(--content-bg);
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
+        }
+        .btn {
+            background-color: var(--accent-blue);
+            color: #1a1b2f;
+            font-weight: 700;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .btn:hover {
+            background-color: #6ce0ff;
+            transform: translateY(-1px);
+        }
+        input, select {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            border-radius: 8px;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus {
+            border-color: var(--accent-blue);
+            outline: none;
+        }
+        .text-link {
+            color: var(--accent-blue);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .text-link:hover {
+            color: #6ce0ff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card w-full max-w-md p-8 sm:p-10">
+        <h1 class="text-3xl font-bold mb-2 text-center">Crooms Connect</h1>
+        <p id="auth-header" class="text-lg text-center mb-8 text-gray-400">Sign Up to get started.</p>
+
+        <!-- Auth Form -->
+        <form id="auth-form" class="space-y-6">
+            <div>
+                <label for="username" class="block text-sm font-medium mb-1">Username (Required)</label>
+                <input type="text" id="username" required
+                    class="w-full p-3"
+                    placeholder="Enter your unique username"
+                    minlength="3" maxlength="20">
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium mb-1">Password (Required)</label>
+                <input type="password" id="password" required
+                    class="w-full p-3"
+                    placeholder="Set a secure password"
+                    minlength="6">
+            </div>
+
+            <button type="submit" id="auth-submit-btn" class="btn w-full p-3 rounded-xl">
+                Sign Up
+            </button>
+
+            <div id="auth-error-message" class="text-center text-red-400 text-sm hidden"></div>
+        </form>
+
+        <!-- Mode Toggle -->
+        <div class="text-center mt-6 text-sm">
+            <span id="toggle-text">Already have an account?</span>
+            <span id="toggle-auth-mode" class="text-link font-medium ml-1">Log In</span>
+        </div>
+    </div>
+
+    <script>
+        // --- Supabase Client Configuration (REQUIRED) ---
+        // REPLACE THESE WITH YOUR ACTUAL SUPABASE PROJECT URL AND ANON KEY
+        const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER1lu7eNpoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // **[UPDATE]** Set up the redirect URL for the main application to index.html
+        const APP_URL = 'index.html'; 
+
+        // --- Global State ---
+        let isSignUpMode = true;
+
+        // --- DOM Elements ---
+        const authForm = document.getElementById('auth-form');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const submitBtn = document.getElementById('auth-submit-btn');
+        const errorMessage = document.getElementById('auth-error-message');
+        const authHeader = document.getElementById('auth-header');
+        const toggleLink = document.getElementById('toggle-auth-mode');
+        const toggleText = document.getElementById('toggle-text');
+
+        // --- Helper Functions ---
+        const showErrorMessage = (message) => {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+        };
+        const hideErrorMessage = () => {
+            errorMessage.classList.add('hidden');
+            errorMessage.textContent = '';
+        };
+
+        const setButtonLoading = (isLoading) => {
+            submitBtn.disabled = isLoading;
+            submitBtn.textContent = isLoading ? (isSignUpMode ? 'Signing Up...' : 'Logging In...') : (isSignUpMode ? 'Sign Up' : 'Log In');
+        };
+
+        const toggleAuthMode = () => {
+            isSignUpMode = !isSignUpMode;
+
+            if (isSignUpMode) {
+                authHeader.textContent = 'Sign Up to get started.';
+                submitBtn.textContent = 'Sign Up';
+                toggleText.textContent = 'Already have an account?';
+                toggleLink.textContent = 'Log In';
+            } else {
+                authHeader.textContent = 'Log In to continue.';
+                submitBtn.textContent = 'Log In';
+                toggleText.textContent = 'Don\'t have an account?';
+                toggleLink.textContent = 'Sign Up';
+            }
+            hideErrorMessage();
+        };
+
+        // --- Core Auth Logic ---
+
+        // Helper to insert the username into the public.profiles table
+        const createProfile = async (userId, username) => {
+            const { error } = await supabase
+                .from('profiles')
+                .insert([{ id: userId, username: username }]);
+
+            if (error && error.code !== '23505') { // 23505 is duplicate key (which shouldn't happen here)
+                console.error("Profile creation failed:", error);
+                return false;
+            }
+            return true;
+        };
+
+        const handleAuthSubmit = async (e) => {
+            e.preventDefault();
+            hideErrorMessage();
+            setButtonLoading(true);
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!username || !password) {
+                showErrorMessage('Please enter a username and password.');
+                setButtonLoading(false);
+                return;
+            }
+
+            // Create a standardized synthetic email from the username
+            // We use the cleaned username as the local part of the email.
+            const syntheticUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const syntheticEmail = `user.${syntheticUsername}@croomsconnect.com`;
+
+            try {
+                if (isSignUpMode) {
+                    // 1. Check if username already exists in profiles table
+                    const { data: profiles, error: profileCheckError } = await supabase
+                        .from('profiles')
+                        .select('username')
+                        .eq('username', username)
+                        .limit(1);
+
+                    if (profileCheckError) throw profileCheckError;
+
+                    if (profiles.length > 0) {
+                        showErrorMessage(`Username "${username}" is already taken.`);
+                        setButtonLoading(false);
+                        return;
+                    }
+
+                    // 2. Perform Sign Up (uses the synthetic email)
+                    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                        email: syntheticEmail,
+                        password: password,
+                    });
+
+                    if (signUpError) {
+                        if (signUpError.message.includes('Email not confirmed')) {
+                             showErrorMessage('Sign Up Failed. Email Confirmation is active on the server. Please check your Supabase settings and ensure it is OFF.');
+                        } else {
+                            showErrorMessage('Sign Up Failed. Check console for details.');
+                        }
+                        throw signUpError;
+                    }
+
+                    // 3. Create the user profile record
+                    const userId = signUpData.user.id;
+                    const profileSuccess = await createProfile(userId, username);
+
+                    if (profileSuccess) {
+                        window.location.href = APP_URL; // Redirect on success
+                    } else {
+                        // Logged in, but profile failed
+                        showErrorMessage('Sign up successful, but could not set username. Please refresh.');
+                        setButtonLoading(false);
+                    }
+
+                } else {
+                    // 1. Perform Log In (uses the synthetic email)
+                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                        email: syntheticEmail,
+                        password: password,
+                    });
+
+                    if (signInError) {
+                        if (signInError.message.includes('Email not confirmed')) {
+                             showErrorMessage('Log In Failed. Email Confirmation is active on the server. Please check your Supabase settings and ensure it is OFF.');
+                        } else {
+                            showErrorMessage('Log In Failed. Invalid username or password.');
+                        }
+                        throw signInError; // Log the detailed error
+                    }
+                    
+                    // 2. Log In Successful - Redirect
+                    window.location.href = APP_URL;
+
+                }
+
+            } catch (error) {
+                console.error('Auth Error:', error.message, error);
+                if (error.code !== '23505') { // Ignore duplicate key errors on the profile creation
+                    setButtonLoading(false);
+                }
+            }
+        };
+
+        // --- Initialization and Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for existing session and redirect immediately if logged in
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                if (session) {
+                    window.location.href = APP_URL;
+                }
+            }).catch(console.error);
+
+            authForm.addEventListener('submit', handleAuthSubmit);
+            toggleLink.addEventListener('click', toggleAuthMode);
+        });
+    </script>
+</body>
+</html>
