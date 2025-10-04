@@ -1,280 +1,364 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Load Supabase client library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Crooms Connect - Sign In</title>
+    <title>Crooms Connect - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Inherit theme variables for consistent look */
         :root {
-            --primary-bg: #1a1b2f;
-            --content-bg: #2b2d42;
-            --text-color: #f8f9fa;
-            --accent-blue: #4cc9f0;
+            --primary-bg: #1a1b2f; 
+            --content-bg: #2b2d42; 
+            --text-color: #f8f9fa; 
             --shadow: 0 4px 12px rgba(0,0,0,0.4);
+            --accent-blue: #4cc9f0;
+            --accent-green: #80ed99;
             --radius: 15px;
         }
+        
         body {
             background-color: var(--primary-bg);
             color: var(--text-color);
             font-family: 'Inter', sans-serif;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
+            padding: 20px; /* Added for mobile safety */
         }
-        .card {
+
+        .auth-card {
             background-color: var(--content-bg);
             box-shadow: var(--shadow);
             border-radius: var(--radius);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
         }
+
         .btn {
             background-color: var(--accent-blue);
             color: #1a1b2f;
             font-weight: 700;
+            padding: 10px 20px;
+            border-radius: 8px;
             transition: background-color 0.2s, transform 0.1s;
         }
         .btn:hover {
             background-color: #6ce0ff;
             transform: translateY(-1px);
         }
-        input, select {
-            background-color: var(--primary-bg);
-            color: var(--text-color);
-            border: 1px solid rgba(248, 249, 250, 0.2);
-            border-radius: 8px;
-            transition: border-color 0.2s;
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
-        input:focus, select:focus {
-            border-color: var(--accent-blue);
-            outline: none;
+        
+        input[type="text"], input[type="password"] {
+            color: #1a1b2f; 
+            border-radius: 6px;
+            padding: 12px;
+            background-color: #f8f9fa;
         }
-        .text-link {
-            color: var(--accent-blue);
-            cursor: pointer;
-            transition: color 0.2s;
+        .form-group {
+            margin-bottom: 20px;
         }
-        .text-link:hover {
-            color: #6ce0ff;
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--accent-blue);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 
 <body>
-    <div class="card w-full max-w-md p-8 sm:p-10">
-        <h1 class="text-3xl font-bold mb-2 text-center">Crooms Connect</h1>
-        <p id="auth-header" class="text-lg text-center mb-8 text-gray-400">Sign Up to get started.</p>
+    <div class="auth-card text-center">
+        <h1 class="text-3xl font-extrabold text-white mb-6">Crooms Connect</h1>
+        <!-- UPDATED HEADER -->
+        <p class="text-gray-400 mb-8" id="auth-header-text">Sign in using your username and password.</p>
 
-        <!-- Auth Form -->
-        <form id="auth-form" class="space-y-6">
-            <div>
-                <label for="username" class="block text-sm font-medium mb-1">Username (Required)</label>
-                <input type="text" id="username" required
-                    class="w-full p-3"
-                    placeholder="Enter your unique username"
-                    minlength="3" maxlength="20">
+        <!-- Dynamic Message/Error Display -->
+        <div id="auth-message" class="mb-4 p-3 rounded-lg text-sm transition duration-300 hidden"></div>
+
+        <!-- Sign In Form -->
+        <form id="sign-in-form" class="space-y-4">
+            <div class="form-group">
+                <!-- NOW ASKING FOR USERNAME -->
+                <input type="text" id="signin-username" required class="w-full" placeholder="Username">
             </div>
-
-            <div>
-                <label for="password" class="block text-sm font-medium mb-1">Password (Required)</label>
-                <input type="password" id="password" required
-                    class="w-full p-3"
-                    placeholder="Set a secure password"
-                    minlength="6">
+            <div class="form-group">
+                <input type="password" id="signin-password" required class="w-full" placeholder="Password">
             </div>
-
-            <button type="submit" id="auth-submit-btn" class="btn w-full p-3 rounded-xl">
-                Sign Up
+            <button type="submit" id="signin-btn" class="btn w-full flex justify-center items-center space-x-2">
+                <span id="signin-text">Sign In</span>
+                <div id="signin-spinner" class="spinner hidden"></div>
             </button>
-
-            <div id="auth-error-message" class="text-center text-red-400 text-sm hidden"></div>
         </form>
 
-        <!-- Mode Toggle -->
-        <div class="text-center mt-6 text-sm">
-            <span id="toggle-text">Already have an account?</span>
-            <span id="toggle-auth-mode" class="text-link font-medium ml-1">Log In</span>
-        </div>
+        <!-- Sign Up Form (Hidden by default) -->
+        <form id="sign-up-form" class="space-y-4 hidden">
+            <div class="form-group">
+                <!-- IMPORTANT: This input creates the 'username' in the 'profiles' table -->
+                <input type="text" id="signup-username" required class="w-full" placeholder="Choose a Unique Username (e.g., JSmith24)">
+            </div>
+            <!-- EMAIL FIELD REMOVED -->
+            <div class="form-group">
+                <input type="password" id="signup-password" required class="w-full" placeholder="Password (min. 6 characters)">
+            </div>
+            <button type="submit" id="signup-btn" class="btn w-full bg-accent-green hover:bg-green-400 flex justify-center items-center space-x-2">
+                <span id="signup-text">Sign Up</span>
+                <div id="signup-spinner" class="spinner hidden"></div>
+            </button>
+        </form>
+        
+        <p class="mt-6 text-sm">
+            <button id="toggle-auth-view" class="text-gray-400 hover:text-accent-blue transition">
+                Need an account? Sign Up
+            </button>
+        </p>
     </div>
 
     <script>
-        // --- Supabase Client Configuration (REQUIRED) ---
-        // REPLACE THESE WITH YOUR ACTUAL SUPABASE PROJECT URL AND ANON KEY
-        const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER1lu7eNpoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
-
+        // =================================================================
+        // IMPORTANT: REPLACE WITH YOUR ACTUAL SUPABASE CONFIGURATION
+        // =================================================================
+        const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co'; 
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER1lu7eNpoETpGVQaFJ4Fp9VMowjzWfN7EZY6w'; 
+        
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         
-        // **[UPDATE]** Set up the redirect URL for the main application to index.html
-        const APP_URL = 'index.html'; 
-
-        // --- Global State ---
-        let isSignUpMode = true;
+        // --- Configuration ---
+        const MAIN_APP_URL = 'index.html'; 
+        // --- NEW: Placeholder domain to allow username-only login ---
+        const PLACEHOLDER_DOMAIN = '@croomsconnect.local';
 
         // --- DOM Elements ---
-        const authForm = document.getElementById('auth-form');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const submitBtn = document.getElementById('auth-submit-btn');
-        const errorMessage = document.getElementById('auth-error-message');
-        const authHeader = document.getElementById('auth-header');
-        const toggleLink = document.getElementById('toggle-auth-mode');
-        const toggleText = document.getElementById('toggle-text');
+        const signInForm = document.getElementById('sign-in-form');
+        const signUpForm = document.getElementById('sign-up-form');
+        const toggleAuthButton = document.getElementById('toggle-auth-view');
+        const authMessage = document.getElementById('auth-message');
+        const authHeaderText = document.getElementById('auth-header-text');
+        
+        // Spinner elements
+        const signInBtn = document.getElementById('signin-btn');
+        const signInText = document.getElementById('signin-text');
+        const signInSpinner = document.getElementById('signin-spinner');
+        const signUpBtn = document.getElementById('signup-btn');
+        const signUpText = document.getElementById('signup-text');
+        const signUpSpinner = document.getElementById('signup-spinner');
 
-        // --- Helper Functions ---
-        const showErrorMessage = (message) => {
-            errorMessage.textContent = message;
-            errorMessage.classList.remove('hidden');
-        };
-        const hideErrorMessage = () => {
-            errorMessage.classList.add('hidden');
-            errorMessage.textContent = '';
-        };
 
-        const setButtonLoading = (isLoading) => {
-            submitBtn.disabled = isLoading;
-            submitBtn.textContent = isLoading ? (isSignUpMode ? 'Signing Up...' : 'Logging In...') : (isSignUpMode ? 'Sign Up' : 'Log In');
-        };
-
-        const toggleAuthMode = () => {
-            isSignUpMode = !isSignUpMode;
-
-            if (isSignUpMode) {
-                authHeader.textContent = 'Sign Up to get started.';
-                submitBtn.textContent = 'Sign Up';
-                toggleText.textContent = 'Already have an account?';
-                toggleLink.textContent = 'Log In';
+        /* ========================================================================= */
+        /* 1. UTILITY FUNCTIONS                                                      */
+        /* ========================================================================= */
+        
+        const showLoading = (isSignUp) => {
+            if (isSignUp) {
+                signUpText.classList.add('hidden');
+                signUpSpinner.classList.remove('hidden');
+                signUpBtn.disabled = true;
             } else {
-                authHeader.textContent = 'Log In to continue.';
-                submitBtn.textContent = 'Log In';
-                toggleText.textContent = 'Don\'t have an account?';
-                toggleLink.textContent = 'Sign Up';
+                signInText.classList.add('hidden');
+                signInSpinner.classList.remove('hidden');
+                signInBtn.disabled = true;
             }
-            hideErrorMessage();
         };
 
-        // --- Core Auth Logic ---
-
-        // Helper to insert the username into the public.profiles table
-        const createProfile = async (userId, username) => {
-            const { error } = await supabase
-                .from('profiles')
-                .insert([{ id: userId, username: username }]);
-
-            if (error && error.code !== '23505') { // 23505 is duplicate key (which shouldn't happen here)
-                console.error("Profile creation failed:", error);
-                return false;
+        const hideLoading = (isSignUp) => {
+            if (isSignUp) {
+                signUpText.classList.remove('hidden');
+                signUpSpinner.classList.add('hidden');
+                signUpBtn.disabled = false;
+            } else {
+                signInText.classList.remove('hidden');
+                signInSpinner.classList.add('hidden');
+                signInBtn.disabled = false;
             }
-            return true;
         };
 
-        const handleAuthSubmit = async (e) => {
+        const displayMessage = (message, type = 'error') => {
+            authMessage.textContent = message;
+            authMessage.classList.remove('hidden', 'bg-red-800', 'bg-green-700');
+            if (type === 'error') {
+                authMessage.classList.add('bg-red-800', 'text-white');
+            } else {
+                authMessage.classList.add('bg-green-700', 'text-white');
+            }
+        };
+        
+        const clearMessage = () => {
+            authMessage.classList.add('hidden');
+        };
+
+        const toggleView = () => {
+            clearMessage();
+            if (signInForm.classList.contains('hidden')) {
+                // Currently on Sign Up, switch to Sign In
+                signInForm.classList.remove('hidden');
+                signUpForm.classList.add('hidden');
+                toggleAuthButton.textContent = "Need an account? Sign Up";
+                authHeaderText.textContent = "Sign in using your username and password."; // UPDATED
+            } else {
+                // Currently on Sign In, switch to Sign Up
+                signInForm.classList.add('hidden');
+                signUpForm.classList.remove('hidden');
+                toggleAuthButton.textContent = "Already have an account? Sign In";
+                authHeaderText.textContent = "Create your Crooms Connect profile.";
+            }
+        };
+
+
+        /* ========================================================================= */
+        /* 2. AUTHENTICATION LOGIC                                                   */
+        /* ========================================================================= */
+        
+        /**
+         * Checks for an existing session and redirects to the main app if found.
+         */
+        const checkSessionAndRedirect = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session) {
+                console.log("Active session found. Redirecting to main app.");
+                window.location.href = MAIN_APP_URL;
+            }
+        };
+
+
+        /**
+         * Handles the sign-in process using username (converted to dummy email).
+         */
+        const handleSignIn = async (e) => {
             e.preventDefault();
-            hideErrorMessage();
-            setButtonLoading(true);
+            clearMessage();
+            showLoading(false);
 
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value;
+            // Get username instead of email
+            const username = document.getElementById('signin-username').value.trim();
+            const password = document.getElementById('signin-password').value;
+            
+            // Convert the username into the dummy email format required by Supabase Auth
+            const email = username + PLACEHOLDER_DOMAIN;
 
-            if (!username || !password) {
-                showErrorMessage('Please enter a username and password.');
-                setButtonLoading(false);
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            
+            hideLoading(false);
+
+            if (error) {
+                console.error('Sign In Error:', error);
+                // Customize error message for username flow
+                displayMessage(error.message.includes('Invalid login credentials') 
+                    ? 'Invalid username or password.' 
+                    : error.message);
+            } else {
+                // Successful sign in, redirect to main app
+                window.location.href = MAIN_APP_URL;
+            }
+        };
+
+        /**
+         * Handles the sign-up process and profile creation.
+         */
+        const handleSignUp = async (e) => {
+            e.preventDefault();
+            clearMessage();
+            showLoading(true);
+
+            const username = document.getElementById('signup-username').value.trim();
+            const password = document.getElementById('signup-password').value;
+            
+            // Construct the dummy email address for Supabase Auth
+            const email = username + PLACEHOLDER_DOMAIN;
+            
+            // Basic client-side validation
+            if (username.length < 3) {
+                 displayMessage("Username must be at least 3 characters long.");
+                 hideLoading(true);
+                 return;
+            }
+            if (password.length < 6) {
+                 displayMessage("Password must be at least 6 characters long.");
+                 hideLoading(true);
+                 return;
+            }
+
+            // Step 1: Create the Auth User using the dummy email
+            const { data, error } = await supabase.auth.signUp({ 
+                email, 
+                password
+            });
+            
+            if (error) {
+                console.error('Sign Up Error:', error);
+                // If it's a "User already registered" error, it means the username is taken
+                displayMessage(error.message.includes('User already registered')
+                    ? 'This username is already taken. Please choose another.'
+                    : error.message);
+                hideLoading(true);
                 return;
             }
-
-            // Create a standardized synthetic email from the username
-            // We use the cleaned username as the local part of the email.
-            const syntheticUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const syntheticEmail = `user.${syntheticUsername}@croomsconnect.com`;
-
-            try {
-                if (isSignUpMode) {
-                    // 1. Check if username already exists in profiles table
-                    const { data: profiles, error: profileCheckError } = await supabase
-                        .from('profiles')
-                        .select('username')
-                        .eq('username', username)
-                        .limit(1);
-
-                    if (profileCheckError) throw profileCheckError;
-
-                    if (profiles.length > 0) {
-                        showErrorMessage(`Username "${username}" is already taken.`);
-                        setButtonLoading(false);
-                        return;
-                    }
-
-                    // 2. Perform Sign Up (uses the synthetic email)
-                    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-                        email: syntheticEmail,
-                        password: password,
-                    });
-
-                    if (signUpError) {
-                        if (signUpError.message.includes('Email not confirmed')) {
-                             showErrorMessage('Sign Up Failed. Email Confirmation is active on the server. Please check your Supabase settings and ensure it is OFF.');
-                        } else {
-                            showErrorMessage('Sign Up Failed. Check console for details.');
-                        }
-                        throw signUpError;
-                    }
-
-                    // 3. Create the user profile record
-                    const userId = signUpData.user.id;
-                    const profileSuccess = await createProfile(userId, username);
-
-                    if (profileSuccess) {
-                        window.location.href = APP_URL; // Redirect on success
-                    } else {
-                        // Logged in, but profile failed
-                        showErrorMessage('Sign up successful, but could not set username. Please refresh.');
-                        setButtonLoading(false);
-                    }
-
-                } else {
-                    // 1. Perform Log In (uses the synthetic email)
-                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-                        email: syntheticEmail,
-                        password: password,
-                    });
-
-                    if (signInError) {
-                        if (signInError.message.includes('Email not confirmed')) {
-                             showErrorMessage('Log In Failed. Email Confirmation is active on the server. Please check your Supabase settings and ensure it is OFF.');
-                        } else {
-                            showErrorMessage('Log In Failed. Invalid username or password.');
-                        }
-                        throw signInError; // Log the detailed error
-                    }
-                    
-                    // 2. Log In Successful - Redirect
-                    window.location.href = APP_URL;
-
+            
+            // Step 2: Create the user's profile in the 'profiles' table
+            if (data.user) {
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .insert([
+                        { id: data.user.id, username: username }
+                    ]);
+                
+                if (profileError) {
+                    console.error('Profile Creation Error:', profileError);
+                    displayMessage("Account created, but could not save your username. Please try logging in or contact support.", 'error');
+                    hideLoading(true);
+                    return; 
                 }
+            }
 
-            } catch (error) {
-                console.error('Auth Error:', error.message, error);
-                if (error.code !== '23505') { // Ignore duplicate key errors on the profile creation
-                    setButtonLoading(false);
-                }
+            hideLoading(true);
+            
+            // Step 3: Handle redirection based on whether a session was created
+            if (data.session) {
+                // If the user is immediately signed in (e.g., email confirmation is off)
+                window.location.href = MAIN_APP_URL;
+            } else {
+                // Since there is no actual email, this section won't be used 
+                // unless you turn on email confirmation in Supabase settings. 
+                // For a no-email flow, ensure email confirmation is DISABLED in your Supabase project.
+                toggleView(); // Switch back to login view
+                displayMessage("Success! Your account is created. Please sign in below.", 'success');
+                // Clear the sign up form fields
+                document.getElementById('signup-username').value = '';
+                document.getElementById('signup-password').value = '';
             }
         };
 
-        // --- Initialization and Event Listeners ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // Check for existing session and redirect immediately if logged in
-            supabase.auth.getSession().then(({ data: { session } }) => {
-                if (session) {
-                    window.location.href = APP_URL;
-                }
-            }).catch(console.error);
 
-            authForm.addEventListener('submit', handleAuthSubmit);
-            toggleLink.addEventListener('click', toggleAuthMode);
+        /* ========================================================================= */
+        /* 3. INITIALIZATION AND EVENT LISTENERS                                     */
+        /* ========================================================================= */
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if already signed in on page load
+            checkSessionAndRedirect(); 
+
+            // Event Listeners
+            signInForm.addEventListener('submit', handleSignIn);
+            signUpForm.addEventListener('submit', handleSignUp);
+            toggleAuthButton.addEventListener('click', toggleView);
         });
+
     </script>
 </body>
 </html>
