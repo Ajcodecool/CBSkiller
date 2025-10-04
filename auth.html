@@ -132,10 +132,10 @@
 
     <script>
         // =================================================================
-        // IMPORTANT: REPLACE WITH YOUR ACTUAL SUPABASE CONFIGURATION
+        // FIX APPLIED: Supabase Credentials have been inserted here!
         // =================================================================
         const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co'; 
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER1lu7eNpoETpGVQaFJ4Fp9VMowjzWfN7EZY6w'; 
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNpoETgVQaFJ4Fp9VMowjzWfN7EZY6w'; 
         
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         
@@ -228,11 +228,16 @@
          * Checks for an existing session and redirects to the main app if found.
          */
         const checkSessionAndRedirect = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            
-            if (session) {
-                console.log("Active session found. Redirecting to main app.");
-                window.location.href = MAIN_APP_URL;
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                if (session) {
+                    console.log("Active session found. Redirecting to main app.");
+                    window.location.href = MAIN_APP_URL;
+                }
+            } catch(e) {
+                // Suppress errors during initial check if keys are bad, wait for user input
+                console.error("Session check failed, likely due to placeholder keys.", e);
             }
         };
 
@@ -333,9 +338,7 @@
                 // If the user is immediately signed in (e.g., email confirmation is off)
                 window.location.href = MAIN_APP_URL;
             } else {
-                // Since there is no actual email, this section won't be used 
-                // unless you turn on email confirmation in Supabase settings. 
-                // For a no-email flow, ensure email confirmation is DISABLED in your Supabase project.
+                // If the user needs to manually sign in
                 toggleView(); // Switch back to login view
                 displayMessage("Success! Your account is created. Please sign in below.", 'success');
                 // Clear the sign up form fields
