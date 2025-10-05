@@ -1590,5 +1590,90 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 </script>
 
+
+<!-- User Info Display and Profile Picture Upload -->
+<div id="user-info" style="display: flex; align-items: center; gap: 10px; margin: 10px;">
+  <img id="user-avatar" src="" alt="Profile Picture" style="width: 40px; height: 40px; border-radius: 50%;">
+  <span id="user-name" style="font-weight: bold;"></span>
+</div>
+
+<!-- Account Settings Section -->
+<div id="account-settings" style="margin: 20px;">
+  <h3>Account Settings</h3>
+  <input type="file" id="avatar-upload" accept="image/*">
+  <button onclick="uploadAvatar()">Upload Profile Picture</button>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      const userNameSpan = document.getElementById('user-name');
+      const userAvatarImg = document.getElementById('user-avatar');
+
+      const username = user.user_metadata?.username || user.email;
+      const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
+
+      userNameSpan.textContent = username;
+      userAvatarImg.src = avatarUrl;
+
+      // Replace "ALPHA" text with username and avatar
+      document.body.innerHTML = document.body.innerHTML.replace(/ALPHA/g, `
+        <span style="display: flex; align-items: center; gap: 8px;">
+          <img src="${avatarUrl}" alt="Avatar" style="width: 30px; height: 30px; border-radius: 50%;">
+          ${username}
+        </span>
+      `);
+    }
+  });
+
+  async function uploadAvatar() {
+    const fileInput = document.getElementById('avatar-upload');
+    const file = fileInput.files[0];
+    if (!file) return alert("Please select an image file.");
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return alert("User not logged in.");
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    let { error: uploadError } = await supabase.storage
+      .from('profile-pictures')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      console.error(uploadError);
+      return alert("Upload failed.");
+    }
+
+    const { data } = supabase.storage
+      .from('profile-pictures')
+      .getPublicUrl(filePath);
+
+    const avatarUrl = data.publicUrl;
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      data: { avatar_url: avatarUrl }
+    });
+
+    if (updateError) {
+      console.error(updateError);
+      return alert("Failed to update profile.");
+    }
+
+    alert("Profile picture updated!");
+    location.reload();
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  }
+</script>
+
 </body>
 </html>
