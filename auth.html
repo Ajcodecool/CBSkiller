@@ -1,13 +1,41 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <!-- Load Supabase client library -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const signInForm = document.getElementById('sign-in-form');
+  const signUpForm = document.getElementById('sign-up-form');
+  const signInBtn = document.getElementById('signin-btn');
+  const signUpBtn = document.getElementById('signup-btn');
+  const signInText = document.getElementById('signin-text');
+  const signUpText = document.getElementById('signup-text');
+  const signInSpinner = document.getElementById('signin-spinner');
+  const signUpSpinner = document.getElementById('signup-spinner');
+
+  if (signInForm) {
+    signInForm.addEventListener('submit', () => {
+      signInText.textContent = "Signing In...";
+      signInSpinner.classList.remove("hidden");
+      signInBtn.disabled = true;
+    });
+  }
+
+  if (signUpForm) {
+    signUpForm.addEventListener('submit', () => {
+      signUpText.textContent = "Creating Account...";
+      signUpSpinner.classList.remove("hidden");
+      signUpBtn.disabled = true;
+    });
+  }
+});
+</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Crooms Connect - Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Crooms Connect - Login</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
         /* Inherit theme variables for consistent look */
         :root {
             --primary-bg: #1a1b2f; 
@@ -82,55 +110,48 @@
         }
     </style>
 </head>
-
 <body>
-    <div class="auth-card text-center">
-        <h1 class="text-3xl font-extrabold text-white mb-6">Crooms Connect</h1>
-        <!-- UPDATED HEADER -->
-        <p class="text-gray-400 mb-8" id="auth-header-text">Sign in using your username and password.</p>
-
-        <!-- Dynamic Message/Error Display -->
-        <div id="auth-message" class="mb-4 p-3 rounded-lg text-sm transition duration-300 hidden"></div>
-
-        <!-- Sign In Form -->
-        <form id="sign-in-form" class="space-y-4">
-            <div class="form-group">
-                <!-- NOW ASKING FOR USERNAME -->
-                <input type="text" id="signin-username" required class="w-full" placeholder="Username">
-            </div>
-            <div class="form-group">
-                <input type="password" id="signin-password" required class="w-full" placeholder="Password">
-            </div>
-            <button type="submit" id="signin-btn" class="btn w-full flex justify-center items-center space-x-2">
-                <span id="signin-text">Sign In</span>
-                <div id="signin-spinner" class="spinner hidden"></div>
-            </button>
-        </form>
-
-        <!-- Sign Up Form (Hidden by default) -->
-        <form id="sign-up-form" class="space-y-4 hidden">
-            <div class="form-group">
-                <!-- IMPORTANT: This input creates the 'username' in the 'profiles' table -->
-                <input type="text" id="signup-username" required class="w-full" placeholder="Choose a Unique Username (e.g., JSmith24)">
-            </div>
-            <!-- EMAIL FIELD REMOVED -->
-            <div class="form-group">
-                <input type="password" id="signup-password" required class="w-full" placeholder="Password (min. 6 characters)">
-            </div>
-            <button type="submit" id="signup-btn" class="btn w-full bg-accent-green hover:bg-green-400 flex justify-center items-center space-x-2">
-                <span id="signup-text">Sign Up</span>
-                <div id="signup-spinner" class="spinner hidden"></div>
-            </button>
-        </form>
-        
-        <p class="mt-6 text-sm">
-            <button id="toggle-auth-view" class="text-gray-400 hover:text-accent-blue transition">
+<div class="auth-card text-center   b o r d e r   b o r d e r - g r a y - 7 0 0">
+<h1 class="text-3xl font-extrabold text-white mb-6">Crooms Connect</h1>
+<!-- UPDATED HEADER -->
+<p class="text-gray-400 mb-8" id="auth-header-text">Sign in using your username and password.</p>
+<!-- Dynamic Message/Error Display -->
+<div class="mb-4 p-3 rounded-lg text-sm transition duration-300 hidden" id="auth-message"></div>
+<!-- Sign In Form -->
+<form class="space-y-4" id="sign-in-form">
+<div class="form-group">
+<!-- NOW ASKING FOR USERNAME -->
+<input class="w-full" id="signin-username" placeholder="Username" required="" type="text"/>
+</div>
+<div class="form-group">
+<input class="w-full" id="signin-password" pattern=".{6,}" placeholder="Password" required="" title="Password must be at least 6 characters." type="password"/>
+</div>
+<button class="btn w-full flex justify-center items-center space-x-2" id="signin-btn" type="submit">
+<span id="signin-text">Sign In</span>
+<div class="spinner hidden" id="signin-spinner"></div>
+</button>
+</form>
+<!-- Sign Up Form (Hidden by default) -->
+<form class="space-y-4 hidden" id="sign-up-form">
+<div class="form-group">
+<!-- IMPORTANT: This input creates the 'username' in the 'profiles' table -->
+<input class="w-full" id="signup-username" placeholder="Choose a Unique Username (e.g., JSmith24)" required="" type="text"/>
+</div>
+<!-- EMAIL FIELD REMOVED -->
+<div class="form-group">
+<input class="w-full" id="signup-password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}" placeholder="Password (min. 6 characters)" required="" title="Password must be at least 6 characters and include uppercase, lowercase, and a number." type="password"/>
+</div>
+<button class="btn w-full bg-accent-green hover:bg-green-400 flex justify-center items-center space-x-2" id="signup-btn" type="submit">
+<span id="signup-text">Sign Up</span>
+<div class="spinner hidden" id="signup-spinner"></div>
+</button>
+</form>
+<p class="mt-6 text-sm">
+<button class="text-gray-400 hover:text-accent-blue transition" id="toggle-auth-view">
                 Need an account? Sign Up
             </button>
-        </p>
-    </div>
-
-    
+</p>
+</div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
@@ -154,6 +175,5 @@ document.addEventListener('DOMContentLoaded', () => {
   // Utility functions and auth logic go here...
 });
 </script>
-
 </body>
 </html>
