@@ -831,7 +831,16 @@ document.addEventListener('DOMContentLoaded', () =&gt; {
     });
   }
 });
-<script>
+
+
+
+</img><script>
+const supabase = supabase.createClient(
+  'https://jxxnfsydjrflnephmfjm.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
+);
+
+
 // --- SCHEDULE DATA ---
 const defaultSchedules = {
 "Monday": [
@@ -1555,8 +1564,8 @@ if (e.target === reminderModal) { hideReminderModal(); }
 });
 if (reminderForm) reminderForm.addEventListener('submit', handleReminderSubmit);
 });
-</script>
-<script>
+
+
 document.addEventListener("DOMContentLoaded", async () => {
   const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
@@ -1567,8 +1576,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "auth.html";
   }
 });
-</script>
-<script>
+
+
   document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -1588,44 +1597,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.getElementById('user-info').style.display = 'none';
     }
   });
-</script>
-</img><script>
-const supabase = supabase.createClient(
-  'https://jxxnfsydjrflnephmfjm.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
-);
 
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user) {
-      const username = user.user_metadata?.username || user.email;
-      const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
-
-      const alphaElement = document.querySelector('#alpha');
-      if (alphaElement) {
-        alphaElement.innerHTML = `
-          <div id="user-info" style="display: flex; align-items: center; gap: 10px;">
-            <img id="user-avatar" src="${avatarUrl}" alt="Profile Picture" style="width: 40px; height: 40px; border-radius: 50%; cursor: pointer;" onclick="openUserModal()" />
-            <span id="user-name" style="font-weight: bold;">${username}</span>
-          </div>
-        `;
-      }
-    }
-  } catch (error) {
-    console.error("Supabase error:", error);
-  }
-});
-
-// Modal logic
-function openUserModal() {
-  const modal = document.getElementById("user-modal");
-  if (modal) modal.style.display = "block";
-}
-function closeUserModal() {
-  const modal = document.getElementById("user-modal");
-  if (modal) modal.style.display = "none";
-}
-</script><div id="user-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:1000;"><div style="background:white; margin:10% auto; padding:20px; width:300px; text-align:center; border-radius:10px;">Loading user info...<button onclick="closeUserModal()" style="margin-top:10px;">Close</button></div></div></body>
+</script></body>
 </html>
