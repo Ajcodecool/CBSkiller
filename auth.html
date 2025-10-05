@@ -365,58 +365,30 @@
     </script>
 
 <script>
-const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-const PLACEHOLDER_DOMAIN = '@crooms.local';
+console.log("🔧 Supabase Debug Mode Activated");
 
-document.addEventListener('DOMContentLoaded', () => {
-  const signInForm = document.getElementById('sign-in-form');
-  const signUpForm = document.getElementById('sign-up-form');
+try {
+  const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+  console.log("✅ Supabase URL:", supabaseUrl);
+  console.log("✅ Supabase Key (anon):", supabaseKey.slice(0, 20) + "...");
 
-  signInForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('signin-username').value.trim();
-    const password = document.getElementById('signin-password').value;
-    const email = username + PLACEHOLDER_DOMAIN;
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+  console.log("✅ Supabase client initialized");
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+  supabase.auth.getSession().then(({ data: { session }, error }) => {
     if (error) {
-      alert('Login failed: ' + error.message);
+      console.error("❌ Error fetching session:", error);
+    } else if (session) {
+      console.log("✅ Active session found:", session);
     } else {
-      window.location.href = 'index.html';
+      console.log("ℹ️ No active session");
     }
   });
 
-  signUpForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('signup-username').value.trim();
-    const password = document.getElementById('signup-password').value;
-    const email = username + PLACEHOLDER_DOMAIN;
-
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) {
-      alert('Signup failed: ' + error.message);
-      return;
-    }
-
-    if (data.user) {
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert([{ id: data.user.id, username }]);
-      if (insertError) {
-        alert('User created but failed to save username: ' + insertError.message);
-        return;
-      }
-    }
-
-    if (data.session) {
-      window.location.href = 'index.html';
-    } else {
-      alert('Signup successful! Please sign in.');
-    }
-  });
-});
+} catch (e) {
+  console.error("❌ Supabase initialization failed:", e);
+}
 </script>
 
 </body>
