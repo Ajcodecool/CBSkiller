@@ -1,7 +1,7 @@
 
 <div id="user-info" style="display: none; align-items: center; gap: 10px; margin: 10px;">
-  <img id="user-avatar" src="" alt="Profile Picture" style="width: 40px; height: 40px; border-radius: 50%;">
-  <span id="user-name" style="font-weight: bold;"></span>
+<img alt="Profile Picture" id="user-avatar" src="" style="width: 40px; height: 40px; border-radius: 50%;"/>
+<span id="user-name" style="font-weight: bold;"></span>
 </div>
 <!DOCTYPE html>
 
@@ -501,8 +501,7 @@ font-size: 14px;
 <span class="title-text">CROOMS CONNECT</span>
 <span class="user-id-display" id="userIdDisplay">Local Theme Storage Active</span>
 </div>
-<span><span id="user-name" style="font-weight: bold;"></span>
-       <img id="user-avatar" src="" alt="Profile Picture" style="width: 32px; height: 32px; border-radius: 50%;"></span>
+<span>ALPHA</span>
 </div>
 <div class="left-box">
 <button data-tab="home">Home</button>
@@ -724,7 +723,7 @@ We may terminate or suspend access to our platform immediately, without prior no
 <footer>
 <p>© 2025 Crooms Connect | <a id="open-legal-modal">Legal Disclaimer</a></p>
 </footer>
-<img id="preview"/>
+<img id="preview">
   // --- Supabase Cloud Reminders ---
 const supabaseUrl = 'https://jxxnfsydrflnephmfjm.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
@@ -1590,75 +1589,45 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 </script>
-
-
+</img>
+<div id="profileModal" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%);
+     background:white; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.3); z-index:1000;">
+<img alt="Profile Picture" id="modal-avatar" src="" style="width:80px; height:80px; border-radius:50%; margin-bottom:10px;"/>
+<h2 id="modal-username">Hello, User</h2>
+<button onclick="window.location.href='account_settings.html'" style="margin-top:10px;">Manage Account</button>
+</div>
+<div id="modalOverlay" onclick="closeModal()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background:rgba(0,0,0,0.5); z-index:999;"></div>
 <script>
-  document.addEventListener('DOMContentLoaded', async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const username = user.user_metadata?.username || user.email;
+    const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
 
-    if (user) {
-      const username = user.user_metadata?.username || user.email;
-      const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
+    const avatarImg = document.querySelector('#user-avatar');
+    const nameSpan = document.querySelector('#user-name');
+    if (avatarImg) avatarImg.src = avatarUrl;
+    if (nameSpan) nameSpan.textContent = username;
 
-      document.getElementById('user-name').textContent = username;
-      document.getElementById('user-avatar').src = avatarUrl;
-
-      // Populate account settings section
-      const accountSection = document.getElementById('account-settings');
-      if (accountSection) {
-        accountSection.innerHTML = `
-          <h3>Account Settings</h3>
-          <p><strong>Name:</strong> ${username}</p>
-          <img src="${avatarUrl}" alt="Current Profile Picture" style="width: 80px; height: 80px; border-radius: 50%;"><br><br>
-          <input type="file" id="avatar-upload" accept="image/*"><br><br>
-          <button id="logout-btn">Logout</button>
-        `;
-
-        document.getElementById('avatar-upload').addEventListener('change', async (event) => {
-          const file = event.target.files[0];
-          if (!file) return;
-
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${user.id}.${fileExt}`;
-          const filePath = `${fileName}`;
-
-          let { error: uploadError } = await supabase.storage
-            .from('profile-pictures')
-            .upload(filePath, file, {
-              upsert: true
-            });
-
-          if (uploadError) {
-            alert('Upload failed.');
-            return;
-          }
-
-          const { data } = supabase.storage
-            .from('profile-pictures')
-            .getPublicUrl(filePath);
-
-          const publicUrl = data.publicUrl;
-
-          const { error: updateError } = await supabase.auth.updateUser({
-            data: { avatar_url: publicUrl }
-          });
-
-          if (updateError) {
-            alert('Failed to update profile picture.');
-          } else {
-            document.getElementById('user-avatar').src = publicUrl;
-            alert('Profile picture updated!');
-          }
-        });
-
-        document.getElementById('logout-btn').addEventListener('click', async () => {
-          await supabase.auth.signOut();
-          window.location.href = '/';
-        });
-      }
+    const alphaElement = document.querySelector('#alpha');
+    if (alphaElement) {
+      alphaElement.innerHTML = `<img src="${avatarUrl}" alt="Avatar" style="width:30px; height:30px; border-radius:50%; cursor:pointer;" onclick="openModal()"> ${username}`;
     }
-  });
-</script>
 
-</body>
+    document.getElementById('modal-avatar').src = avatarUrl;
+    document.getElementById('modal-username').textContent = `Hello, ${username}`;
+  }
+});
+
+function openModal() {
+  document.getElementById('profileModal').style.display = 'block';
+  document.getElementById('modalOverlay').style.display = 'block';
+}
+
+function closeModal() {
+  document.getElementById('profileModal').style.display = 'none';
+  document.getElementById('modalOverlay').style.display = 'none';
+}
+</script></body>
 </html>
