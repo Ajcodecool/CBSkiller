@@ -1,8 +1,3 @@
-
-<div id="user-info" style="display: none; align-items: center; gap: 10px; margin: 10px;">
-<img alt="Profile Picture" id="user-avatar" src="" style="width: 40px; height: 40px; border-radius: 50%;"/>
-<span id="user-name" style="font-weight: bold;"></span>
-</div>
 <!DOCTYPE html>
 
 <html lang="en">
@@ -723,7 +718,7 @@ We may terminate or suspend access to our platform immediately, without prior no
 <footer>
 <p>© 2025 Crooms Connect | <a id="open-legal-modal">Legal Disclaimer</a></p>
 </footer>
-<img id="preview">
+<img id="preview"/>
   // --- Supabase Cloud Reminders ---
 const supabaseUrl = 'https://jxxnfsydrflnephmfjm.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
@@ -1568,61 +1563,56 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const supabase = supabase.createClient(
+      'https://jxxnfsydjrflnephmfjm.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
+    );
 
-    if (user) {
-      const userInfoDiv = document.getElementById('user-info');
-      const userNameSpan = document.getElementById('user-name');
-      const userAvatarImg = document.getElementById('user-avatar');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const username = user.user_metadata?.username || user.email;
+        const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
 
-      const username = user.user_metadata?.username || user.email;
-      const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
+        const alphaElement = document.querySelector('#alpha');
+        if (alphaElement) {
+          alphaElement.innerHTML = `
+            <div id="user-info" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+              <img id="user-avatar" src="${avatarUrl}" alt="Profile Picture" style="width: 40px; height: 40px; border-radius: 50%;">
+              <span id="user-name" style="font-weight: bold;">${username}</span>
+            </div>
+          `;
+        }
 
-      userNameSpan.textContent = username;
-      userAvatarImg.src = avatarUrl;
+        // Add modal HTML
+        const modal = document.createElement('div');
+        modal.id = "user-modal";
+        modal.style = "display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.3); z-index:1000;";
+        modal.innerHTML = `
+          <div style="text-align:center;">
+            <img src="${avatarUrl}" style="width:80px; height:80px; border-radius:50%; margin-bottom:10px;">
+            <h2>Hello, ${username}</h2>
+            <a href="account_settings.html" style="display:block; margin-top:10px; font-weight:bold;">Manage Account</a>
+            <button onclick="document.getElementById('user-modal').style.display='none'" style="margin-top:10px;">Close</button>
+          </div>
+        `;
+        document.body.appendChild(modal);
 
-      userInfoDiv.style.display = 'flex';
-    } else {
-      document.getElementById('user-info').style.display = 'none';
+        // Add click event
+        document.addEventListener('click', function(e) {
+          if (e.target.closest('#user-info')) {
+            document.getElementById('user-modal').style.display = 'block';
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Supabase error:', error);
     }
   });
 </script>
-</img>
-<div id="profileModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
-background:white; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.3); z-index:1000;">
-<img alt="Profile Picture" id="modal-avatar" src="" style="width:80px; height:80px; border-radius:50%;"/><br/>
-<h2 id="modal-username" style="margin-top:10px;"></h2>
-<button onclick="window.location.href='account_settings.html'" style="margin-top:10px;">Manage Account</button>
-<button onclick="document.getElementById('profileModal').style.display='none'" style="margin-top:10px;">Close</button>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', async () => {
-  const supabase = supabase.createClient(
-    'https://jxxnfsydjrflnephmfjm.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
-  );
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    const username = user.user_metadata?.username || user.email;
-    const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
-
-    const avatarImg = document.getElementById('user-avatar');
-    const usernameSpan = document.getElementById('user-name');
-    if (avatarImg && usernameSpan) {
-      avatarImg.src = avatarUrl;
-      usernameSpan.textContent = username;
-
-      avatarImg.style.cursor = 'pointer';
-      avatarImg.onclick = () => {
-        document.getElementById('modal-avatar').src = avatarUrl;
-        document.getElementById('modal-username').textContent = `Hello, ${username}`;
-        document.getElementById('profileModal').style.display = 'block';
-      };
-    }
-  }
-});
-</script></body>
+</body>
 </html>
