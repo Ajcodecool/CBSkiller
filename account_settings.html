@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Account Settings</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background-color: #f4f4f4;
+    }
+    .account-container {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 1rem;
+    }
+    .username {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .file-input {
+      margin: 1rem 0;
+    }
+    .btn {
+      padding: 0.5rem 1rem;
+      margin: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .logout-btn {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+    }
+    .upload-btn {
+      background-color: #3498db;
+      color: white;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="account-container">
+    <img id="user-avatar" class="avatar" src="" alt="Profile Picture"/>
+    <div class="username" id="user-name">Loading...</div>
+    <input type="file" id="avatar-upload" class="file-input" accept="image/*"/>
+    <button class="btn upload-btn" onclick="uploadAvatar()">Upload New Profile Picture</button>
+    <br/>
+    <button class="btn logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <script>
+    const supabase = supabase.createClient('https://your-project.supabase.co', 'public-anon-key');
+
+    async function loadUserInfo() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const username = user.user_metadata?.username || user.email;
+        const avatarUrl = user.user_metadata?.avatar_url || 'https://via.placeholder.com/100';
+        document.getElementById('user-name').textContent = username;
+        document.getElementById('user-avatar').src = avatarUrl;
+      }
+    }
+
+    async function uploadAvatar() {
+      const fileInput = document.getElementById('avatar-upload');
+      const file = fileInput.files[0];
+      if (!file) return alert('Please select a file.');
+
+      const { data: { user } } = await supabase.auth.getUser();
+      const filePath = `${user.id}/${file.name}`;
+
+      const { data, error } = await supabase.storage
+        .from('profile-pictures')
+        .upload(filePath, file, { upsert: true });
+
+      if (error) {
+        alert('Upload failed: ' + error.message);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(filePath);
+
+      await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl }
+      });
+
+      document.getElementById('user-avatar').src = publicUrl;
+      alert('Profile picture updated!');
+    }
+
+    async function logout() {
+      await supabase.auth.signOut();
+      window.location.href = 'auth_fixed.html';
+    }
+
+    loadUserInfo();
+  </script>
+</body>
+</html>
