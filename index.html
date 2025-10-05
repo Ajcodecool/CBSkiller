@@ -502,9 +502,9 @@ font-size: 14px;
 <span class="user-id-display" id="userIdDisplay">Local Theme Storage Active</span>
 </div>
 <span>
-<div id="user-display" style="display: flex; align-items: center; gap: 10px;">
-<img alt="Profile Picture" id="user-avatar" src="default-avatar.png" style="width: 32px; height: 32px; border-radius: 50%;"/>
-<span id="user-name">Loading...</span>
+<div id="user-info" style="display: flex; align-items: center; gap: 10px;">
+<img alt="Profile Picture" id="user-avatar" src="" style="width: 40px; height: 40px; border-radius: 50%;"/>
+<span id="user-name" style="font-weight: bold;"></span>
 </div>
 </span>
 </div>
@@ -1595,14 +1595,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 </script>
 </img><script>
+const supabase = supabase.createClient(
+  'https://jxxnfsydjrflnephmfjm.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
+);
+
 document.addEventListener('DOMContentLoaded', async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) throw error;
+
     if (user) {
-        const username = user.user_metadata?.username || user.email;
-        const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
-        document.getElementById('user-name').textContent = username;
-        document.getElementById('user-avatar').src = avatarUrl;
+      const userNameSpan = document.getElementById('user-name');
+      const userAvatarImg = document.getElementById('user-avatar');
+
+      const username = user.user_metadata?.username || user.email;
+      const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
+
+      userNameSpan.textContent = username;
+      userAvatarImg.src = avatarUrl;
     }
+  } catch (err) {
+    console.error('Error fetching user info:', err.message);
+  }
 });
 </script></body>
 </html>
