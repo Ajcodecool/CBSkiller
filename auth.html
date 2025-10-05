@@ -1,131 +1,159 @@
 <!DOCTYPE html>
-
 <html lang="en">
+<!-- Load Supabase client library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Crooms Connect - Login</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<style>
-    body {
-      background-color: #1a1b2f;
-      color: #f8f9fa;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .card {
-      background-color: #2b2d42;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      width: 100%;
-      max-width: 400px;
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      border: none;
-      background-color: #f8f9fa;
-      color: #1a1b2f;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      background-color: #4cc9f0;
-      color: #1a1b2f;
-      font-weight: bold;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #message {
-      margin-top: 10px;
-      font-size: 14px;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-<div class="card">
-<h2 class="text-xl font-bold mb-4 text-center">Crooms Connect Login</h2>
-<input id="username" placeholder="Username" required="" type="text"/>
-<input id="password" placeholder="Password" required="" type="password"/>
-<button onclick="signIn()">Sign In</button>
-<button onclick="signUp()" style="margin-top:10px; background-color:#80ed99;">Sign Up</button>
-<div id="message"></div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-
-    const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-const domain = '@crooms.local';
-
-    async function signIn() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-      console.log('Attempting sign in with:', email);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        console.error('Sign In Error:', error.message);
-        showMessage('Sign In Failed: ' + error.message, true);
-      } else {
-        console.log('Sign In Successful');
-        window.location.href = 'index.html';
-      }
-    }
-
-    async function signUp() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-      console.log('Attempting sign up with:', email);
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        console.error('Sign Up Error:', error.message);
-        showMessage('Sign Up Failed: ' + error.message, true);
-        return;
-      }
-      if (data.user) {
-        console.log('User created:', data.user.id);
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert([{ id: data.user.id, username: username }]);
-        if (insertError) {
-          console.error('Insert Error:', insertError.message);
-          showMessage('User created but failed to save username.', true);
-        } else {
-          console.log('Username saved to users table');
-          window.location.href = 'index.html';
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Crooms Connect - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Inherit theme variables for consistent look */
+        :root {
+            --primary-bg: #1a1b2f; 
+            --content-bg: #2b2d42; 
+            --text-color: #f8f9fa; 
+            --shadow: 0 4px 12px rgba(0,0,0,0.4);
+            --accent-blue: #4cc9f0;
+            --accent-green: #80ed99;
+            --radius: 15px;
         }
-      }
-    }
+        
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px; /* Added for mobile safety */
+        }
 
-    function showMessage(msg, isError) {
-      const el = document.getElementById('message');
-      el.textContent = msg;
-      el.style.color = isError ? '#ef476f' : '#80ed99';
-    }
+        .auth-card {
+            background-color: var(--content-bg);
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      console.log('Checking session...');
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        console.log('Session found, redirecting...');
-        window.location.href = 'index.html';
-      } else {
-        console.log('No session found.');
-      }
-    });
-  
+        .btn {
+            background-color: var(--accent-blue);
+            color: #1a1b2f;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .btn:hover {
+            background-color: #6ce0ff;
+            transform: translateY(-1px);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        input[type="text"], input[type="password"] {
+            color: #1a1b2f; 
+            border-radius: 6px;
+            padding: 12px;
+            background-color: #f8f9fa;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
 
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--accent-blue);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-card text-center">
+        <h1 class="text-3xl font-extrabold text-white mb-6">Crooms Connect</h1>
+        <!-- UPDATED HEADER -->
+        <p class="text-gray-400 mb-8" id="auth-header-text">Sign in using your username and password.</p>
+
+        <!-- Dynamic Message/Error Display -->
+        <div id="auth-message" class="mb-4 p-3 rounded-lg text-sm transition duration-300 hidden"></div>
+
+        <!-- Sign In Form -->
+        <form id="sign-in-form" class="space-y-4">
+            <div class="form-group">
+                <!-- NOW ASKING FOR USERNAME -->
+                <input type="text" id="signin-username" required class="w-full" placeholder="Username">
+            </div>
+            <div class="form-group">
+                <input type="password" id="signin-password" required class="w-full" placeholder="Password">
+            </div>
+            <button type="submit" id="signin-btn" class="btn w-full flex justify-center items-center space-x-2">
+                <span id="signin-text">Sign In</span>
+                <div id="signin-spinner" class="spinner hidden"></div>
+            </button>
+        </form>
+
+        <!-- Sign Up Form (Hidden by default) -->
+        <form id="sign-up-form" class="space-y-4 hidden">
+            <div class="form-group">
+                <!-- IMPORTANT: This input creates the 'username' in the 'profiles' table -->
+                <input type="text" id="signup-username" required class="w-full" placeholder="Choose a Unique Username (e.g., JSmith24)">
+            </div>
+            <!-- EMAIL FIELD REMOVED -->
+            <div class="form-group">
+                <input type="password" id="signup-password" required class="w-full" placeholder="Password (min. 6 characters)">
+            </div>
+            <button type="submit" id="signup-btn" class="btn w-full bg-accent-green hover:bg-green-400 flex justify-center items-center space-x-2">
+                <span id="signup-text">Sign Up</span>
+                <div id="signup-spinner" class="spinner hidden"></div>
+            </button>
+        </form>
+        
+        <p class="mt-6 text-sm">
+            <button id="toggle-auth-view" class="text-gray-400 hover:text-accent-blue transition">
+                Need an account? Sign Up
+            </button>
+        </p>
+    </div>
+
+    
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+  const PLACEHOLDER_DOMAIN = '@croomsconnect.local';
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+  // Re-run initialization and event listeners
+  const signInForm = document.getElementById('sign-in-form');
+  const signUpForm = document.getElementById('sign-up-form');
+  const toggleAuthButton = document.getElementById('toggle-auth-view');
+  const authMessage = document.getElementById('auth-message');
+  const authHeaderText = document.getElementById('auth-header-text');
+  const signInBtn = document.getElementById('signin-btn');
+  const signInText = document.getElementById('signin-text');
+  const signInSpinner = document.getElementById('signin-spinner');
+  const signUpBtn = document.getElementById('signup-btn');
+  const signUpText = document.getElementById('signup-text');
+  const signUpSpinner = document.getElementById('signup-spinner');
+
+  // Utility functions and auth logic go here...
 });
-</script></body>
+</script>
+
+</body>
 </html>
