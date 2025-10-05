@@ -1,7 +1,7 @@
 
 <div id="user-info" style="display: none; align-items: center; gap: 10px; margin: 10px;">
-  <img id="user-avatar" src="" alt="Profile Picture" style="width: 40px; height: 40px; border-radius: 50%;">
-  <span id="user-name" style="font-weight: bold;"></span>
+<img alt="Profile Picture" id="user-avatar" src="" style="width: 40px; height: 40px; border-radius: 50%;"/>
+<span id="user-name" style="font-weight: bold;"></span>
 </div>
 <!DOCTYPE html>
 
@@ -723,7 +723,7 @@ We may terminate or suspend access to our platform immediately, without prior no
 <footer>
 <p>© 2025 Crooms Connect | <a id="open-legal-modal">Legal Disclaimer</a></p>
 </footer>
-<img id="preview"/>
+<img id="preview">
   // --- Supabase Cloud Reminders ---
 const supabaseUrl = 'https://jxxnfsydrflnephmfjm.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
@@ -1589,45 +1589,43 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 </script>
+</img><script>
+const supabase = supabase.createClient(
+  'https://jxxnfsydjrflnephmfjm.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
+);
 
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script>
-  const supabase = supabase.createClient(
-    'https://jxxnfsydjrflnephmfjm.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
-  );
-</script>
-
-<!-- User Info Modal -->
-<div id="userModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
-  <div style="background:white; padding:20px; border-radius:8px; text-align:center;">
-    <img id="modal-avatar" src="" alt="Profile Picture" style="width:80px; height:80px; border-radius:50%; margin-bottom:10px;">
-    <h2 id="modal-username">Hello, User</h2>
-    <a href="account_settings.html" style="display:block; margin-top:10px;">Manage Account</a>
-    <button onclick="document.getElementById('userModal').style.display='none'" style="margin-top:10px;">Close</button>
-  </div>
-</div>
-
-<script>
-  document.addEventListener('DOMContentLoaded', async () => {
-    const { data: { user }, error } = await supabase.auth.getUser();
     if (user) {
       const username = user.user_metadata?.username || user.email;
       const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
 
-      document.getElementById('user-name').textContent = username;
-      document.getElementById('user-avatar').src = avatarUrl;
-
-      document.getElementById('modal-username').textContent = `Hello, ${username}`;
-      document.getElementById('modal-avatar').src = avatarUrl;
-
-      document.getElementById('user-avatar').style.cursor = 'pointer';
-      document.getElementById('user-avatar').addEventListener('click', () => {
-        document.getElementById('userModal').style.display = 'flex';
-      });
+      const alphaElement = document.querySelector('#alpha');
+      if (alphaElement) {
+        alphaElement.innerHTML = `
+          <div id="user-info" style="display: flex; align-items: center; gap: 10px;">
+            <img id="user-avatar" src="${avatarUrl}" alt="Profile Picture" style="width: 40px; height: 40px; border-radius: 50%; cursor: pointer;" onclick="openUserModal()" />
+            <span id="user-name" style="font-weight: bold;">${username}</span>
+          </div>
+        `;
+      }
     }
-  });
-</script>
-</body>
+  } catch (error) {
+    console.error("Supabase error:", error);
+  }
+});
+
+// Modal logic
+function openUserModal() {
+  const modal = document.getElementById("user-modal");
+  if (modal) modal.style.display = "block";
+}
+function closeUserModal() {
+  const modal = document.getElementById("user-modal");
+  if (modal) modal.style.display = "none";
+}
+</script><div id="user-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:1000;"><div style="background:white; margin:10% auto; padding:20px; width:300px; text-align:center; border-radius:10px;">Loading user info...<button onclick="closeUserModal()" style="margin-top:10px;">Close</button></div></div></body>
 </html>
