@@ -1,12 +1,13 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Crooms Connect - Login</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Crooms Connect - Login</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<style>
     body {
       background-color: #1a1b2f;
       color: #f8f9fa;
@@ -51,25 +52,26 @@
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2 class="text-xl font-bold mb-4 text-center">Crooms Connect Login</h2>
-    <input type="text" id="username" placeholder="Username" required />
-    <input type="password" id="password" placeholder="Password" required />
-    <button onclick="signIn()">Sign In</button>
-    <button onclick="signUp()" style="margin-top:10px; background-color:#80ed99;">Sign Up</button>
-    <div id="message"></div>
-  </div>
+<div class="card">
+<h2 class="text-xl font-bold mb-4 text-center">Crooms Connect Login</h2>
+<input id="username" placeholder="Username" required="" type="text"/>
+<input id="password" placeholder="Password" required="" type="password"/>
+<button onclick="signIn()">Sign In</button>
+<button onclick="signUp()" style="margin-top:10px; background-color:#80ed99;">Sign Up</button>
+<div id="message"></div>
+</div>
 
-  <script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
     const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-    const domain = '@crooms.local';
+const domain = '@crooms.local';
 
     async function signIn() {
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
-      const email = username + domain;
       console.log('Attempting sign in with:', email);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
@@ -84,7 +86,6 @@
     async function signUp() {
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
-      const email = username + domain;
       console.log('Attempting sign up with:', email);
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
@@ -123,6 +124,8 @@
         console.log('No session found.');
       }
     });
-  </script>
-</body>
+  
+
+});
+</script></body>
 </html>
