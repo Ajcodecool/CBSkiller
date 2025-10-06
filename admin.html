@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Admin Panel - Verified Users</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      background: #191b26;
+      color: #f8f9fa;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .panel-container {
+      max-width: 700px;
+      margin: 48px auto;
+      background: #232642;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px #0009;
+      padding: 32px 24px;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #4cc9f0;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #292b45;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 14px 10px;
+      text-align: left;
+    }
+    th {
+      background: #232642;
+      color: #80ed99;
+      font-weight: bold;
+    }
+    tr:nth-child(even) {
+      background: #232642;
+    }
+    tr:nth-child(odd) {
+      background: #222432;
+    }
+    .verify-btn, .unverify-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 6px;
+    }
+    .verify-btn {
+      background: #4cc9f0;
+      color: #112;
+    }
+    .verify-btn:hover {
+      background: #6ce0ff;
+    }
+    .unverify-btn {
+      background: #f06543;
+      color: #fff;
+    }
+    .unverify-btn:hover {
+      background: #fa9e98;
+      color: #191b26;
+    }
+    .verified-badge {
+      width: 22px;
+      height: 22px;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      margin-right: 10px;
+      vertical-align: middle;
+      object-fit: cover;
+      background: #38405f;
+    }
+    .username-cell {
+      display: flex;
+      align-items: center;
+    }
+    .success-msg {
+      color: #80ed99;
+      margin-bottom: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .error-msg {
+      color: #f06543;
+      margin-bottom: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<div class="panel-container">
+  <h1>Verified Users Admin Panel</h1>
+  <div id="message"></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Avatar</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Verified</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="user-list">
+      <!-- Users will be loaded here -->
+    </tbody>
+  </table>
+</div>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+  const SUPABASE_URL = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Util: clean username for avatar
+  function cleanUsername(name) {
+    if (!name) return "Anonymous";
+    if (typeof name !== 'string') return name;
+    return name.replace(/@croomsconnect\.local$/i, '');
+  }
+
+  // Show message
+  function showMessage(msg, type = 'success') {
+    document.getElementById('message').innerHTML =
+      `<div class="${type}-msg">${msg}</div>`;
+    setTimeout(() => document.getElementById('message').innerHTML = "", 2500);
+  }
+
+  // Load all users from the profiles table
+  async function loadUsers() {
+    let { data, error } = await supabase
+      .from('profiles')
+      .select('id, username, is_verified')
+      .order('username', { ascending: true });
+
+    if (error) {
+      showMessage("Failed to load users: " + error.message, 'error');
+      return;
+    }
+
+    // Get emails and avatars from auth (fetch all users)
+    let { data: users, error: err2 } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    if (err2) {
+      showMessage("Failed to fetch emails/avatars: " + err2.message, 'error');
+      users = { users: [] };
+    }
+    let userEmailMap = {};
+    let userAvatarMap = {};
+    for (const u of users.users) {
+      userEmailMap[u.id] = u.email;
+      userAvatarMap[u.id] = u.user_metadata?.avatar_url || "";
+    }
+
+    // Render user table
+    const userList = document.getElementById('user-list');
+    userList.innerHTML = '';
+    for (const user of data) {
+      const email = userEmailMap[user.id] || "(not found)";
+      const avatar = userAvatarMap[user.id]
+        ? userAvatarMap[user.id]
+        : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(cleanUsername(user.username))}`;
+      const isVerified = user.is_verified;
+
+      userList.innerHTML += `
+        <tr>
+          <td>
+            <img class="avatar" src="${avatar}" alt="avatar">
+          </td>
+          <td class="username-cell">
+            ${cleanUsername(user.username)}
+            ${isVerified ? `<img src="verify.png" alt="verified" class="verified-badge">` : ""}
+          </td>
+          <td>${email}</td>
+          <td>${isVerified ? `<img src="verify.png" alt="verified" class="verified-badge">` : "—"}</td>
+          <td>
+            ${isVerified
+              ? `<button class="unverify-btn" data-id="${user.id}" data-action="unverify">Unverify</button>`
+              : `<button class="verify-btn" data-id="${user.id}" data-action="verify">Verify</button>`
+            }
+          </td>
+        </tr>
+      `;
+    }
+
+    // Add event listeners for verify/unverify
+    document.querySelectorAll('.verify-btn, .unverify-btn').forEach(btn => {
+      btn.onclick = async function() {
+        const userId = this.getAttribute('data-id');
+        const action = this.getAttribute('data-action');
+        let { error } = await supabase
+          .from('profiles')
+          .update({ is_verified: action === "verify" })
+          .eq('id', userId);
+        if (error) {
+          showMessage("Failed to update: " + error.message, 'error');
+        } else {
+          showMessage("User " + (action === "verify" ? "verified" : "unverified") + " successfully!", 'success');
+          loadUsers();
+        }
+      }
+    });
+  }
+
+  // On page load
+  document.addEventListener('DOMContentLoaded', () => {
+    loadUsers();
+  });
+</script>
+</body>
+</html>
