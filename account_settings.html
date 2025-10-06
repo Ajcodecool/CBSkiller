@@ -1,46 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Account Settings</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
-<body>
-  <h2>Account Settings</h2>
-  <input type="file" id="avatarInput" accept="image/*" />
-  <button onclick="uploadProfilePicture()">Upload</button>
+<body class="bg-gray-100 text-gray-800">
+  <div class="max-w-xl mx-auto mt-10 p-6 bg-white rounded shadow">
+    <h1 class="text-2xl font-bold mb-4">Account Settings</h1>
+    <div class="mb-4">
+      <label for="profile-pic" class="block font-medium mb-2">Upload Profile Picture</label>
+      <input type="file" id="profile-pic" accept="image/*" class="mb-2" />
+      <img id="preview" src="" alt="Preview" class="w-32 h-32 object-cover rounded-full border border-gray-300 hidden" />
+    </div>
+    <button id="upload-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Upload</button>
+    <p id="status" class="mt-4 text-sm text-gray-600"></p>
+  </div>
 
   <script>
-    const supabase = supabase.createClient("https://jxxnfsydjrflnephmfjm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w");
+    document.addEventListener("DOMContentLoaded", async () => {
+      console.log("✅ DOM fully loaded");
 
-    async function uploadProfilePicture() {
-      const file = document.getElementById('avatarInput').files[0];
-      if (!file) return alert("Please select a file.");
+      const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
+      console.log("🔧 Creating Supabase client...");
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
-      if (!userId) return alert("You must be logged in.");
+      console.log("🔍 Checking session...");
+      try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        console.log("📦 Session data:", sessionData);
+        console.log("⚠️ Session error:", sessionError);
+        if (!sessionData.session) {
+          console.warn("🔒 No active session found. Redirecting to auth.html...");
+          window.location.href = "auth.html";
+          return;
+        }
+        console.log("✅ User is signed in.");
+      } catch (err) {
+        console.error("❌ Error checking session:", err);
+        window.location.href = "auth.html";
+        return;
+      }
 
-      const filePath = `${userId}/avatar.png`;
-      const { error: uploadError } = await supabase.storage
-        .from('profile-pictures')
-        .upload(filePath, file, { upsert: true });
+      const fileInput = document.getElementById("profile-pic");
+      const preview = document.getElementById("preview");
+      const uploadBtn = document.getElementById("upload-btn");
+      const status = document.getElementById("status");
 
-      if (uploadError) return alert("Upload failed: " + uploadError.message);
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (file) {
+          console.log("📁 File selected:", file.name);
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            preview.src = e.target.result;
+            preview.classList.remove("hidden");
+          };
+          reader.readAsDataURL(file);
+        }
+      });
 
-      const { data: urlData } = supabase.storage
-        .from('profile-pictures')
-        .getPublicUrl(filePath);
+      uploadBtn.addEventListener("click", async () => {
+        const file = fileInput.files[0];
+        if (!file) {
+          alert("Please select a file first.");
+          return;
+        }
 
-      const avatarUrl = urlData.publicUrl;
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ avatar_url: avatarUrl })
-        .eq('id', userId);
+        const fileName = `profile-${Date.now()}-${file.name}`;
+        console.log("🚀 Uploading file:", fileName);
 
-      if (updateError) return alert("Failed to update profile: " + updateError.message);
+        const { data, error } = await supabase.storage
+          .from("profile-pictures")
+          .upload(fileName, file);
 
-      alert("Profile picture updated!");
-    }
+        if (error) {
+          console.error("❌ Upload error:", error.message);
+          status.textContent = "Upload failed: " + error.message;
+        } else {
+          console.log("✅ Upload successful:", data);
+          status.textContent = "Upload successful!";
+        }
+      });
+    });
   </script>
 </body>
 </html>
