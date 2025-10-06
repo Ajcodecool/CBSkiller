@@ -6,16 +6,6 @@
 <!DOCTYPE html>
 
 <html lang="en">
-
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-  const supabase = createClient(
-    'https://jxxnfsydjrflnephmfjm.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
-  );
-
-  window.supabase = supabase;
-</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 <head>
 <meta charset="utf-8"/>
@@ -511,7 +501,7 @@ font-size: 14px;
 <span class="title-text">CROOMS CONNECT</span>
 <span class="user-id-display" id="userIdDisplay">Local Theme Storage Active</span>
 </div>
-<span>ALPHA</span>
+<span><img alt="Profile Picture" class="w-10 h-10 rounded-full cursor-pointer" id="user-avatar" onclick="openUserModal()" src="#"/></span>
 </div>
 <div class="left-box">
 <button data-tab="home">Home</button>
@@ -841,16 +831,7 @@ document.addEventListener('DOMContentLoaded', () =&gt; {
     });
   }
 });
-
-
-
 <script>
-const supabase = supabase.createClient(
-  'https://jxxnfsydjrflnephmfjm.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
-);
-
-
 // --- SCHEDULE DATA ---
 const defaultSchedules = {
 "Monday": [
@@ -1574,20 +1555,8 @@ if (e.target === reminderModal) { hideReminderModal(); }
 });
 if (reminderForm) reminderForm.addEventListener('submit', handleReminderSubmit);
 });
-
-
-document.addEventListener("DOMContentLoaded", async () => {
-  const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
-  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = "auth.html";
-  }
-});
-
-
+</script>
+<script>
   document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -1607,6 +1576,100 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.getElementById('user-info').style.display = 'none';
     }
   });
+</script>
+<div id="user-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:1000;"><div style="background:white; margin:10% auto; padding:20px; width:300px; text-align:center; border-radius:10px;">Loading user info...<button onclick="closeUserModal()" style="margin-top:10px;">Close</button></div></div><script>
+const supabase = supabase.createClient(
+  'https://jxxnfsydjrflnephmfjm.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
+);
+</script>
+<!-- User Info Modal -->
+<div class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50" id="userModal">
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-80 transform transition-all scale-95 opacity-0 duration-300" id="userModalContent">
+<div class="flex flex-col items-center">
+<img alt="Avatar" class="w-20 h-20 rounded-full mb-4" id="modal-avatar" src=""/>
+<h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4" id="modal-username">Hello, User</h2>
+<a class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition" href="account_settings.html">Manage Account</a>
+<button class="mt-4 text-sm text-gray-600 dark:text-gray-300 hover:underline" onclick="closeUserModal()">Close</button>
+</div>
+</div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const username = user.user_metadata?.username || user.email;
+    const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
+    const avatarImg = document.getElementById('user-avatar');
+    const modalAvatar = document.getElementById('modal-avatar');
+    const modalUsername = document.getElementById('modal-username');
 
-</script></body>
+    if (avatarImg) avatarImg.src = avatarUrl;
+    if (modalAvatar) modalAvatar.src = avatarUrl;
+    if (modalUsername) modalUsername.textContent = `Hello, ${username}`;
+  }
+});
+
+function openUserModal() {
+  const modal = document.getElementById('userModal');
+  const content = document.getElementById('userModalContent');
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    content.classList.remove('scale-95', 'opacity-0');
+    content.classList.add('scale-100', 'opacity-100');
+  }, 10);
+}
+
+function closeUserModal() {
+  const modal = document.getElementById('userModal');
+  const content = document.getElementById('userModalContent');
+  content.classList.remove('scale-100', 'opacity-100');
+  content.classList.add('scale-95', 'opacity-0');
+  setTimeout(() => {
+    modal.classList.add('hidden');
+  }, 300);
+}
+</script><script>
+const supabase = supabase.createClient(
+  'https://jxxnfsydjrflnephmfjm.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
+);
+</script>
+<!-- Profile Modal -->
+<div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" id="profileModal">
+<div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-80 text-center transform transition-all scale-95 opacity-0" id="modalContent">
+<img alt="Profile Picture" class="w-20 h-20 rounded-full mx-auto mb-4" id="modal-avatar" src=""/>
+<h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2" id="modal-username">Hello, User</h2>
+<a class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition" href="account_settings.html">Manage Account</a>
+<button class="mt-4 text-sm text-gray-600 dark:text-gray-300 hover:underline" onclick="closeProfileModal()">Close</button>
+</div>
+</div>
+<script>
+function openProfileModal() {
+  document.getElementById('profileModal').classList.remove('hidden');
+  setTimeout(() => {
+    document.getElementById('modalContent').classList.remove('scale-95', 'opacity-0');
+    document.getElementById('modalContent').classList.add('scale-100', 'opacity-100');
+  }, 10);
+}
+
+function closeProfileModal() {
+  document.getElementById('modalContent').classList.add('scale-95', 'opacity-0');
+  setTimeout(() => {
+    document.getElementById('profileModal').classList.add('hidden');
+  }, 200);
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const username = user.user_metadata?.username || user.email;
+    const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
+    document.getElementById('user-avatar').src = avatarUrl;
+    document.getElementById('modal-avatar').src = avatarUrl;
+    document.getElementById('modal-username').textContent = `Hello, ${username}`;
+  }
+});
+</script>
+</body>
 </html>
