@@ -277,7 +277,10 @@
 
   function createMessageElement(msg) {
     const username = cleanUsername(msg.username) || "Anonymous";
-    const avatarSrc = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
+    // Use custom avatar if present in the message, else DiceBear
+    const avatarSrc = msg.avatar_url && msg.avatar_url.trim() !== ""
+      ? msg.avatar_url
+      : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
     const div = document.createElement('div');
     div.className = 'message';
     div.dataset.userId = msg.user_id;
@@ -294,7 +297,6 @@
 
   function renderMessages() {
     // Renders all loaded messages (oldest at top)
-    // Save scroll position if prepending
     let prevScrollHeight = chatBox.scrollHeight;
     let prevScrollTop = chatBox.scrollTop;
     chatBox.innerHTML = '';
@@ -303,12 +305,9 @@
       chatBox.appendChild(createMessageElement(msg));
     });
     if (!loadingOlder && loadedMessages.length > 0) {
-      // If just loaded more, keep scroll at the same message
       if (prevScrollTop < 100) {
-        // If user was at the top, keep them at the same message after prepend
         chatBox.scrollTop = chatBox.scrollHeight - prevScrollHeight + prevScrollTop;
       } else {
-        // Otherwise scroll to bottom on initial load
         chatBox.scrollTop = chatBox.scrollHeight;
       }
     }
@@ -324,14 +323,12 @@
 
   async function loadInitialMessages() {
     debugLog("loadInitialMessages() called");
-    // Find total count
     totalMessageCount = await fetchTotalMessageCount();
-    // Load newest PAGE_SIZE messages
     const start = Math.max(0, totalMessageCount - PAGE_SIZE);
     const end = totalMessageCount - 1;
     const { data, error } = await supabase
       .from('messages')
-      .select('user_id, username, message, timestamp')
+      .select('user_id, username, avatar_url, message, timestamp')
       .order('timestamp', { ascending: true })
       .range(start, end);
 
@@ -340,7 +337,6 @@
     loadedMessages = data || [];
     if (loadedMessages.length < PAGE_SIZE) allOlderLoaded = true;
     renderMessages();
-    // Scroll to bottom on initial load
     setTimeout(() => {
       chatBox.scrollTop = chatBox.scrollHeight;
     }, 0);
@@ -351,7 +347,6 @@
     loadingOlder = true;
     loadingOlderDiv.style.display = '';
     debugLog("loadOlderMessages() called");
-    // Calculate which messages to load
     const messagesToLoad = PAGE_SIZE;
     const currentlyLoaded = loadedMessages.length;
     const start = Math.max(0, totalMessageCount - currentlyLoaded - messagesToLoad);
@@ -365,7 +360,7 @@
     }
     const { data, error } = await supabase
       .from('messages')
-      .select('user_id, username, message, timestamp')
+      .select('user_id, username, avatar_url, message, timestamp')
       .order('timestamp', { ascending: true })
       .range(start, end);
     debugLog("Loaded older messages:", data, error);
@@ -381,7 +376,6 @@
   }
 
   function handleScroll() {
-    // If user scrolls to the top, load older messages
     if (chatBox.scrollTop < 100 && !loadingOlder && !allOlderLoaded) {
       loadOlderMessages();
     }
@@ -404,10 +398,12 @@
     debugLog("Profile result for send:", profile, profileErr);
 
     const username = cleanUsername(profile?.username) || 'Anonymous';
+    const avatar_url = currentUser.user_metadata?.avatar_url || '';
 
     const { data: insertData, error: insertErr } = await supabase.from('messages').insert([{
       user_id: currentUser.id,
       username,
+      avatar_url,
       message,
       timestamp: new Date().toISOString()
     }]);
@@ -428,7 +424,6 @@
       .channel('messages-channel')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         debugLog("New message payload:", payload);
-        // If this is a new message (not loaded), append to end
         loadedMessages.push(payload.new);
         renderMessages();
         setTimeout(() => {
