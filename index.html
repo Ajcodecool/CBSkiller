@@ -7,11 +7,21 @@
 
 <html lang="en">
 
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  const supabase = createClient(
+    'https://jxxnfsydjrflnephmfjm.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
+  );
+
+  window.supabase = supabase;
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Crooms Connect</title>
-
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
 /* ------------------------------------------------------------------- */
 /* ROOT THEME VARIABLES (Default: DARK MODE)                           */
@@ -723,7 +733,7 @@ We may terminate or suspend access to our platform immediately, without prior no
 <footer>
 <p>© 2025 Crooms Connect | <a id="open-legal-modal">Legal Disclaimer</a></p>
 </footer>
-<img id="preview">
+<img id="preview"/>
   // --- Supabase Cloud Reminders ---
 const supabaseUrl = 'https://jxxnfsydrflnephmfjm.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
@@ -834,54 +844,769 @@ document.addEventListener('DOMContentLoaded', () =&gt; {
 
 
 
-</img>
 <script>
+const supabase = supabase.createClient(
+  'https://jxxnfsydjrflnephmfjm.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
+);
+
+
+// --- SCHEDULE DATA ---
+const defaultSchedules = {
+"Monday": [
+{ period: "1st Period", start: "07:20", end: "08:13" },
+{ period: "2nd Period", start: "08:18", end: "09:10" },
+{ period: "3rd Period", start: "09:15", end: "10:05" },
+{ period: "4th Period", start: "10:10", end: "11:02" },
+{ period: "5th Period A", start: "11:07", end: "11:57" }, // Class
+{ period: "5th Period B", start: "11:57", end: "12:27" }, // Lunch
+{ period: "6th Period", start: "12:32", end: "13:24" },
+{ period: "7th Period", start: "13:29", end: "14:20" }
+],
+"Tuesday": [
+{ period: "1st Period", start: "07:20", end: "08:13" },
+{ period: "2nd Period", start: "08:18", end: "09:10" },
+{ period: "3rd Period", start: "09:15", end: "10:05" },
+{ period: "4th Period", start: "10:10", end: "11:02" },
+{ period: "5th Period A", start: "11:07", end: "11:57" }, // Class
+{ period: "5th Period B", start: "11:57", end: "12:27" }, // Lunch
+{ period: "6th Period", start: "12:32", end: "13:24" },
+{ period: "7th Period", start: "13:29", end: "14:20" }
+],
+"Wednesday": [
+{ period: "2nd Period", start: "07:20", end: "08:49" },
+{ period: "4th Period", start: "08:55", end: "10:21" },
+{ period: "Homeroom B", start: "10:27", end: "11:17" }, // Lunch
+{ period: "Homeroom A", start: "11:17", end: "11:47" }, // Class/Homeroom
+{ period: "6th Period", start: "11:53", end: "13:20" }
+],
+"Thursday": [
+{ period: "1st Period", start: "07:20", end: "08:55" },
+{ period: "3rd Period", start: "09:01", end: "10:33" },
+{ period: "5th Period B", start: "10:39", end: "12:11" }, // Class
+{ period: "5th Period A", start: "12:11", end: "12:41" }, // Lunch
+{ period: "7th Period", start: "12:47", end: "14:20" }
+],
+"Friday": [
+{ period: "1st Period", start: "07:20", end: "08:13" },
+{ period: "2nd Period", start: "08:18", end: "09:10" },
+{ period: "3rd Period", start: "09:15", end: "10:05" },
+{ period: "4th Period", start: "10:10", end: "11:02" },
+{ period: "5th Period A", start: "11:07", end: "11:57" }, // Class
+{ period: "5th Period B", start: "11:57", end: "12:27" }, // Lunch
+{ period: "6th Period", start: "12:32", end: "13:24" },
+{ period: "7th Period", start: "13:29", end: "14:20" }
+]
+};
+let schedules = JSON.parse(JSON.stringify(defaultSchedules)); // Working copy of schedules
+
+// --- DOM Elements ---
+const appBody = document.getElementById('app-body');
+const darkModeButton = document.getElementById('dark-mode-button');
+const lightModeButton = document.getElementById('light-mode-button');
+const messageBox = document.getElementById('messageBox');
+const tabs = document.querySelectorAll(".tab-content");
+const homeButton = document.querySelector(".left-box button[data-tab='home']");
+const periodNamesForm = document.getElementById('period-names-form');
+const periodMessageBox = document.getElementById('periodMessage');
+const lunchNamesForm = document.getElementById('lunch-names-form');
+const lunchMessageBox = document.getElementById('lunchMessage');
+const currentLunchDisplay = document.getElementById('current-lunch-display');
+const notificationsCard = document.getElementById('notifications-card');
+const reminderModal = document.getElementById('reminder-modal');
+const reminderForm = document.getElementById('reminder-form');
+const reminderMessageBox = document.getElementById('reminder-message');
+const activeRemindersList = document.getElementById('active-reminders-list');
+const closeReminderModalButton = document.getElementById('close-reminder-modal-button');
+const inAppNotification = document.getElementById('in-app-notification');
+const testNotificationButton = document.getElementById('test-notification-button'); // NEW
+
+// --- CONSTANTS ---
+const THEME_STORAGE_KEY = 'croomsConnectThemeMode';
+const NAMES_STORAGE_KEY = 'croomsConnectPeriodNames';
+const LUNCH_STORAGE_KEY = 'croomsConnectLunchNames';
+const REMINDER_STORAGE_KEY = 'croomsConnectReminders';
+const DEFAULT_MODE = 'dark'; // Set the default to dark
+
+// Map of period names (keys) to their default associated lunch names (values)
+const DEFAULT_LUNCH_MAP = {
+"5th Period B": "B Lunch", // Standard Lunch time (M, T, F)
+"5th Period A": "A Lunch", // Standard Lunch time (Thur)
+"Homeroom B": "B Lunch", // Wednesday Lunch time
+"Homeroom A": "A Lunch" // Wednesday Lunch time
+};
+
+// --- GENERAL UTILITIES ---
+const applyMode = (mode) => {
+if (mode === 'light') {
+appBody.classList.add('light-mode');
+} else {
+appBody.classList.remove('light-mode');
+}
+updateActiveButton(mode);
+};
+
+const updateActiveButton = (mode) => {
+darkModeButton.classList.remove('active');
+lightModeButton.classList.remove('active');
+
+if (mode === 'dark') {
+darkModeButton.classList.add('active');
+} else {
+lightModeButton.classList.add('active');
+}
+};
+
+const saveModePreference = (mode) => {
+try {
+localStorage.setItem(THEME_STORAGE_KEY, mode);
+applyMode(mode);
+showMessageBox(messageBox, `${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode activated and saved!`, 'success');
+} catch (error) {
+console.error("Error saving mode preference to localStorage:", error);
+showMessageBox(messageBox, "Failed to save mode locally.", 'error');
+}
+};
+
+const loadModePreference = () => {
+try {
+const savedMode = localStorage.getItem(THEME_STORAGE_KEY);
+applyMode(savedMode || DEFAULT_MODE);
+} catch (error) {
+console.error("Error loading mode preference from localStorage:", error);
+applyMode(DEFAULT_MODE);
+}
+};
+
+const showMessageBox = (box, message, type) => {
+box.textContent = message;
+box.classList.remove('hidden');
+box.style.backgroundColor = type === 'success' ? 'var(--accent-green)' : 'var(--accent-red)';
+box.style.color = 'var(--primary-bg)';
+
+setTimeout(() => box.classList.add('hidden'), 3000);
+};
+
+// --- PERIOD NAME UTILITIES ---
+
+const getUniquePeriodKeys = () => {
+const keys = new Set();
+for (const day in defaultSchedules) {
+defaultSchedules[day].forEach(block => keys.add(block.period));
+}
+return Array.from(keys).filter(key => !DEFAULT_LUNCH_MAP.hasOwnProperty(key));
+};
+
+const loadPeriodNames = () => {
+try {
+const savedNames = localStorage.getItem(NAMES_STORAGE_KEY);
+if (savedNames) {
+const customNames = JSON.parse(savedNames);
+for (const day in schedules) {
+schedules[day] = defaultSchedules[day].map(block => {
+const originalKey = block.period;
+const customName = customNames[originalKey];
+if (customName) {
+return { ...block, period: customName };
+}
+return block;
+});
+}
+}
+} catch (error) {
+console.error("Error loading period names from localStorage:", error);
+}
+};
+
+const populatePeriodForm = () => {
+const uniqueKeys = getUniquePeriodKeys();
+let savedNames = {};
+try {
+const savedNamesStr = localStorage.getItem(NAMES_STORAGE_KEY);
+if (savedNamesStr) {
+savedNames = JSON.parse(savedNamesStr);
+}
+} catch (e) { /* ignore parse errors */ }
+
+let formContent = '';
+uniqueKeys.sort().forEach(key => {
+const currentName = savedNames[key] || key;
+formContent += `
+<label for="name-${key.replace(/\s/g, '_')}">${key}</label>
+<input type="text" id="name-${key.replace(/\s/g, '_')}" name="${key}" value="${currentName}" placeholder="${key}">
+`;
+});
+
+let existingButton = periodNamesForm.querySelector('.save-settings-button');
+let buttonHTML = existingButton ? existingButton.outerHTML : '<button type="submit" class="save-settings-button">Save Period Names</button>';
+
+periodNamesForm.innerHTML = formContent + buttonHTML;
+
+periodNamesForm.removeEventListener('submit', handlePeriodFormSubmit);
+periodNamesForm.addEventListener('submit', handlePeriodFormSubmit);
+};
+
+const handlePeriodFormSubmit = (e) => {
+e.preventDefault();
+const formData = new FormData(periodNamesForm);
+const customNames = {};
+const defaultKeys = getUniquePeriodKeys();
+
+for (const [originalKey, customName] of formData.entries()) {
+const trimmedName = customName.trim();
+if (defaultKeys.includes(originalKey) && trimmedName.length > 0) {
+if (trimmedName !== originalKey) {
+customNames[originalKey] = trimmedName;
+}
+}
+}
+
+try {
+localStorage.setItem(NAMES_STORAGE_KEY, JSON.stringify(customNames));
+schedules = JSON.parse(JSON.stringify(defaultSchedules));
+loadPeriodNames();
+updatePeriodTimer();
+showMessageBox(periodMessageBox, 'Period names saved successfully! Restarting timer...', 'success');
+} catch (error) {
+console.error("Error saving period names to localStorage:", error);
+showMessageBox(periodMessageBox, 'Failed to save period names.', 'error');
+}
+};
+
+// --- LUNCH NAME UTILITIES ---
+
+const loadLunchNames = () => {
+let customLunchMap = {};
+try {
+const savedNamesStr = localStorage.getItem(LUNCH_STORAGE_KEY);
+if (savedNamesStr) {
+customLunchMap = JSON.parse(savedNamesStr);
+}
+} catch (e) { /* ignore parse errors */ }
+
+for (const key in DEFAULT_LUNCH_MAP) {
+const input = document.getElementById(`lunch-${key.replace(/\s/g, '_')}`);
+if (input) {
+input.value = customLunchMap[key] || DEFAULT_LUNCH_MAP[key];
+}
+}
+return customLunchMap;
+};
+
+const handleLunchFormSubmit = (e) => {
+e.preventDefault();
+const formData = new FormData(lunchNamesForm);
+const customLunchMap = {};
+
+for (const [originalKey, customName] of formData.entries()) {
+const trimmedName = customName.trim();
+if (trimmedName.length > 0 && DEFAULT_LUNCH_MAP.hasOwnProperty(originalKey)) {
+if (trimmedName !== DEFAULT_LUNCH_MAP[originalKey]) {
+customLunchMap[originalKey] = trimmedName;
+}
+}
+}
+
+try {
+localStorage.setItem(LUNCH_STORAGE_KEY, JSON.stringify(customLunchMap));
+updateLunchDisplay();
+showMessageBox(lunchMessageBox, 'Lunch periods saved successfully!', 'success');
+} catch (error) {
+console.error("Error saving lunch names to localStorage:", error);
+showMessageBox(lunchMessageBox, 'Failed to save lunch periods.', 'error');
+}
+};
+
+const updateLunchDisplay = () => {
+const now = new Date();
+const dayName = now.toLocaleDateString("en-US", { weekday: "long" });
+const schedule = schedules[dayName] || [];
+const customLunchMap = loadLunchNames();
+
+let currentLunch = "No Scheduled Lunch Today";
+let foundLunch = false;
+
+for (let block of defaultSchedules[dayName] || []) {
+const originalPeriodKey = block.period;
+
+if (DEFAULT_LUNCH_MAP.hasOwnProperty(originalPeriodKey)) {
+const lunchName = customLunchMap[originalPeriodKey] || DEFAULT_LUNCH_MAP[originalPeriodKey];
+const workingBlock = schedule.find(b => b.start === block.start && b.end === block.end);
+
+if (workingBlock) {
+currentLunch = `${lunchName} (${workingBlock.start} - ${workingBlock.end})`;
+foundLunch = true;
+break;
+}
+}
+}
+
+currentLunchDisplay.innerText = foundLunch ? currentLunch : "No Scheduled Lunch Today";
+}
+
+// --- REMINDER UTILITIES (MODIFIED FOR INTERVAL CHECK) ---
+
+const loadReminders = () => {
+try {
+const remindersStr = localStorage.getItem(REMINDER_STORAGE_KEY);
+// We no longer filter out past reminders here, the interval checker will handle cleanup
+return remindersStr ? JSON.parse(remindersStr) : [];
+} catch (e) {
+console.error("Error loading reminders:", e);
+return [];
+}
+};
+
+const saveReminders = (reminders) => {
+try {
+localStorage.setItem(REMINDER_STORAGE_KEY, JSON.stringify(reminders));
+} catch (e) {
+console.error("Error saving reminders:", e);
+}
+};
+
+const deleteReminder = (id) => {
+let reminders = loadReminders();
+reminders = reminders.filter(r => r.id !== id);
+saveReminders(reminders);
+renderReminders();
+showMessageBox(reminderMessageBox, 'Reminder deleted.', 'success');
+};
+
+const renderReminders = () => {
+const reminders = loadReminders().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+activeRemindersList.innerHTML = '';
+
+if (reminders.length === 0) {
+activeRemindersList.innerHTML = `<li style="font-size: 14px; color: var(--text-color); opacity: 0.7; border-bottom: none;">No active reminders set.</li>`;
+return;
+}
+
+reminders.forEach(r => {
+// Since we now store the local time string (YYYY-MM-DDTHH:MM:SS), this will correctly parse it as local time.
+const reminderTime = new Date(r.timestamp);
+const item = document.createElement('li');
+const dateStr = reminderTime.toLocaleDateString();
+const timeStr = reminderTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+item.innerHTML = `
+<span><strong>${r.title}</strong><br><small style="opacity: 0.8; color: var(--accent-yellow);">${dateStr} @ ${timeStr}</small></span>
+<button class="delete-reminder-button" data-id="${r.id}" style="background: var(--accent-red); color: var(--primary-bg); border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold;">&times; Delete</button>
+`;
+activeRemindersList.appendChild(item);
+});
+
+document.querySelectorAll('.delete-reminder-button').forEach(button => {
+button.addEventListener('click', (e) => {
+const id = e.target.getAttribute('data-id');
+deleteReminder(id);
+});
+});
+};
+
+const handleReminderSubmit = (e) => {
+e.preventDefault();
+const title = document.getElementById('reminder-title').value.trim();
+const date = document.getElementById('reminder-date').value;
+const time = document.getElementById('reminder-time').value;
+
+if (!title || !date || !time) {
+showMessageBox(reminderMessageBox, 'Please fill out all fields.', 'error');
+return;
+}
+
+// This creates the standardized local time string (e.g., "2025-10-02T09:45:00")
+const datetimeString = `${date}T${time}:00`;
+
+// We create a Date object *only* for validation against the current time.
+const reminderTime = new Date(datetimeString);
+const now = new Date();
+
+if (reminderTime.getTime() <= now.getTime()) {
+showMessageBox(reminderMessageBox, 'Reminder time must be in the future.', 'error');
+return;
+}
+
+const newReminder = {
+id: Date.now().toString(),
+title: title,
+// CRITICAL FIX: We save the local time string directly, not the UTC-converted ISO string.
+timestamp: datetimeString,
+};
+
+let reminders = loadReminders();
+reminders.push(newReminder);
+saveReminders(reminders);
+
+e.target.reset();
+renderReminders();
+showMessageBox(reminderMessageBox, 'Reminder created and scheduled!', 'success');
+};
+
+// Function to show custom slide-in notification
+const showInAppNotification = (title, body) => {
+console.log(`[Notification Fired] Title: ${title}, Body: ${body}`); // Debugging log
+
+const notificationTitle = inAppNotification.querySelector('h4');
+const notificationMessage = document.getElementById('notification-message');
+
+// Ensure we don't try to show it if it's currently showing
+inAppNotification.classList.remove('show');
+
+// Slight delay to reset the animation state before showing
+setTimeout(() => {
+notificationTitle.innerHTML = `<span>🔔</span> ${title}`;
+notificationMessage.textContent = body;
+
+// Show the notification
+inAppNotification.classList.add('show');
+
+// Auto-hide after 5 seconds
+setTimeout(() => {
+inAppNotification.classList.remove('show');
+}, 5000);
+}, 50); // Small delay to force the CSS transition to re-fire
+}
+
+
+// Function to check reminders in the 1-second interval
+const checkIntervalReminders = () => {
+let reminders = loadReminders();
+// Get current time in milliseconds (based on the user's clock/timezone)
+const now = new Date().getTime();
+let remindersToKeep = [];
+let firedCount = 0;
+
+reminders.forEach(r => {
+// Parse the stored local time string into a Date object (which respects the user's timezone)
+const reminderTime = new Date(r.timestamp).getTime();
+
+// Check if the reminder time is in the past (or within the next second)
+if (reminderTime <= now + 1000) {
+console.log(`[Interval Checker] Reminder FIRED: "${r.title}"`);
+showInAppNotification("Reminder", r.title);
+firedCount++;
+} else {
+// Keep active future reminders
+remindersToKeep.push(r);
+}
+});
+
+// If any reminder fired, save the reduced list and re-render
+if (reminders.length !== remindersToKeep.length) {
+saveReminders(remindersToKeep);
+renderReminders();
+}
+};
+
+
+// --- TIMER AND DISPLAY UTILITIES ---
+
+const formatTimeLeft = (totalSeconds) => {
+if (totalSeconds < 0) return "0s";
+const hours = Math.floor(totalSeconds / 3600);
+const minutes = Math.floor((totalSeconds % 3600) / 60);
+const seconds = totalSeconds % 60;
+let parts = [];
+if (hours > 0) parts.push(`${hours}h`);
+if (minutes > 0) parts.push(`${minutes}m`);
+if (totalSeconds >= 0) {
+parts.push(`${seconds}s`);
+}
+return parts.join(" ");
+};
+const timeToMinutes = (timeStr) => {
+const parts = timeStr.split(":").map(Number);
+return parts[0] * 60 + parts[1];
+};
+
+const updateInfoSection = () => {
+const now = new Date();
+const timeStr = now.toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const dateStr = (now.getMonth() + 1).toString().padStart(2, '0') + '/' + now.getDate().toString().padStart(2, '0') + '/' + now.getFullYear();
+const dayName = now.toLocaleDateString("en-US", { weekday: "long" });
+const schedule = schedules[dayName] || [];
+const currentMinutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+
+let parity = "Unknown Schedule";
+
+if (schedule.length > 0) {
+const firstStartMinutes = timeToMinutes(schedule[0].start);
+const lastEndMinutes = timeToMinutes(schedule[schedule.length - 1].end);
+let inSession = false;
+for (let block of schedule) {
+const startMinutes = timeToMinutes(block.start);
+const endMinutes = timeToMinutes(block.end);
+
+if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+parity = dayName + " Schedule";
+inSession = true;
+break;
+}
+}
+if (!inSession) {
+if (currentMinutes < firstStartMinutes) {
+parity = "Before School";
+} else if (currentMinutes >= lastEndMinutes) {
+parity = "After School";
+} else {
+parity = "Passing Time";
+}
+}
+} else {
+parity = "Weekend / No School";
+}
+const infoEl = document.getElementById("info-section");
+if (infoEl) {
+infoEl.innerText = `Time: ${timeStr} | Date: ${dateStr} | ${parity}`;
+}
+};
+
+const updatePeriodTimer = () => {
+const now = new Date();
+const dayName = now.toLocaleDateString("en-US", { weekday: "long" });
+const schedule = schedules[dayName] || [];
+const currentMinutes = now.getHours() * 60 + now.getMinutes();
+let currentPeriod = "No Class";
+let totalSecondsLeft = -1;
+
+for (let block of schedule) {
+const startMinutes = timeToMinutes(block.start);
+const endMinutes = timeToMinutes(block.end);
+if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+currentPeriod = block.period;
+totalSecondsLeft = (endMinutes * 60) - (currentMinutes * 60) - now.getSeconds();
+break;
+}
+}
+
+if (totalSecondsLeft === -1) {
+let nextTarget = null;
+
+if (schedule.length > 0) {
+const firstStartMinutes = timeToMinutes(schedule[0].start);
+const lastEndMinutes = timeToMinutes(schedule[schedule.length - 1].end);
+if (currentMinutes < firstStartMinutes) {
+nextTarget = new Date(now);
+const firstPeriodStart = schedule[0].start.split(":").map(Number);
+nextTarget.setHours(firstPeriodStart[0], firstPeriodStart[1], 0, 0);
+currentPeriod = "Before School";
+} else if (currentMinutes >= lastEndMinutes) {
+currentPeriod = "After School";
+let nextDay = new Date(now);
+nextDay.setDate(now.getDate() + 1);
+while (nextDay.getDay() === 0 || nextDay.getDay() === 6) { nextDay.setDate(nextDay.getDate() + 1); }
+nextTarget = nextDay;
+nextTarget.setHours(7, 20, 0, 0);
+} else {
+for (let i = 0; i < schedule.length; i++) {
+const block = schedule[i];
+const startMinutes = timeToMinutes(block.start);
+if (currentMinutes < startMinutes) {
+nextTarget = new Date(now);
+const blockStart = block.start.split(":").map(Number);
+nextTarget.setHours(blockStart[0], blockStart[1], 0, 0);
+currentPeriod = `Next: ${block.period}`;
+break;
+}
+}
+}
+} else {
+currentPeriod = "Weekend/Break";
+let nextDay = new Date(now);
+let dayOfWeek = nextDay.getDay();
+let daysUntilMonday = (8 - dayOfWeek) % 7;
+if (daysUntilMonday === 0) daysUntilMonday = 7;
+nextDay.setDate(nextDay.getDate() + daysUntilMonday);
+nextTarget = nextDay;
+nextTarget.setHours(7, 20, 0, 0);
+}
+
+if (nextTarget) {
+totalSecondsLeft = Math.floor((nextTarget.getTime() - now.getTime()) / 1000);
+if (totalSecondsLeft < 0) totalSecondsLeft = 0;
+}
+}
+
+let timeLeft = formatTimeLeft(totalSecondsLeft);
+const timerContainer = document.getElementById("period-timer");
+let timerTextSpan = document.getElementById("timer-text");
+
+if (!timerTextSpan) {
+timerContainer.innerHTML = `${currentPeriod} – <span id="timer-text" class="timer-text">${timeLeft} left</span>`;
+timerTextSpan = document.getElementById("timer-text");
+} else {
+timerContainer.firstChild.nodeValue = `${currentPeriod} – `;
+timerTextSpan.innerText = `${timeLeft} left`;
+}
+
+timerTextSpan.classList.remove('timer-active');
+timerTextSpan.style.color = 'var(--text-color)';
+
+if (totalSecondsLeft > 0 && currentPeriod !== "After School" && currentPeriod !== "Weekend/Break") {
+timerTextSpan.classList.add('timer-active');
+const fifteenMinutesInSeconds = 15 * 60;
+
+if (totalSecondsLeft > fifteenMinutesInSeconds) {
+timerTextSpan.style.color = 'var(--accent-green)';
+} else {
+timerTextSpan.style.color = 'var(--accent-red)';
+}
+}
+updateInfoSection();
+// IMPORTANT: Call the new check function every second
+checkIntervalReminders();
+};
+
+const showReminderModal = () => {
+renderReminders();
+reminderModal.classList.add('show');
+document.body.style.overflow = 'hidden';
+};
+const hideReminderModal = () => {
+reminderModal.classList.remove('show');
+document.body.style.overflow = '';
+};
+
+
+// --- DOM READY AND LISTENERS ---
+document.addEventListener('DOMContentLoaded', () => {
+
+// 0. Load Custom Names and Populate Forms
+loadPeriodNames();
+populatePeriodForm();
+loadLunchNames();
+lunchNamesForm.addEventListener('submit', handleLunchFormSubmit);
+
+// 1. Load Theme Preference
+loadModePreference();
+
+// 2. Attach theme-related event listeners
+darkModeButton.addEventListener('click', () => saveModePreference('dark'));
+lightModeButton.addEventListener('click', () => saveModePreference('light'));
+
+// 3. Start the timer loop and lunch display update
+updatePeriodTimer();
+updateLunchDisplay();
+// The main interval now also runs the reminder check
+setInterval(() => {
+updatePeriodTimer();
+updateLunchDisplay();
+}, 1000);
+
+// 4. Tab Switching
+document.querySelectorAll(".left-box button").forEach(button => {
+button.addEventListener("click", () => {
+const target = button.getAttribute("data-tab");
+document.querySelectorAll(".left-box button").forEach(btn => btn.classList.remove("active"));
+button.classList.add("active");
+tabs.forEach(tab => {
+tab.classList.remove("active");
+if (tab.id === target) {
+tab.classList.add("active");
+}
+});
+});
+});
+if (homeButton) homeButton.classList.add("active");
+
+// 5. Header Scroll Hide/Show
+let lastScrollY = window.scrollY;
+const header = document.querySelector('.header');
+const headerHeight = header.offsetHeight;
+window.addEventListener('scroll', () => {
+const currentScrollY = window.scrollY;
+if (currentScrollY > lastScrollY && currentScrollY > headerHeight) {
+header.style.top = `-${headerHeight}px`;
+} else {
+header.style.top = '0';
+}
+lastScrollY = currentScrollY;
+});
+
+// 6. Image Preview (Placeholder for lunch items)
+const fetchImage = async (food) => {
+return `https://placehold.co/300x300/4cc9f0/1a1b2f?text=${encodeURIComponent(food)}`;
+};
+const preview = document.getElementById("preview");
+document.querySelectorAll(".info p").forEach(item => {
+item.addEventListener("mouseenter", async (e) => {
+const food = e.target.getAttribute("data-food");
+const imgUrl = await fetchImage(food);
+preview.src = imgUrl;
+preview.style.display = "block";
+});
+item.addEventListener("mousemove", (e) => {
+preview.style.left = (e.pageX + 20) + "px";
+preview.style.top = (e.pageY + 20) + "px";
+});
+item.addEventListener("mouseleave", () => {
+preview.style.display = "none";
+});
+});
+
+// 7. Modal Logic
+const legalModal = document.getElementById("legal-modal");
+const openModalLink = document.getElementById("open-legal-modal");
+const closeModalButton = document.getElementById("close-modal-button");
+const body = document.body;
+const showLegalModal = () => { legalModal.classList.add('show'); body.style.overflow = 'hidden'; };
+const hideLegalModal = () => { legalModal.classList.remove('show'); body.style.overflow = ''; };
+if (openModalLink) openModalLink.addEventListener('click', showLegalModal);
+if (closeModalButton) closeModalButton.addEventListener('click', hideLegalModal);
+if (legalModal) legalModal.addEventListener('click', (e) => {
+if (e.target === legalModal) { hideLegalModal(); }
+});
+
+// 8. Reminder Maker Logic
+// Click handler for the card itself (opens modal)
+if (notificationsCard) notificationsCard.addEventListener('click', showReminderModal);
+// Click handler for the TEST button (fires animation)
+if (testNotificationButton) {
+testNotificationButton.addEventListener('click', (e) => {
+e.stopPropagation(); // Stop the event from propagating to the card and opening the modal
+showInAppNotification("Test Notification", "This should slide in smoothly!");
+});
+}
+if (closeReminderModalButton) closeReminderModalButton.addEventListener('click', hideReminderModal);
+if (reminderModal) reminderModal.addEventListener('click', (e) => {
+if (e.target === reminderModal) { hideReminderModal(); }
+});
+if (reminderForm) reminderForm.addEventListener('submit', handleReminderSubmit);
+});
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = "auth.html";
+  }
+});
+
+
   document.addEventListener('DOMContentLoaded', async () => {
-    const supabase = window.supabase.createClient(
-      'https://jxxnfsydjrflnephmfjm.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
-    );
+    const { data: { user } } = await supabase.auth.getUser();
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const userInfoDiv = document.getElementById('user-info');
-        const userNameSpan = document.getElementById('user-name');
-        const userAvatarImg = document.getElementById('user-avatar');
+    if (user) {
+      const userInfoDiv = document.getElementById('user-info');
+      const userNameSpan = document.getElementById('user-name');
+      const userAvatarImg = document.getElementById('user-avatar');
 
-        const username = user.user_metadata?.username || user.email;
-        const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
+      const username = user.user_metadata?.username || user.email;
+      const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
 
-        userNameSpan.textContent = username;
-        userAvatarImg.src = avatarUrl;
+      userNameSpan.textContent = username;
+      userAvatarImg.src = avatarUrl;
 
-        userInfoDiv.style.display = 'flex';
-
-        // Make profile picture clickable
-        userAvatarImg.style.cursor = 'pointer';
-        userAvatarImg.addEventListener('click', () => {
-          const modal = document.getElementById('profile-modal');
-          modal.style.display = 'block';
-        });
-
-        document.getElementById('close-modal').addEventListener('click', () => {
-          document.getElementById('profile-modal').style.display = 'none';
-        });
-      }
-    } catch (error) {
-      console.error("Supabase error:", error);
+      userInfoDiv.style.display = 'flex';
+    } else {
+      document.getElementById('user-info').style.display = 'none';
     }
   });
-</script>
 
-<div id="profile-modal" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%);
-         background:white; padding:20px; border:1px solid #ccc; border-radius:8px; z-index:1000;">
-<h2 id="modal-greeting">Hello, <span id="modal-username"></span></h2>
-<img alt="Profile Picture" id="modal-avatar" src="" style="width:80px; height:80px; border-radius:50%; margin:10px 0;"/>
-<br/>
-<a href="account_settings.html" style="display:inline-block; margin-top:10px;">Manage Account</a>
-<br/><br/>
-<button id="close-modal">Close</button>
-</div>
-</body>
+</script></body>
 </html>
