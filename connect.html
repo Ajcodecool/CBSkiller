@@ -1,13 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>Connect</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <style>
+
+<html><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Connect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<style>
     :root {
       --primary-bg: #1a1b2f;
       --content-bg: #2b2d42;
@@ -32,37 +31,12 @@
       display: flex;
       flex-direction: column;
       height: 80vh;
-      position: relative;
     }
     .chat-header {
       padding: 16px;
       font-size: 1.5rem;
       font-weight: bold;
       border-bottom: 1px solid #444;
-      position: relative;
-    }
-    .user-info {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(44, 46, 72, 0.8);
-      padding: 6px 12px;
-      border-radius: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      z-index: 10;
-    }
-    .user-info img {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    .user-info span {
-      font-weight: bold;
-      color: var(--accent-blue);
     }
     .chat-messages {
       flex: 1;
@@ -132,196 +106,505 @@
       border-radius: 8px;
       font-weight: bold;
       transition: background-color 0.2s ease;
-      z-index: 20;
     }
     .back-button:hover {
       background-color: #a0f0b0;
     }
-    .message-bubble {
-      background-color: var(--content-bg);
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 10px;
-      box-shadow: var(--shadow);
-    }
-    .mention {
-      color: var(--accent-blue);
-      font-weight: bold;
-    }
-    .timestamp {
-      font-size: 0.8em;
-      color: #aaa;
-      margin-left: 10px;
-    }
-    .avatar-fallback {
-      background: var(--accent-blue);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 1.3em;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      margin-right: 12px;
-    }
   </style>
-</head>
-<body>
+<style>
+.message-bubble {
+    background-color: var(--content-bg);
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+.mention {
+    color: var(--accent-blue);
+    font-weight: bold;
+}
+.timestamp {
+    font-size: 0.8em;
+    color: #aaa;
+    margin-left: 10px;
+}
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script></head><body>
+<div class="max-w-xl mx-auto mt-10 p-6 bg-white rounded shadow">
+<h2 class="text-xl font-bold mb-4">Upload Your Avatar</h2>
+<input accept="image/*" class="mb-2" id="avatarInput" type="file"/>
+<button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" id="uploadBtn">Upload Avatar</button>
+<img alt="Your Avatar" class="w-32 h-32 object-cover rounded-full border border-gray-300 mt-4 hidden" id="avatarPreview" src="default-avatar.png"/>
+<div class="mt-2 text-sm text-gray-600" id="uploadStatus"></div>
+</div>
+
 <a class="back-button" href="index.html">← Back to Home</a>
 <div class="chat-container">
-  <div class="chat-header">
-    Crooms Connect Chat
-    <!-- User Info Box -->
-    <div class="user-info" id="user-info" style="display: none;">
-      <img id="user-avatar" src="default-avatar.png" alt="avatar">
-      <span id="user-name">Loading...</span>
-    </div>
-  </div>
-  <div class="chat-messages" id="chat-box">
-    <!-- Messages will appear here -->
-  </div>
-  <div class="chat-input">
-    <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
-    <button id="send-button">Send</button>
-    <div id="typing-indicator" style="color: var(--accent-blue); margin-top: 5px; font-size: 0.9em;"></div>
-  </div>
+<div class="chat-header">Crooms Connect Chat</div>
+<div class="chat-messages" id="chat-box">
+<!-- Messages will appear here -->
 </div>
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-  const SUPABASE_URL = 'https://jxxnfsydjrflnephmfjm.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+<div class="chat-input">
+<textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
+<button id="send-button">Send</button>
+<div id="typing-indicator" style="color: var(--accent-blue); margin-top: 5px; font-size: 0.9em;"></div></div>
+</div>
+<script type="module">document.addEventListener("DOMContentLoaded", (function() {
 
-  // DOM elements
-  const chatBox = document.getElementById('chat-box');
-  const input = document.getElementById('chat-input');
-  const sendBtn = document.getElementById('send-button');
-  const typingIndicator = document.getElementById('typing-indicator');
-  const userInfoDiv = document.getElementById('user-info');
-  const userAvatarImg = document.getElementById('user-avatar');
-  const userNameSpan = document.getElementById('user-name');
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  let currentUser = null;
-  let currentAvatarUrl = 'default-avatar.png';
-  let currentUsername = 'Anonymous';
+    const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Fetch user profile from DB and update UI
-  async function updateGlobalAvatarAndName() {
-    const { data: authData, error: authError } = await supabase.auth.getUser();
-    if (authError || !authData?.user) {
-      userInfoDiv.style.display = 'none';
-      return;
+    const chatBox = document.getElementById('chat-box');
+    const input = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-button');
+
+    function displayMessage(msg) {
+      const div = document.createElement('div');
+      div.className = 'message';
+      div.innerHTML = `
+        <img src="${msg.avatar_url || 'https://api.dicebear.com/6.x/thumbs/svg?seed=' + msg.username}" alt="avatar">
+        <div class="message-content">
+          <div class="username">${msg.username}</div>
+          <div class="text">${msg.message}</div>
+          <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+        </div>
+      `;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
-    const userId = authData.user.id;
-    // Fetch from users table
-    const { data: profile, error: profileError } = await supabase
-      .from("users")
-      .select("avatar_url, username, email")
-      .eq("id", userId)
-      .single();
 
-    currentUser = authData.user;
-    currentUsername = profile?.username || authData.user.user_metadata?.username || authData.user.email || "Anonymous";
-    currentAvatarUrl = profile?.avatar_url || authData.user.user_metadata?.avatar_url || "default-avatar.png";
+    async function sendMessage() {
+      const message = input.value.trim();
+      if (!message) return;
 
-    userAvatarImg.src = currentAvatarUrl;
-    userNameSpan.textContent = currentUsername;
-    userInfoDiv.style.display = 'flex';
-  }
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+      if (!user) {
+        alert('You must be logged in to send messages.');
+        return;
+      }
 
-  // Display one message
-  function displayMessage(msg) {
-    // Fallback: Use DiceBear avatar if no avatar_url
-    const avatarSrc = msg.avatar_url 
-      ? msg.avatar_url 
-      : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(msg.username)}`;
+      const username = user.user_metadata?.username || user.email;
+      const avatar_url = user.user_metadata?.avatar_url || '';
+
+      const { error } = await supabase.from('messages').insert([{
+        user_id: user.id,
+        username,
+        avatar_url,
+        message,
+        timestamp: new Date().toISOString()
+      }]);
+
+      if (!error) input.value = '';
+    }
+
+    async function loadMessages() {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .order('timestamp', { ascending: true });
+      if (data) data.forEach(displayMessage);
+    }
+
+    supabase
+      .channel('public:messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        displayMessage(payload.new);
+      })
+      .subscribe();
+
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadMessages();
+      const theme = localStorage.getItem('theme');
+      if (theme === 'light') {
+        document.documentElement.style.setProperty('--primary-bg', '#f8f9fa');
+        document.documentElement.style.setProperty('--content-bg', '#ffffff');
+        document.documentElement.style.setProperty('--text-color', '#1a1b2f');
+      }
+    });
+  
+});</script>
+<script>document.addEventListener("DOMContentLoaded", (function() {
+
+const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+const chatBox = document.getElementById('chat-box');
+const input = document.getElementById('chat-input');
+const sendBtn = document.getElementById('send-button');
+const typingIndicator = document.getElementById('typing-indicator');
+
+let currentUser = null;
+let lastMessageId = null;
+
+async function getUser() {
+    const { data: userData } = await supabase.auth.getUser();
+    currentUser = userData?.user;
+}
+
+function formatMessage(msg) {
     const div = document.createElement('div');
-    div.className = 'message';
-    div.innerHTML = `
-      <img src="${avatarSrc}" alt="avatar" onerror="this.onerror=null;this.src='default-avatar.png';">
-      <div class="message-content">
-        <div class="username">${msg.username}</div>
-        <div class="text">${msg.message.replace(/@([a-zA-Z0-9_]+)/g, '<span class="mention">@$1</span>')}</div>
-        <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>
-      </div>
-    `;
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
+    div.className = 'message-bubble';
+    const timestamp = new Date(msg.timestamp).toLocaleTimeString();
+    let content = msg.message.replace(/@([a-zA-Z0-9_]+)/g, '<span class="mention">@$1</span>');
+    div.innerHTML = `<strong>${msg.username}</strong> <span class="timestamp">${timestamp}</span><br>${content}`;
+    return div;
+}
 
-  // Send a message to Supabase
-  async function sendMessage() {
+async function sendMessage() {
     const message = input.value.trim();
     if (!message || !currentUser) return;
 
-    // Refetch latest profile for avatar_url and username
-    const { data: profile } = await supabase
-      .from('users')
-      .select('avatar_url, username, email')
-      .eq('id', currentUser.id)
-      .single();
-    const avatar_url = profile?.avatar_url || currentUser.user_metadata?.avatar_url || '';
-    const username = profile?.username || currentUser.user_metadata?.username || currentUser.email || 'Anonymous';
-
-    const { error } = await supabase.from('messages').insert([{
-      user_id: currentUser.id,
-      username,
-      avatar_url,
-      message,
-      timestamp: new Date().toISOString()
-    }]);
-    if (!error) input.value = '';
+    await supabase.from('messages').insert([
+        {
+            user_id: currentUser.id,
+            username: currentUser.user_metadata?.username || currentUser.email,
+            message: message,
+            timestamp: new Date().toISOString()
+        }
+    ]);
+    input.value = '';
     typingIndicator.textContent = '';
-  }
+}
 
-  // Load all messages
+async function loadMessages() {
+    const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .order('timestamp', { ascending: true });
+
+    if (error) {
+        console.error('Error loading messages:', error.message);
+        return;
+    }
+
+    chatBox.innerHTML = '';
+    data.forEach(msg => {
+        const div = formatMessage(msg);
+        chatBox.appendChild(div);
+    });
+}
+
+function pollMessages() {
+    loadMessages();
+    setTimeout(pollMessages, 2000);
+}
+
+input.addEventListener('input', () => {
+    if (input.value.trim()) {
+        typingIndicator.textContent = currentUser?.user_metadata?.username + ' is typing...';
+    } else {
+        typingIndicator.textContent = '';
+    }
+});
+
+input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+sendBtn.addEventListener('click', sendMessage);
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await getUser();
+    pollMessages();
+});
+
+});</script><script>document.addEventListener("DOMContentLoaded", (function() {
+
+document.getElementById("send-button").addEventListener("click", function () {
+    const message = document.getElementById("message-input").value;
+    if (message.trim()) {
+        console.log("Sending message:", message);
+    }
+});
+
+});</script><script>document.addEventListener("DOMContentLoaded", (function() {
+
+document.addEventListener("DOMContentLoaded", function () {
+  const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
+  const SUPABASE_KEY = "your-anon-key";
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const sendButton = document.getElementById("send-button");
+  const messageInput = document.getElementById("message-input");
+
+  if (sendButton && messageInput) {
+    sendButton.addEventListener("click", async () => {
+      const message = messageInput.value.trim();
+      if (message !== "") {
+        const { data, error } = await supabase
+          .from("messages")
+          .insert([{ message: message, timestamp: new Date().toISOString() }]);
+
+        if (error) {
+          console.error("Supabase insert error:", error.message);
+        } else {
+          const chatBox = document.getElementById("chat-box");
+          if (chatBox) {
+            const messageElement = document.createElement("div");
+            messageElement.textContent = message + " (" + new Date().toLocaleTimeString() + ")";
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+          }
+          messageInput.value = "";
+        }
+      }
+    });
+  }
+});
+
+});</script><script>document.addEventListener("DOMContentLoaded", (function() {
+
+document.addEventListener("DOMContentLoaded", function () {
+  const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const sendButton = document.getElementById("send-button");
+  const messageInput = document.getElementById("message-input");
+  const chatBox = document.getElementById("chat-box");
+
   async function loadMessages() {
     const { data, error } = await supabase
-      .from('messages')
-      .select('user_id, username, avatar_url, message, timestamp')
-      .order('timestamp', { ascending: true });
-    chatBox.innerHTML = '';
+      .from("messages")
+      .select("*")
+      .order("timestamp", { ascending: true });
     if (error) {
-      chatBox.innerHTML = '<div style="color:red;">Error loading messages: ' + error.message + '</div>';
+      console.error("Error loading messages:", error);
       return;
     }
-    if (data) data.forEach(displayMessage);
+    chatBox.innerHTML = "";
+    data.forEach(msg => {
+      const msgDiv = document.createElement("div");
+      msgDiv.textContent = `[${new Date(msg.timestamp).toLocaleTimeString()}] ${msg.username}: ${msg.message}`;
+      chatBox.appendChild(msgDiv);
+    });
+    chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  // Realtime message listener
-  supabase
-    .channel('public:messages')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-      displayMessage(payload.new);
-    })
-    .subscribe();
-
-  sendBtn.addEventListener('click', sendMessage);
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  });
-
-  input.addEventListener('input', () => {
-    if (input.value.trim()) {
-      typingIndicator.textContent = `${currentUsername} is typing...`;
+  sendButton?.addEventListener("click", async () => {
+    const message = messageInput?.value.trim();
+    if (!message) return;
+    const username = "Anonymous";
+    const { error } = await supabase
+      .from("messages")
+      .insert([{
+        username: username,
+        message: message,
+        timestamp: new Date().toISOString()
+      }]);
+    if (error) {
+      console.error("Error sending message:", error);
     } else {
-      typingIndicator.textContent = '';
+      messageInput.value = "";
+      loadMessages();
     }
   });
 
-  // Initial page load
-  document.addEventListener('DOMContentLoaded', async () => {
-    await updateGlobalAvatarAndName();
-    await loadMessages();
-    supabase.auth.onAuthStateChange((_event, _session) => {
-      updateGlobalAvatarAndName();
-    });
+  loadMessages();
+});
+
+});</script><script src="https://cdn.tailwindcss.com"></script><script>
+document.addEventListener("DOMContentLoaded", () => {
+  const theme = localStorage.getItem("theme");
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+});
+</script><script type="module">document.addEventListener("DOMContentLoaded", (function() {
+
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const chatBox = document.getElementById('chat-box');
+    const input = document.getElementById('chat-input');
+
+    async function sendMessage() {
+      const message = input.value.trim();
+      if (!message) return;
+
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+
+      if (!user) {
+        alert('You must be logged in to send messages.');
+        return;
+      }
+
+      const username = user.user_metadata?.username || user.email;
+
+      const { error } = await supabase.from('messages').insert([
+        {
+          user_id: user.id,
+          username: username,
+          message: message,
+          timestamp: new Date().toISOString()
+        }
+      ]);
+
+      if (error) {
+        console.error('Message send error:', error.message);
+      } else {
+        input.value = '';
+      }
+    }
+
+    function displayMessage(msg) {
+      const div = document.createElement('div');
+      div.className = "mb-2";
+      div.textContent = `${msg.username}: ${msg.message}`;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function loadMessages() {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .order('timestamp', { ascending: true });
+
+      if (error) {
+        console.error('Error loading messages:', error.message);
+        return;
+      }
+
+      chatBox.innerHTML = '';
+      data.forEach(displayMessage);
+    }
+
+    supabase
+      .channel('public:messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        displayMessage(payload.new);
+      })
+      .subscribe();
+
+    document.getElementById('send-button').addEventListener('click', sendMessage);
+    document.addEventListener('DOMContentLoaded', loadMessages);
+  
+});</script><script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData?.session?.user) {
+    window.location.href = "auth.html";
+    return;
+  }
+  const user = sessionData.session.user;
+
+  const fileInput = document.getElementById("avatarInput");
+  const preview = document.getElementById("avatarPreview");
+  const uploadBtn = document.getElementById("uploadBtn");
+  const status = document.getElementById("uploadStatus");
+
+  fileInput?.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.src = e.target.result;
+        preview.classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    }
   });
-</script>
-</body>
-</html>
+
+  uploadBtn?.addEventListener("click", async () => {
+    const file = fileInput.files[0];
+    if (!file) {
+      alert("Please select a file first.");
+      return;
+    }
+
+    status.textContent = "Uploading...";
+    uploadBtn.disabled = true;
+
+    const fileName = `profile-${user.id}-${Date.now()}-${file.name}`;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("profile-pictures")
+      .upload(fileName, file, { upsert: true });
+
+    if (uploadError) {
+      status.textContent = "Upload failed: " + uploadError.message;
+      uploadBtn.disabled = false;
+      return;
+    }
+
+    const { data: publicUrlData } = await supabase.storage
+      .from("profile-pictures")
+      .getPublicUrl(fileName);
+
+    if (!publicUrlData?.publicUrl) {
+      status.textContent = "Could not get public URL.";
+      uploadBtn.disabled = false;
+      return;
+    }
+
+    const publicUrl = publicUrlData.publicUrl;
+
+    let updateProfileMsg = "";
+    if (user.id) {
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ avatar_url: publicUrl })
+        .eq("id", user.id);
+      if (updateError) {
+        updateProfileMsg = " (Could not update your profile: " + updateError.message + ")";
+      }
+    }
+
+    preview.src = publicUrl;
+    preview.classList.remove("hidden");
+    status.textContent = "Avatar uploaded successfully!" + updateProfileMsg;
+    uploadBtn.disabled = false;
+  });
+
+  // Example chat message rendering with avatar
+  async function loadMessages() {
+    const { data: messages } = await supabase
+      .from("messages")
+      .select("id, text, username, user_id, users(avatar_url)")
+      .order("created_at", { ascending: true });
+
+    const chatContainer = document.getElementById("chatContainer");
+    chatContainer.innerHTML = "";
+    messages.forEach(msg => {
+      const avatarSrc = msg.users?.avatar_url || `https://api.dicebear.com/6.x/thumbs/svg?seed=${msg.username}`;
+      const messageHTML = `
+        <div class="flex items-start space-x-3 mb-4">
+          <img src="${avatarSrc}" alt="${msg.username}'s avatar" class="w-10 h-10 rounded-full border border-gray-300" />
+          <div>
+            <p class="font-semibold">${msg.username}</p>
+            <p>${msg.text}</p>
+          </div>
+        </div>
+      `;
+      chatContainer.innerHTML += messageHTML;
+    });
+  }
+
+  loadMessages();
+});
+</script></body></html>
