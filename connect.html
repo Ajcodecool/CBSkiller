@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>Connect</title>
-  <!-- For production, install Tailwind via npm/PostCSS/CLI! -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     :root {
       --primary-bg: #1a1b2f;
@@ -32,6 +32,7 @@
       display: flex;
       flex-direction: column;
       height: 80vh;
+      position: relative;
     }
     .chat-header {
       padding: 16px;
@@ -51,6 +52,7 @@
       padding: 6px 12px;
       border-radius: 20px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 10;
     }
     .user-info img {
       width: 32px;
@@ -130,6 +132,7 @@
       border-radius: 8px;
       font-weight: bold;
       transition: background-color 0.2s ease;
+      z-index: 20;
     }
     .back-button:hover {
       background-color: #a0f0b0;
@@ -151,25 +154,16 @@
       margin-left: 10px;
     }
   </style>
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      const theme = localStorage.getItem("theme");
-      if (theme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    });
-  </script>
 </head>
 <body>
 <a class="back-button" href="index.html">← Back to Home</a>
 <div class="chat-container">
   <div class="chat-header">
     Crooms Connect Chat
-    <div class="user-info" id="user-info">
-      <img src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous" alt="avatar">
-      <span>Anonymous</span>
+    <!-- User Info Box -->
+    <div class="user-info" id="user-info" style="display: none;">
+      <img id="user-avatar" src="default-avatar.png" alt="avatar">
+      <span id="user-name">Loading...</span>
     </div>
   </div>
   <div class="chat-messages" id="chat-box">
@@ -182,45 +176,55 @@
   </div>
 </div>
 <script type="module">
+  // Supabase setup
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  const SUPABASE_URL = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
+  // DOM elements
   const chatBox = document.getElementById('chat-box');
   const input = document.getElementById('chat-input');
   const sendBtn = document.getElementById('send-button');
   const typingIndicator = document.getElementById('typing-indicator');
   const userInfoDiv = document.getElementById('user-info');
+  const userAvatarImg = document.getElementById('user-avatar');
+  const userNameSpan = document.getElementById('user-name');
 
   let currentUser = null;
+  let currentAvatarUrl = 'default-avatar.png';
+  let currentUsername = 'Anonymous';
 
-  async function fetchAndDisplayUserInfo() {
-    const { data: userData, error } = await supabase.auth.getUser();
-    const user = userData?.user;
-    currentUser = user;
-    let username, avatar_url;
-
-    if (user) {
-      username = user.user_metadata?.username || user.email || 'Anonymous';
-      avatar_url = user.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/thumbs/svg?seed=${username}`;
-    } else {
-      username = 'Anonymous';
-      avatar_url = 'https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous';
+  // Fetch user profile from DB and update UI
+  async function updateGlobalAvatarAndName() {
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData?.user) {
+      userInfoDiv.style.display = 'none';
+      return;
     }
+    const userId = authData.user.id;
+    // Fetch from users table
+    const { data: profile, error: profileError } = await supabase
+      .from("users")
+      .select("avatar_url, username, email")
+      .eq("id", userId)
+      .single();
 
-    userInfoDiv.innerHTML = `
-      <img src="${avatar_url}" alt="avatar">
-      <span>${username}</span>
-    `;
+    currentUser = authData.user;
+    currentUsername = profile?.username || authData.user.user_metadata?.username || authData.user.email || "Anonymous";
+    currentAvatarUrl = profile?.avatar_url || authData.user.user_metadata?.avatar_url || "default-avatar.png";
+
+    userAvatarImg.src = currentAvatarUrl;
+    userNameSpan.textContent = currentUsername;
+    userInfoDiv.style.display = 'flex';
   }
 
+  // Display one message
   function displayMessage(msg) {
     const div = document.createElement('div');
     div.className = 'message';
     div.innerHTML = `
-      <img src="${msg.avatar_url || 'https://api.dicebear.com/6.x/thumbs/svg?seed=' + msg.username}" alt="avatar">
+      <img src="${msg.avatar_url || 'default-avatar.png'}" alt="avatar">
       <div class="message-content">
         <div class="username">${msg.username}</div>
         <div class="text">${msg.message.replace(/@([a-zA-Z0-9_]+)/g, '<span class="mention">@$1</span>')}</div>
@@ -231,47 +235,42 @@
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
+  // Send a message to Supabase
   async function sendMessage() {
     const message = input.value.trim();
-    if (!message) return;
+    if (!message || !currentUser) return;
 
-    let username, avatar_url, user_id;
-    if (currentUser) {
-      username = currentUser.user_metadata?.username || currentUser.email || 'Anonymous';
-      avatar_url = currentUser.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/thumbs/svg?seed=${username}`;
-      user_id = currentUser.id;
-    } else {
-      username = 'Anonymous';
-      avatar_url = 'https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous';
-      user_id = null;
-    }
+    // Refetch latest profile for avatar_url and username
+    const { data: profile } = await supabase
+      .from('users')
+      .select('avatar_url, username, email')
+      .eq('id', currentUser.id)
+      .single();
+    const avatar_url = profile?.avatar_url || currentUser.user_metadata?.avatar_url || 'default-avatar.png';
+    const username = profile?.username || currentUser.user_metadata?.username || currentUser.email || 'Anonymous';
 
     const { error } = await supabase.from('messages').insert([{
-      user_id,
+      user_id: currentUser.id,
       username,
       avatar_url,
       message,
       timestamp: new Date().toISOString()
     }]);
     if (!error) input.value = '';
+    typingIndicator.textContent = '';
   }
 
+  // Load all messages
   async function loadMessages() {
     const { data, error } = await supabase
       .from('messages')
-      .select('user_id,username,avatar_url,message,timestamp')
+      .select('*')
       .order('timestamp', { ascending: true });
-    if (error) {
-      console.error('Error loading messages:', error.message);
-      return;
-    }
-    if (data) {
-      chatBox.innerHTML = '';
-      data.forEach(displayMessage);
-    }
+    chatBox.innerHTML = '';
+    if (data) data.forEach(displayMessage);
   }
 
-  // Real-time updates
+  // Realtime message listener
   supabase
     .channel('public:messages')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
@@ -286,24 +285,23 @@
       sendMessage();
     }
   });
+
   input.addEventListener('input', () => {
     if (input.value.trim()) {
-      typingIndicator.textContent = currentUser
-        ? (currentUser.user_metadata?.username || currentUser.email || 'Anonymous') + ' is typing...'
-        : 'Anonymous is typing...';
+      typingIndicator.textContent = `${currentUsername} is typing...`;
     } else {
       typingIndicator.textContent = '';
     }
   });
 
+  // Initial page load
   document.addEventListener('DOMContentLoaded', async () => {
-    await fetchAndDisplayUserInfo();
+    await updateGlobalAvatarAndName();
     await loadMessages();
-  });
-
-  // Also refresh user info if auth state changes (e.g., after login/logout)
-  supabase.auth.onAuthStateChange((_event, _session) => {
-    fetchAndDisplayUserInfo();
+    // Optionally, refresh avatar/name when auth state changes
+    supabase.auth.onAuthStateChange((_event, _session) => {
+      updateGlobalAvatarAndName();
+    });
   });
 </script>
 </body>
