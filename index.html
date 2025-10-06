@@ -3,15 +3,22 @@
 <head>
   <title>Crooms Connect</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    header { display: flex; align-items: center; gap: 10px; }
+    .user-avatar { width: 50px; height: 50px; border-radius: 50%; }
+  </style>
 </head>
 <body>
   <header>
-    <img class="user-avatar" src="default_avatar.png" alt="User Avatar" width="50" height="50" />
+    <img class="user-avatar" src="https://via.placeholder.com/50" alt="User Avatar" />
     <h1>Welcome to Crooms Connect</h1>
-    <a href="account_settings_debug_fixed_updated (1).html">Manage Account</a>
+    <a href="#account-settings">Account Settings</a>
   </header>
 
-  
+  <section id="main-content">
+    <h2>Main Page</h2>
+    <div>
 <div id="user-info" style="display: none; align-items: center; gap: 10px; margin: 10px;">
 <img alt="Profile Picture" id="user-avatar" src="" style="width: 40px; height: 40px; border-radius: 50%;"/>
 <span id="user-name" style="font-weight: bold;"></span>
@@ -1754,30 +1761,598 @@ document.addEventListener("DOMContentLoaded", async () => {
 </script>
 </body>
 </html>
+</div>
+  </section>
 
+  <section id="account-settings">
+    <h2>Account Settings</h2>
+    <input type="file" id="avatarInput" accept="image/*" />
+    <button onclick="uploadProfilePicture()">Upload Profile Picture</button>
+    <div><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Settings</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <div class="max-w-xl mx-auto mt-10 p-6 bg-white rounded shadow">
+    <h1 class="text-2xl font-bold mb-4">Account Settings</h1>
+    <div class="mb-4">
+      <label for="profile-pic" class="block font-medium mb-2">Upload Profile Picture</label>
+      <input type="file" id="profile-pic" accept="image/*" class="mb-2" />
+      <img id="preview" src="" alt="Preview" class="w-32 h-32 object-cover rounded-full border border-gray-300 hidden" />
+    </div>
+    <button id="upload-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Upload</button>
+    <p id="status" class="mt-4 text-sm text-gray-600"></p>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      console.log("✅ DOM fully loaded");
+
+      const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
+      console.log("🔧 Creating Supabase client...");
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      console.log("🔍 Checking session...");
+      try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        console.log("📦 Session data:", sessionData);
+        console.log("⚠️ Session error:", sessionError);
+        if (!sessionData.session) {
+          console.warn("🔒 No active session found. Redirecting to auth.html...");
+          window.location.href = "auth.html";
+          return;
+        }
+        console.log("✅ User is signed in.");
+      } catch (err) {
+        console.error("❌ Error checking session:", err);
+        window.location.href = "auth.html";
+        return;
+      }
+
+      const fileInput = document.getElementById("profile-pic");
+      const preview = document.getElementById("preview");
+      const uploadBtn = document.getElementById("upload-btn");
+      const status = document.getElementById("status");
+
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (file) {
+          console.log("📁 File selected:", file.name);
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            preview.src = e.target.result;
+            preview.classList.remove("hidden");
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      uploadBtn.addEventListener("click", async () => {
+        const file = fileInput.files[0];
+        if (!file) {
+          alert("Please select a file first.");
+          return;
+        }
+
+        const fileName = `profile-${Date.now()}-${file.name}`;
+        console.log("🚀 Uploading file:", fileName);
+
+        const { data, error } = await supabase.storage
+          .from("profile-pictures")
+          .upload(fileName, file);
+
+        if (error) {
+          console.error("❌ Upload error:", error.message);
+          status.textContent = "Upload failed: " + error.message;
+        } else {
+          console.log("✅ Upload successful:", data);
+          status.textContent = "Upload successful!";
+        }
+      });
+    });
+  </script>
+</body>
+</html></div>
+  </section>
+
+  <section id="auth">
+    <h2>Login</h2>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="signIn()">Sign In</button>
+    <p>Need an account? <a href="#" onclick="signUp()">Sign Up</a></p>
+    <div><!DOCTYPE html>
+<html lang="en">
+<!-- Load Supabase client library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Crooms Connect - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Inherit theme variables for consistent look */
+        :root {
+            --primary-bg: #1a1b2f; 
+            --content-bg: #2b2d42; 
+            --text-color: #f8f9fa; 
+            --shadow: 0 4px 12px rgba(0,0,0,0.4);
+            --accent-blue: #4cc9f0;
+            --accent-green: #80ed99;
+            --radius: 15px;
+        }
+        
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px; /* Added for mobile safety */
+        }
+
+        .auth-card {
+            background-color: var(--content-bg);
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn {
+            background-color: var(--accent-blue);
+            color: #1a1b2f;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .btn:hover {
+            background-color: #6ce0ff;
+            transform: translateY(-1px);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        input[type="text"], input[type="password"] {
+            color: #1a1b2f; 
+            border-radius: 6px;
+            padding: 12px;
+            background-color: #f8f9fa;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--accent-blue);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-card text-center">
+        <h1 class="text-3xl font-extrabold text-white mb-6">Crooms Connect</h1>
+        <!-- UPDATED HEADER -->
+        <p class="text-gray-400 mb-8" id="auth-header-text">Sign in using your username and password.</p>
+
+        <!-- Dynamic Message/Error Display -->
+        <div id="auth-message" class="mb-4 p-3 rounded-lg text-sm transition duration-300 hidden"></div>
+
+        <!-- Sign In Form -->
+        <form id="sign-in-form" class="space-y-4">
+            <div class="form-group">
+                <!-- NOW ASKING FOR USERNAME -->
+                <input type="text" id="signin-username" required class="w-full" placeholder="Username">
+            </div>
+            <div class="form-group">
+                <input type="password" id="signin-password" required class="w-full" placeholder="Password">
+            </div>
+            <button type="submit" id="signin-btn" class="btn w-full flex justify-center items-center space-x-2">
+                <span id="signin-text">Sign In</span>
+                <div id="signin-spinner" class="spinner hidden"></div>
+            </button>
+        </form>
+
+        <!-- Sign Up Form (Hidden by default) -->
+        <form id="sign-up-form" class="space-y-4 hidden">
+            <div class="form-group">
+                <!-- IMPORTANT: This input creates the 'username' in the 'profiles' table -->
+                <input type="text" id="signup-username" required class="w-full" placeholder="Choose a Unique Username (e.g., JSmith24)">
+            </div>
+            <!-- EMAIL FIELD REMOVED -->
+            <div class="form-group">
+                <input type="password" id="signup-password" required class="w-full" placeholder="Password (min. 6 characters)">
+            </div>
+            <button type="submit" id="signup-btn" class="btn w-full bg-accent-green hover:bg-green-400 flex justify-center items-center space-x-2">
+                <span id="signup-text">Sign Up</span>
+                <div id="signup-spinner" class="spinner hidden"></div>
+            </button>
+        </form>
+        
+        <p class="mt-6 text-sm">
+            <button id="toggle-auth-view" class="text-gray-400 hover:text-accent-blue transition">
+                Need an account? Sign Up
+            </button>
+        </p>
+    </div>
+
+    <script>
+        // =================================================================
+        // FIX APPLIED: Supabase Credentials have been inserted here!
+        // =================================================================
+        const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co'; 
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'; 
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+supabase.auth.getSession().then(({ data, error }) => {
+  if (error) {
+    console.error("Supabase session error:", error.message);
+    const authMessage = document.getElementById('auth-message');
+    if (authMessage) {
+      authMessage.textContent = "Supabase initialization failed: " + error.message;
+      authMessage.classList.remove('hidden');
+      authMessage.classList.add('bg-red-800', 'text-white');
+    }
+  }
+});
+
+        
+        // --- Configuration ---
+        const MAIN_APP_URL = 'index.html'; 
+        // --- NEW: Placeholder domain to allow username-only login ---
+        const PLACEHOLDER_DOMAIN = '@croomsconnect.local';
+
+        // --- DOM Elements ---
+        const signInForm = document.getElementById('sign-in-form');
+        const signUpForm = document.getElementById('sign-up-form');
+        const toggleAuthButton = document.getElementById('toggle-auth-view');
+        const authMessage = document.getElementById('auth-message');
+        const authHeaderText = document.getElementById('auth-header-text');
+        
+        // Spinner elements
+        const signInBtn = document.getElementById('signin-btn');
+        const signInText = document.getElementById('signin-text');
+        const signInSpinner = document.getElementById('signin-spinner');
+        const signUpBtn = document.getElementById('signup-btn');
+        const signUpText = document.getElementById('signup-text');
+        const signUpSpinner = document.getElementById('signup-spinner');
+
+
+        /* ========================================================================= */
+        /* 1. UTILITY FUNCTIONS                                                      */
+        /* ========================================================================= */
+        
+        const showLoading = (isSignUp) => {
+            if (isSignUp) {
+                signUpText.classList.add('hidden');
+                signUpSpinner.classList.remove('hidden');
+                signUpBtn.disabled = true;
+            } else {
+                signInText.classList.add('hidden');
+                signInSpinner.classList.remove('hidden');
+                signInBtn.disabled = true;
+            }
+        };
+
+        const hideLoading = (isSignUp) => {
+            if (isSignUp) {
+                signUpText.classList.remove('hidden');
+                signUpSpinner.classList.add('hidden');
+                signUpBtn.disabled = false;
+            } else {
+                signInText.classList.remove('hidden');
+                signInSpinner.classList.add('hidden');
+                signInBtn.disabled = false;
+            }
+        };
+
+        const displayMessage = (message, type = 'error') => {
+            authMessage.textContent = message;
+            authMessage.classList.remove('hidden', 'bg-red-800', 'bg-green-700');
+            if (type === 'error') {
+                authMessage.classList.add('bg-red-800', 'text-white');
+            } else {
+                authMessage.classList.add('bg-green-700', 'text-white');
+            }
+        };
+        
+        const clearMessage = () => {
+            authMessage.classList.add('hidden');
+        };
+
+        const toggleView = () => {
+            clearMessage();
+            if (signInForm.classList.contains('hidden')) {
+                // Currently on Sign Up, switch to Sign In
+                signInForm.classList.remove('hidden');
+                signUpForm.classList.add('hidden');
+                toggleAuthButton.textContent = "Need an account? Sign Up";
+                authHeaderText.textContent = "Sign in using your username and password."; // UPDATED
+            } else {
+                // Currently on Sign In, switch to Sign Up
+                signInForm.classList.add('hidden');
+                signUpForm.classList.remove('hidden');
+                toggleAuthButton.textContent = "Already have an account? Sign In";
+                authHeaderText.textContent = "Create your Crooms Connect profile.";
+            }
+        };
+
+
+        /* ========================================================================= */
+        /* 2. AUTHENTICATION LOGIC                                                   */
+        /* ========================================================================= */
+        
+        /**
+         * Checks for an existing session and redirects to the main app if found.
+         */
+        const checkSessionAndRedirect = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                if (session) {
+                    console.log("Active session found. Redirecting to main app.");
+                    window.location.href = MAIN_APP_URL;
+                }
+            } catch(e) {
+                // Suppress errors during initial check if keys are bad, wait for user input
+                console.error("Session check failed, likely due to placeholder keys.", e);
+            }
+        };
+
+
+        /**
+         * Handles the sign-in process using username (converted to dummy email).
+         */
+        const handleSignIn = async (e) => {
+            e.preventDefault();
+            clearMessage();
+            showLoading(false);
+
+            // Get username instead of email
+            const username = document.getElementById('signin-username').value.trim();
+            const password = document.getElementById('signin-password').value;
+            
+            // Convert the username into the dummy email format required by Supabase Auth
+            const email = username + PLACEHOLDER_DOMAIN;
+
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            
+            hideLoading(false);
+
+            if (error) {
+                console.error('Sign In Error:', error);
+                // Customize error message for username flow
+                displayMessage(error.message.includes('Invalid login credentials') 
+                    ? 'Invalid username or password.' 
+                    : error.message);
+            } else {
+                // Successful sign in, redirect to main app
+                window.location.href = MAIN_APP_URL;
+            }
+        };
+
+        /**
+         * Handles the sign-up process and profile creation.
+         */
+        const handleSignUp = async (e) => {
+            e.preventDefault();
+            clearMessage();
+            showLoading(true);
+
+            const username = document.getElementById('signup-username').value.trim();
+            const password = document.getElementById('signup-password').value;
+            
+            // Construct the dummy email address for Supabase Auth
+            const email = username + PLACEHOLDER_DOMAIN;
+            
+            // Basic client-side validation
+            if (username.length < 3) {
+                 displayMessage("Username must be at least 3 characters long.");
+                 hideLoading(true);
+                 return;
+            }
+            if (password.length < 6) {
+                 displayMessage("Password must be at least 6 characters long.");
+                 hideLoading(true);
+                 return;
+            }
+
+            // Step 1: Create the Auth User using the dummy email
+            const { data, error } = await supabase.auth.signUp({ 
+                email, 
+                password
+            });
+            
+            if (error) {
+                console.error('Sign Up Error:', error);
+                // If it's a "User already registered" error, it means the username is taken
+                displayMessage(error.message.includes('User already registered')
+                    ? 'This username is already taken. Please choose another.'
+                    : error.message);
+                hideLoading(true);
+                return;
+            }
+            
+            // Step 2: Create the user's profile in the 'profiles' table
+            if (data.user) {
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .insert([
+                        { id: data.user.id, username: username }
+                    ]);
+                
+                if (profileError) {
+                    console.error('Profile Creation Error:', profileError);
+                    displayMessage("Account created, but could not save your username. Please try logging in or contact support.", 'error');
+                    hideLoading(true);
+                    return; 
+                }
+            }
+
+            hideLoading(true);
+            
+            // Step 3: Handle redirection based on whether a session was created
+            if (data.session) {
+                // If the user is immediately signed in (e.g., email confirmation is off)
+                window.location.href = MAIN_APP_URL;
+            } else {
+                // If the user needs to manually sign in
+                toggleView(); // Switch back to login view
+                displayMessage("Success! Your account is created. Please sign in below.", 'success');
+                // Clear the sign up form fields
+                document.getElementById('signup-username').value = '';
+                document.getElementById('signup-password').value = '';
+            }
+        };
+
+
+        /* ========================================================================= */
+        /* 3. INITIALIZATION AND EVENT LISTENERS                                     */
+        /* ========================================================================= */
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if already signed in on page load
+            checkSessionAndRedirect(); 
+
+            // Event Listeners
+            signInForm.addEventListener('submit', handleSignIn);
+            signUpForm.addEventListener('submit', handleSignUp);
+            toggleAuthButton.addEventListener('click', toggleView);
+        });
+
+    </script>
+
+<script>
+  console.log("🔧 Supabase Auth Debug: Script loaded");
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    console.log("🔧 Supabase Auth Debug: DOM fully loaded");
+
+    const supabaseUrl = "https://jxxnfsydjrflnephmfjm.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
+
+    console.log("🔧 Supabase Auth Debug: Creating Supabase client");
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    const signInForm = document.getElementById("sign-in-form");
+    if (!signInForm) {
+      console.warn("⚠️ Supabase Auth Debug: Sign-in form not found");
+      return;
+    }
+
+    signInForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      console.log("🔧 Supabase Auth Debug: Sign-in form submitted");
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      console.log("🔧 Supabase Auth Debug: Attempting sign-in with email:", email);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        console.error("❌ Supabase Auth Debug: Sign-in error", error);
+        alert("Sign-in failed: " + error.message);
+      } else {
+        console.log("✅ Supabase Auth Debug: Sign-in successful", data);
+        alert("Sign-in successful!");
+        window.location.href = "fixed_crooms_connect_redirect_final_fixed_updated_authenticated.html";
+      }
+    });
+  });
+</script>
+
+</body>
+</html></div>
+  </section>
 
   <script>
     const supabase = supabase.createClient("https://jxxnfsydjrflnephmfjm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w");
 
-    async function loadUserAvatar() {
+    async function signIn() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return alert("Login failed: " + error.message);
+      alert("Login successful!");
+    }
+
+    async function signUp() {
+      const email = prompt("Enter your email:");
+      const password = prompt("Enter your password:");
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) return alert("Sign up failed: " + error.message);
+      alert("Sign up successful! Check your email to confirm.");
+    }
+
+    async function uploadProfilePicture() {
+      const file = document.getElementById('avatarInput').files[0];
+      if (!file) return alert("Please select a file.");
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) return alert("You must be logged in.");
+      const filePath = `${userId}/avatar.png`;
+      const { error: uploadError } = await supabase.storage
+        .from('profile-pictures')
+        .upload(filePath, file, { upsert: true });
+      if (uploadError) return alert("Upload failed: " + uploadError.message);
+      const { data: urlData } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(filePath);
+      const avatarUrl = urlData.publicUrl;
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ avatar_url: avatarUrl })
+        .eq('id', userId);
+      if (updateError) return alert("Failed to update profile: " + updateError.message);
+      alert("Profile picture updated!");
+      document.querySelectorAll('.user-avatar').forEach(img => {
+        img.src = avatarUrl;
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData?.user?.id;
       if (!userId) return;
-
       const { data, error } = await supabase
         .from('users')
         .select('avatar_url')
         .eq('id', userId)
         .single();
-
       if (error || !data?.avatar_url) return;
-
       document.querySelectorAll('.user-avatar').forEach(img => {
         img.src = data.avatar_url;
       });
-    }
-
-    document.addEventListener('DOMContentLoaded', loadUserAvatar);
+    });
   </script>
 </body>
 </html>
