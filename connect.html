@@ -1,67 +1,132 @@
 
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Crooms Connect - Chat</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const theme = localStorage.getItem("theme");
-  if (theme === "dark") {
-    document.documentElement.classList.add("dark");
-  } else {
-    document.documentElement.classList.remove("dark");
-  }
-});
-</script><style>
-.send-button {
-  background-color: var(--accent-blue, #4cc9f0);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
-  transition: transform 0.2s ease, background-color 0.3s ease;
-}
-.send-button:hover {
-  transform: scale(1.05);
-  background-color: #6ce0ff;
-}
-#chat-input {
-  font-family: 'Inter', sans-serif;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-#chat-input:focus {
-  outline: none;
-  border-color: var(--accent-blue, #4cc9f0);
-}
-</style></head>
-<body class="bg-gray-900 text-white font-sans">
-<div class="max-w-2xl mx-auto mt-10 p-6 bg-gray-800 rounded-lg shadow-lg">
-<h1 class="text-3xl font-bold mb-4 text-center">Crooms Connect Chat</h1>
-<div class="h-96 overflow-y-scroll bg-gray-700 p-4 rounded mb-4" id="chat-box"></div>
-<div class="flex space-x-2">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crooms Connect Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-bg: #1a1b2f;
+      --content-bg: #2b2d42;
+      --text-color: #f8f9fa;
+      --accent-blue: #4cc9f0;
+      --accent-green: #80ed99;
+      --radius: 12px;
+    }
+    body {
+      background-color: var(--primary-bg);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .chat-container {
+      max-width: 800px;
+      margin: 40px auto;
+      background-color: var(--content-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      height: 80vh;
+    }
+    .chat-header {
+      padding: 16px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      border-bottom: 1px solid #444;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    .chat-input {
+      border-top: 1px solid #444;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chat-input textarea {
+      flex: 1;
+      resize: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 1rem;
+      background-color: #f8f9fa;
+      color: #1a1b2f;
+    }
+    .chat-input button {
+      background-color: var(--accent-blue);
+      color: #1a1b2f;
+      font-weight: bold;
+      padding: 10px 16px;
+      border-radius: 8px;
+      transition: background-color 0.2s ease;
+    }
+    .chat-input button:hover {
+      background-color: #6ce0ff;
+    }
+    .message {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .message img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 12px;
+    }
+    .message-content {
+      background-color: #3a3b5a;
+      padding: 10px 14px;
+      border-radius: 10px;
+      max-width: 70%;
+    }
+    .message-content .username {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .message-content .timestamp {
+      font-size: 0.75rem;
+      color: #ccc;
+      margin-top: 4px;
+    }
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: var(--accent-green);
+      color: #1a1b2f;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: background-color 0.2s ease;
+    }
+    .back-button:hover {
+      background-color: #a0f0b0;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-button">← Back to Home</a>
+  <div class="chat-container">
+    <div class="chat-header">Crooms Connect Chat</div>
+    <div class="chat-messages" id="chat-box">
+      <!-- Messages will appear here -->
+    </div>
+    <div class="chat-input">
+      <textarea id="chat-input" rows="2" placeholder="Type your message..."></textarea>
+      <button id="send-button">Send</button>
+    </div>
+  </div>
 
-<div id="editor-toolbar" style="margin-bottom: 10px;">
-<button onclick="document.execCommand('bold')" title="Bold"><b>B</b></button>
-<button onclick="document.execCommand('italic')" title="Italic"><i>I</i></button>
-<button onclick="document.execCommand('underline')" title="Underline"><u>U</u></button>
-<select onchange="document.execCommand('fontName', false, this.value)">
-<option value="Arial">Arial</option>
-<option value="Courier New">Courier</option>
-<option value="Georgia">Georgia</option>
-<option value="Times New Roman">Times</option>
-</select>
-<input onchange="document.execCommand('foreColor', false, this.value)" title="Text Color" type="color"/>
-</div>
-<input class="flex-1 p-2 rounded bg-gray-600 text-white" id="chat-input" placeholder="Type your message..." type="text"/>
-<button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded" id="send-button">Send</button>
-</div>
-</div>
-<script type="module">
+  <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
@@ -70,6 +135,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const chatBox = document.getElementById('chat-box');
     const input = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-button');
+
+    function displayMessage(msg) {
+      const div = document.createElement('div');
+      div.className = 'message';
+      div.innerHTML = `
+        <img src="${msg.avatar_url || 'https://api.dicebear.com/6.x/thumbs/svg?seed=' + msg.username}" alt="avatar">
+        <div class="message-content">
+          <div class="username">${msg.username}</div>
+          <div class="text">${msg.message}</div>
+          <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+        </div>
+      `;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
     async function sendMessage() {
       const message = input.value.trim();
@@ -77,36 +158,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const { data: userData } = await supabase.auth.getUser();
       const user = userData?.user;
-
       if (!user) {
         alert('You must be logged in to send messages.');
         return;
       }
 
       const username = user.user_metadata?.username || user.email;
+      const avatar_url = user.user_metadata?.avatar_url || '';
 
-      const { error } = await supabase.from('messages').insert([
-        {
-          user_id: user.id,
-          username: username,
-          message: message,
-          timestamp: new Date().toISOString()
-        }
-      ]);
+      const { error } = await supabase.from('messages').insert([{
+        user_id: user.id,
+        username,
+        avatar_url,
+        message,
+        timestamp: new Date().toISOString()
+      }]);
 
-      if (error) {
-        console.error('Message send error:', error.message);
-      } else {
-        input.value = '';
-      }
-    }
-
-    function displayMessage(msg) {
-      const div = document.createElement('div');
-      div.className = "mb-2";
-      div.textContent = `${msg.username}: ${msg.message}`;
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
+      if (!error) input.value = '';
     }
 
     async function loadMessages() {
@@ -114,14 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .from('messages')
         .select('*')
         .order('timestamp', { ascending: true });
-
-      if (error) {
-        console.error('Error loading messages:', error.message);
-        return;
-      }
-
-      chatBox.innerHTML = '';
-      data.forEach(displayMessage);
+      if (data) data.forEach(displayMessage);
     }
 
     supabase
@@ -131,18 +192,23 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .subscribe();
 
-    document.getElementById('send-button').addEventListener('click', sendMessage);
-    document.addEventListener('DOMContentLoaded', loadMessages);
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadMessages();
+      const theme = localStorage.getItem('theme');
+      if (theme === 'light') {
+        document.documentElement.style.setProperty('--primary-bg', '#f8f9fa');
+        document.documentElement.style.setProperty('--content-bg', '#ffffff');
+        document.documentElement.style.setProperty('--text-color', '#1a1b2f');
+      }
+    });
   </script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("chat-input");
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      document.getElementById("send-button").click();
-    }
-  });
-});
-</script></body>
+</body>
 </html>
