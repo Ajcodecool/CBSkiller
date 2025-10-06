@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-
-<html><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Connect</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
-<style>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Connect</title>
+  <!-- For production, install Tailwind via npm/PostCSS/CLI! -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <style>
     :root {
       --primary-bg: #1a1b2f;
       --content-bg: #2b2d42;
@@ -110,387 +111,135 @@
     .back-button:hover {
       background-color: #a0f0b0;
     }
+    .message-bubble {
+      background-color: var(--content-bg);
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+    }
+    .mention {
+      color: var(--accent-blue);
+      font-weight: bold;
+    }
+    .timestamp {
+      font-size: 0.8em;
+      color: #aaa;
+      margin-left: 10px;
+    }
   </style>
-<style>
-.message-bubble {
-    background-color: var(--content-bg);
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 10px;
-    box-shadow: var(--shadow);
-}
-.mention {
-    color: var(--accent-blue);
-    font-weight: bold;
-}
-.timestamp {
-    font-size: 0.8em;
-    color: #aaa;
-    margin-left: 10px;
-}
-</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script></head><body>
+  <script>
+    // Simple theme handler
+    document.addEventListener("DOMContentLoaded", function() {
+      const theme = localStorage.getItem("theme");
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    });
+  </script>
+</head>
+<body>
 <a class="back-button" href="index.html">← Back to Home</a>
 <div class="chat-container">
-<div class="chat-header">Crooms Connect Chat</div>
-<div class="chat-messages" id="chat-box">
-<!-- Messages will appear here -->
+  <div class="chat-header">Crooms Connect Chat</div>
+  <div class="chat-messages" id="chat-box">
+    <!-- Messages will appear here -->
+  </div>
+  <div class="chat-input">
+    <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
+    <button id="send-button">Send</button>
+    <div id="typing-indicator" style="color: var(--accent-blue); margin-top: 5px; font-size: 0.9em;"></div>
+  </div>
 </div>
-<div class="chat-input">
-<textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
-<button id="send-button">Send</button>
-<div id="typing-indicator" style="color: var(--accent-blue); margin-top: 5px; font-size: 0.9em;"></div></div>
-</div>
-<script type="module">document.addEventListener("DOMContentLoaded", (function() {
+<!-- Supabase logic, single script, ES module -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+  const chatBox = document.getElementById('chat-box');
+  const input = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('send-button');
+  const typingIndicator = document.getElementById('typing-indicator');
 
-    const chatBox = document.getElementById('chat-box');
-    const input = document.getElementById('chat-input');
-    const sendBtn = document.getElementById('send-button');
-
-    function displayMessage(msg) {
-      const div = document.createElement('div');
-      div.className = 'message';
-      div.innerHTML = `
-        <img src="${msg.avatar_url || 'https://api.dicebear.com/6.x/thumbs/svg?seed=' + msg.username}" alt="avatar">
-        <div class="message-content">
-          <div class="username">${msg.username}</div>
-          <div class="text">${msg.message}</div>
-          <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>
-        </div>
-      `;
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    async function sendMessage() {
-      const message = input.value.trim();
-      if (!message) return;
-
-      const { data: userData } = await supabase.auth.getUser();
-      const user = userData?.user;
-      if (!user) {
-        alert('You must be logged in to send messages.');
-        return;
-      }
-
-      const username = user.user_metadata?.username || user.email;
-      const avatar_url = user.user_metadata?.avatar_url || '';
-
-      const { error } = await supabase.from('messages').insert([{
-        user_id: user.id,
-        username,
-        avatar_url,
-        message,
-        timestamp: new Date().toISOString()
-      }]);
-
-      if (!error) input.value = '';
-    }
-
-    async function loadMessages() {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .order('timestamp', { ascending: true });
-      if (data) data.forEach(displayMessage);
-    }
-
-    supabase
-      .channel('public:messages')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-        displayMessage(payload.new);
-      })
-      .subscribe();
-
-    sendBtn.addEventListener('click', sendMessage);
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      loadMessages();
-      const theme = localStorage.getItem('theme');
-      if (theme === 'light') {
-        document.documentElement.style.setProperty('--primary-bg', '#f8f9fa');
-        document.documentElement.style.setProperty('--content-bg', '#ffffff');
-        document.documentElement.style.setProperty('--text-color', '#1a1b2f');
-      }
-    });
-  
-});</script>
-<script>document.addEventListener("DOMContentLoaded", (function() {
-
-const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-const chatBox = document.getElementById('chat-box');
-const input = document.getElementById('chat-input');
-const sendBtn = document.getElementById('send-button');
-const typingIndicator = document.getElementById('typing-indicator');
-
-let currentUser = null;
-let lastMessageId = null;
-
-async function getUser() {
-    const { data: userData } = await supabase.auth.getUser();
-    currentUser = userData?.user;
-}
-
-function formatMessage(msg) {
+  // Display message utility
+  function displayMessage(msg) {
     const div = document.createElement('div');
-    div.className = 'message-bubble';
-    const timestamp = new Date(msg.timestamp).toLocaleTimeString();
-    let content = msg.message.replace(/@([a-zA-Z0-9_]+)/g, '<span class="mention">@$1</span>');
-    div.innerHTML = `<strong>${msg.username}</strong> <span class="timestamp">${timestamp}</span><br>${content}`;
-    return div;
-}
-
-async function sendMessage() {
-    const message = input.value.trim();
-    if (!message || !currentUser) return;
-
-    await supabase.from('messages').insert([
-        {
-            user_id: currentUser.id,
-            username: currentUser.user_metadata?.username || currentUser.email,
-            message: message,
-            timestamp: new Date().toISOString()
-        }
-    ]);
-    input.value = '';
-    typingIndicator.textContent = '';
-}
-
-async function loadMessages() {
-    const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .order('timestamp', { ascending: true });
-
-    if (error) {
-        console.error('Error loading messages:', error.message);
-        return;
-    }
-
-    chatBox.innerHTML = '';
-    data.forEach(msg => {
-        const div = formatMessage(msg);
-        chatBox.appendChild(div);
-    });
-}
-
-function pollMessages() {
-    loadMessages();
-    setTimeout(pollMessages, 2000);
-}
-
-input.addEventListener('input', () => {
-    if (input.value.trim()) {
-        typingIndicator.textContent = currentUser?.user_metadata?.username + ' is typing...';
-    } else {
-        typingIndicator.textContent = '';
-    }
-});
-
-input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-    }
-});
-
-sendBtn.addEventListener('click', sendMessage);
-
-document.addEventListener('DOMContentLoaded', async () => {
-    await getUser();
-    pollMessages();
-});
-
-});</script><script>document.addEventListener("DOMContentLoaded", (function() {
-
-document.getElementById("send-button").addEventListener("click", function () {
-    const message = document.getElementById("message-input").value;
-    if (message.trim()) {
-        console.log("Sending message:", message);
-    }
-});
-
-});</script><script>document.addEventListener("DOMContentLoaded", (function() {
-
-document.addEventListener("DOMContentLoaded", function () {
-  const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
-  const SUPABASE_KEY = "your-anon-key";
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  const sendButton = document.getElementById("send-button");
-  const messageInput = document.getElementById("message-input");
-
-  if (sendButton && messageInput) {
-    sendButton.addEventListener("click", async () => {
-      const message = messageInput.value.trim();
-      if (message !== "") {
-        const { data, error } = await supabase
-          .from("messages")
-          .insert([{ message: message, timestamp: new Date().toISOString() }]);
-
-        if (error) {
-          console.error("Supabase insert error:", error.message);
-        } else {
-          const chatBox = document.getElementById("chat-box");
-          if (chatBox) {
-            const messageElement = document.createElement("div");
-            messageElement.textContent = message + " (" + new Date().toLocaleTimeString() + ")";
-            chatBox.appendChild(messageElement);
-            chatBox.scrollTop = chatBox.scrollHeight;
-          }
-          messageInput.value = "";
-        }
-      }
-    });
-  }
-});
-
-});</script><script>document.addEventListener("DOMContentLoaded", (function() {
-
-document.addEventListener("DOMContentLoaded", function () {
-  const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  const sendButton = document.getElementById("send-button");
-  const messageInput = document.getElementById("message-input");
-  const chatBox = document.getElementById("chat-box");
-
-  async function loadMessages() {
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*")
-      .order("timestamp", { ascending: true });
-    if (error) {
-      console.error("Error loading messages:", error);
-      return;
-    }
-    chatBox.innerHTML = "";
-    data.forEach(msg => {
-      const msgDiv = document.createElement("div");
-      msgDiv.textContent = `[${new Date(msg.timestamp).toLocaleTimeString()}] ${msg.username}: ${msg.message}`;
-      chatBox.appendChild(msgDiv);
-    });
+    div.className = 'message';
+    div.innerHTML = `
+      <img src="${msg.avatar_url || 'https://api.dicebear.com/6.x/thumbs/svg?seed=' + msg.username}" alt="avatar">
+      <div class="message-content">
+        <div class="username">${msg.username}</div>
+        <div class="text">${msg.message.replace(/@([a-zA-Z0-9_]+)/g, '<span class="mention">@$1</span>')}</div>
+        <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+      </div>
+    `;
+    chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  sendButton?.addEventListener("click", async () => {
-    const message = messageInput?.value.trim();
+  async function sendMessage() {
+    const message = input.value.trim();
     if (!message) return;
-    const username = "Anonymous";
-    const { error } = await supabase
-      .from("messages")
-      .insert([{
-        username: username,
-        message: message,
-        timestamp: new Date().toISOString()
-      }]);
-    if (error) {
-      console.error("Error sending message:", error);
-    } else {
-      messageInput.value = "";
-      loadMessages();
+
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user;
+    if (!user) {
+      alert('You must be logged in to send messages.');
+      return;
     }
-  });
+    const username = user.user_metadata?.username || user.email;
+    const avatar_url = user.user_metadata?.avatar_url || '';
 
-  loadMessages();
-});
-
-});</script><script src="https://cdn.tailwindcss.com"></script><script>
-document.addEventListener("DOMContentLoaded", () => {
-  const theme = localStorage.getItem("theme");
-  if (theme === "dark") {
-    document.documentElement.classList.add("dark");
-  } else {
-    document.documentElement.classList.remove("dark");
+    const { error } = await supabase.from('messages').insert([{
+      user_id: user.id,
+      username,
+      avatar_url,
+      message,
+      timestamp: new Date().toISOString()
+    }]);
+    if (!error) input.value = '';
   }
-});
-</script><script type="module">document.addEventListener("DOMContentLoaded", (function() {
 
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-    const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const chatBox = document.getElementById('chat-box');
-    const input = document.getElementById('chat-input');
-
-    async function sendMessage() {
-      const message = input.value.trim();
-      if (!message) return;
-
-      const { data: userData } = await supabase.auth.getUser();
-      const user = userData?.user;
-
-      if (!user) {
-        alert('You must be logged in to send messages.');
-        return;
-      }
-
-      const username = user.user_metadata?.username || user.email;
-
-      const { error } = await supabase.from('messages').insert([
-        {
-          user_id: user.id,
-          username: username,
-          message: message,
-          timestamp: new Date().toISOString()
-        }
-      ]);
-
-      if (error) {
-        console.error('Message send error:', error.message);
-      } else {
-        input.value = '';
-      }
-    }
-
-    function displayMessage(msg) {
-      const div = document.createElement('div');
-      div.className = "mb-2";
-      div.textContent = `${msg.username}: ${msg.message}`;
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    async function loadMessages() {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .order('timestamp', { ascending: true });
-
-      if (error) {
-        console.error('Error loading messages:', error.message);
-        return;
-      }
-
+  async function loadMessages() {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .order('timestamp', { ascending: true });
+    if (data) {
       chatBox.innerHTML = '';
       data.forEach(displayMessage);
     }
+  }
 
-    supabase
-      .channel('public:messages')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-        displayMessage(payload.new);
-      })
-      .subscribe();
+  // Real-time updates
+  supabase
+    .channel('public:messages')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+      displayMessage(payload.new);
+    })
+    .subscribe();
 
-    document.getElementById('send-button').addEventListener('click', sendMessage);
-    document.addEventListener('DOMContentLoaded', loadMessages);
-  
-});</script></body></html>
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  input.addEventListener('input', () => {
+    if (input.value.trim()) {
+      typingIndicator.textContent = 'Typing...';
+    } else {
+      typingIndicator.textContent = '';
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', loadMessages);
+</script>
+</body>
+</html>
