@@ -6,7 +6,28 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Connect</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com">
+document.addEventListener('DOMContentLoaded', function () {
+  const sendButton = document.getElementById('send-button');
+  const messageInput = document.getElementById('message-input');
+  const chatBox = document.getElementById('chat-box');
+
+  if (sendButton && messageInput && chatBox) {
+    sendButton.addEventListener('click', function () {
+      const message = messageInput.value.trim();
+      if (message !== '') {
+        const timestamp = new Date().toLocaleTimeString();
+        const messageElement = document.createElement('div');
+        messageElement.className = 'chat-message';
+        messageElement.innerHTML = `<strong>You:</strong> ${message} <span class="timestamp">${timestamp}</span>`;
+        chatBox.appendChild(messageElement);
+        messageInput.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    });
+  }
+});
+</script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
 <style>
     :root {
