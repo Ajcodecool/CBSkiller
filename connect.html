@@ -38,6 +38,29 @@
       font-size: 1.5rem;
       font-weight: bold;
       border-bottom: 1px solid #444;
+      position: relative;
+    }
+    .user-info {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(44, 46, 72, 0.8);
+      padding: 6px 12px;
+      border-radius: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .user-info img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .user-info span {
+      font-weight: bold;
+      color: var(--accent-blue);
     }
     .chat-messages {
       flex: 1;
@@ -129,7 +152,6 @@
     }
   </style>
   <script>
-    // Simple theme handler
     document.addEventListener("DOMContentLoaded", function() {
       const theme = localStorage.getItem("theme");
       if (theme === "dark") {
@@ -143,7 +165,14 @@
 <body>
 <a class="back-button" href="index.html">← Back to Home</a>
 <div class="chat-container">
-  <div class="chat-header">Crooms Connect Chat</div>
+  <div class="chat-header">
+    Crooms Connect Chat
+    <div class="user-info" id="user-info">
+      <!-- Username and avatar will be injected here -->
+      <img src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous" alt="avatar">
+      <span>Anonymous</span>
+    </div>
+  </div>
   <div class="chat-messages" id="chat-box">
     <!-- Messages will appear here -->
   </div>
@@ -153,7 +182,6 @@
     <div id="typing-indicator" style="color: var(--accent-blue); margin-top: 5px; font-size: 0.9em;"></div>
   </div>
 </div>
-<!-- Supabase logic, single script, ES module -->
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
@@ -165,8 +193,30 @@
   const input = document.getElementById('chat-input');
   const sendBtn = document.getElementById('send-button');
   const typingIndicator = document.getElementById('typing-indicator');
+  const userInfoDiv = document.getElementById('user-info');
 
-  // Display message utility
+  let currentUser = null;
+
+  async function fetchAndDisplayUserInfo() {
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user;
+    currentUser = user;
+    let username, avatar_url;
+
+    if (user) {
+      username = user.user_metadata?.username || user.email || 'Anonymous';
+      avatar_url = user.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/thumbs/svg?seed=${username}`;
+    } else {
+      username = 'Anonymous';
+      avatar_url = 'https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous';
+    }
+
+    userInfoDiv.innerHTML = `
+      <img src="${avatar_url}" alt="avatar">
+      <span>${username}</span>
+    `;
+  }
+
   function displayMessage(msg) {
     const div = document.createElement('div');
     div.className = 'message';
@@ -186,17 +236,19 @@
     const message = input.value.trim();
     if (!message) return;
 
-    const { data: userData } = await supabase.auth.getUser();
-    const user = userData?.user;
-    if (!user) {
-      alert('You must be logged in to send messages.');
-      return;
+    let username, avatar_url, user_id;
+    if (currentUser) {
+      username = currentUser.user_metadata?.username || currentUser.email || 'Anonymous';
+      avatar_url = currentUser.user_metadata?.avatar_url || `https://api.dicebear.com/6.x/thumbs/svg?seed=${username}`;
+      user_id = currentUser.id;
+    } else {
+      username = 'Anonymous';
+      avatar_url = 'https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous';
+      user_id = null;
     }
-    const username = user.user_metadata?.username || user.email;
-    const avatar_url = user.user_metadata?.avatar_url || '';
 
     const { error } = await supabase.from('messages').insert([{
-      user_id: user.id,
+      user_id,
       username,
       avatar_url,
       message,
@@ -233,13 +285,23 @@
   });
   input.addEventListener('input', () => {
     if (input.value.trim()) {
-      typingIndicator.textContent = 'Typing...';
+      typingIndicator.textContent = currentUser
+        ? (currentUser.user_metadata?.username || currentUser.email || 'Anonymous') + ' is typing...'
+        : 'Anonymous is typing...';
     } else {
       typingIndicator.textContent = '';
     }
   });
 
-  document.addEventListener('DOMContentLoaded', loadMessages);
+  document.addEventListener('DOMContentLoaded', async () => {
+    await fetchAndDisplayUserInfo();
+    await loadMessages();
+  });
+
+  // Also refresh user info if auth state changes (e.g., after login/logout)
+  supabase.auth.onAuthStateChange((_event, _session) => {
+    fetchAndDisplayUserInfo();
+  });
 </script>
 </body>
 </html>
