@@ -321,5 +321,38 @@ document.getElementById("send-button").addEventListener("click", function () {
         console.log("Sending message:", message);
     }
 });
+</script><script>
+document.addEventListener("DOMContentLoaded", function () {
+  const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
+  const SUPABASE_KEY = "your-anon-key";
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const sendButton = document.getElementById("send-button");
+  const messageInput = document.getElementById("message-input");
+
+  if (sendButton && messageInput) {
+    sendButton.addEventListener("click", async () => {
+      const message = messageInput.value.trim();
+      if (message !== "") {
+        const { data, error } = await supabase
+          .from("messages")
+          .insert([{ message: message, timestamp: new Date().toISOString() }]);
+
+        if (error) {
+          console.error("Supabase insert error:", error.message);
+        } else {
+          const chatBox = document.getElementById("chat-box");
+          if (chatBox) {
+            const messageElement = document.createElement("div");
+            messageElement.textContent = message + " (" + new Date().toLocaleTimeString() + ")";
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+          }
+          messageInput.value = "";
+        }
+      }
+    });
+  }
+});
 </script></body>
 </html>
