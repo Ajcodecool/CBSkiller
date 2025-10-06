@@ -146,6 +146,19 @@
       color: #aaa;
       margin-left: 10px;
     }
+    .debug-log {
+      background: #222;
+      color: #c0ffb3;
+      font-size: 13px;
+      padding: 7px 10px;
+      margin: 0;
+      border-bottom: 1px solid #333;
+      overflow-x: auto;
+      font-family: monospace;
+      max-height: 140px;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body>
@@ -158,6 +171,7 @@
       <span id="user-name">Loading...</span>
     </div>
   </div>
+  <div id="debug" class="debug-log" style="display:none"></div>
   <div class="chat-messages" id="chat-box"></div>
   <div class="chat-input">
     <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
@@ -167,6 +181,16 @@
 </div>
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  // === DEBUG LOGGING FUNCTION ===
+  function debugLog(...args) {
+    const debugDiv = document.getElementById('debug');
+    debugDiv.style.display = '';
+    const text = args.map(a => (typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a))).join(' ');
+    debugDiv.textContent = `[${new Date().toLocaleTimeString()}] ` + text + "\n" + debugDiv.textContent;
+    // Also log in console for details
+    console.log('DEBUG:', ...args);
+  }
 
   const SUPABASE_URL = 'https://jxxnfsydjrflnephmfjm.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
@@ -193,22 +217,26 @@
   }
 
   async function updateGlobalAvatarAndName() {
-    const { data: authData } = await supabase.auth.getUser();
+    debugLog("updateGlobalAvatarAndName() called");
+    const { data: authData, error: authErr } = await supabase.auth.getUser();
+    debugLog("Auth data:", authData, "Auth error:", authErr);
     if (!authData?.user) {
       userInfoDiv.style.display = 'none';
+      debugLog("No authenticated user.");
       return;
     }
 
     const userId = authData.user.id;
-    const { data: profile } = await supabase
+    debugLog("Fetching profile for userId:", userId);
+    const { data: profile, error: profileErr } = await supabase
       .from("profiles")
       .select("username")
       .eq("id", userId)
       .single();
+    debugLog("Profile query:", profile, "Profile error:", profileErr);
 
     currentUser = authData.user;
     currentUsername = cleanUsername(profile?.username) || "Anonymous";
-    // DiceBear avatar for everyone
     userAvatarImg.src = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(currentUsername)}`;
     userNameSpan.textContent = currentUsername;
     userInfoDiv.style.display = 'flex';
@@ -245,47 +273,68 @@
   }
 
   async function sendMessage() {
+    debugLog("sendMessage() called");
     const message = input.value.trim();
-    if (!message || !currentUser) return;
+    if (!message || !currentUser) {
+      debugLog("No message to send or user not logged in.", {message, currentUser});
+      return;
+    }
 
-    // Get username from profiles table
-    const { data: profile } = await supabase
+    debugLog("Fetching username for sender:", currentUser.id);
+    const { data: profile, error: profileErr } = await supabase
       .from('profiles')
       .select('username')
       .eq('id', currentUser.id)
       .single();
+    debugLog("Profile result for send:", profile, profileErr);
 
     const username = cleanUsername(profile?.username) || 'Anonymous';
 
-    await supabase.from('messages').insert([{
+    const { data: insertData, error: insertErr } = await supabase.from('messages').insert([{
       user_id: currentUser.id,
       username,
       message,
       timestamp: new Date().toISOString()
     }]);
+    debugLog("Insert message:", insertData, insertErr);
+
+    if (insertErr) {
+      debugLog("Failed to insert message!", insertErr);
+      chatBox.innerHTML += `<div style="color:red;">Failed to send message: ${insertErr.message}</div>`;
+    }
 
     input.value = '';
     typingIndicator.textContent = '';
   }
 
   async function loadMessages() {
+    debugLog("loadMessages() called");
     const { data, error } = await supabase
       .from('messages')
       .select('user_id, username, message, timestamp')
       .order('timestamp', { ascending: true });
 
+    debugLog("Loaded messages:", data, error);
+
     chatBox.innerHTML = '';
     if (error) {
       chatBox.innerHTML = `<div style='color:red;'>Error loading messages: ${error.message}</div>`;
+      debugLog("Error loading messages", error);
       return;
+    }
+    if (!data || data.length === 0) {
+      chatBox.innerHTML = `<div style='color:#aaa;'>No messages yet.</div>`;
+      debugLog("No messages found in table.");
     }
     data.forEach(displayMessage);
   }
 
   function subscribeToMessages() {
+    debugLog("Subscribed to messages realtime channel.");
     supabase
       .channel('messages-channel')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        debugLog("New message payload:", payload);
         displayMessage(payload.new);
       })
       .subscribe();
@@ -304,6 +353,7 @@
   });
 
   document.addEventListener('DOMContentLoaded', async () => {
+    debugLog("DOMContentLoaded event fired");
     await updateGlobalAvatarAndName();
     await loadMessages();
     subscribeToMessages();
