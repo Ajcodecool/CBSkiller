@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>Connect</title>
+  <title>Connect Chat (Verified Badge Demo)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -119,6 +119,9 @@
     .message-content .username {
       font-weight: bold;
       margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
     .message-content .timestamp {
       font-size: 0.75rem;
@@ -148,6 +151,13 @@
       font-size: 0.8em;
       color: #aaa;
       margin-left: 10px;
+    }
+    .verified-badge {
+      width: 18px;
+      height: 18px;
+      margin-left: 2px;
+      vertical-align: middle;
+      display: inline-block;
     }
     .debug-log {
       background: #222;
@@ -179,6 +189,7 @@
     <div class="user-info" id="user-info" style="display: none;">
       <img id="user-avatar" src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous" alt="avatar">
       <span id="user-name">Loading...</span>
+      <img id="user-verified" src="verify.png" class="verified-badge" alt="verified" title="Verified" style="display:none;">
     </div>
   </div>
   <div id="debug" class="debug-log" style="display:none"></div>
@@ -188,7 +199,6 @@
   <div class="chat-input">
     <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
     <button id="send-button">Send</button>
-    <!-- Removed typing indicator -->
   </div>
 </div>
 <script type="module">
@@ -215,9 +225,11 @@
   const userInfoDiv = document.getElementById('user-info');
   const userAvatarImg = document.getElementById('user-avatar');
   const userNameSpan = document.getElementById('user-name');
+  const userVerifiedImg = document.getElementById('user-verified');
 
   let currentUser = null;
   let currentUsername = 'Anonymous';
+  let currentUserIsVerified = false;
 
   // Infinite scroll state
   const PAGE_SIZE = 20;
@@ -226,11 +238,28 @@
   let allOlderLoaded = false;
   let totalMessageCount = null; // We'll fetch this on first load
 
+  // --- CACHE FOR PROFILE VERIFICATION ---
+  const verifiedCache = {};
+
+  // Clean username helper
   function cleanUsername(name) {
     if (!name) return "Anonymous";
     if (typeof name !== 'string') return name;
-    // Always strip @croomsconnect.local at the end (case-insensitive)
     return name.replace(/@croomsconnect\.local$/i, '');
+  }
+
+  // Async check if a username is verified (with caching)
+  async function isUserVerified(username) {
+    if (verifiedCache.hasOwnProperty(username)) return verifiedCache[username];
+    // Query profiles for is_verified
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_verified')
+      .eq('username', username)
+      .single();
+    const verified = !!(data && data.is_verified);
+    verifiedCache[username] = verified;
+    return verified;
   }
 
   async function updateGlobalAvatarAndName() {
@@ -247,19 +276,21 @@
     debugLog("Fetching profile for userId:", userId);
     const { data: profile, error: profileErr } = await supabase
       .from("profiles")
-      .select("username")
+      .select("username, is_verified")
       .eq("id", userId)
       .single();
     debugLog("Profile query:", profile, "Profile error:", profileErr);
 
     currentUser = authData.user;
     currentUsername = cleanUsername(profile?.username) || "Anonymous";
+    currentUserIsVerified = !!profile?.is_verified;
     // Use custom avatar if present in user_metadata, else DiceBear
     const customAvatar = authData.user.user_metadata?.avatar_url;
     userAvatarImg.src = customAvatar && customAvatar.trim() !== ""
       ? customAvatar
       : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(currentUsername)}`;
     userNameSpan.textContent = currentUsername;
+    userVerifiedImg.style.display = currentUserIsVerified ? "" : "none";
     userInfoDiv.style.display = 'flex';
   }
 
@@ -274,41 +305,40 @@
     });
   }
 
-  function createMessageElement(msg) {
+  // async displayMessage to allow for verified badge lookup
+  async function displayMessage(msg) {
     const username = cleanUsername(msg.username) || "Anonymous";
-    // Use custom avatar if present in the message, else DiceBear
     const avatarSrc = msg.avatar_url && msg.avatar_url.trim() !== ""
       ? msg.avatar_url
       : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
     const div = document.createElement('div');
     div.className = 'message';
     div.dataset.userId = msg.user_id;
+
+    // Check verified status (async, cache)
+    const verified = await isUserVerified(msg.username);
+
     div.innerHTML = `
       <img src="${avatarSrc}" alt="avatar">
       <div class="message-content">
-        <div class="username">${username}</div>
+        <div class="username">
+          ${username}
+          ${verified ? `<img src="verify.png" class="verified-badge" alt="verified" title="Verified">` : ""}
+        </div>
         <div class="text">${cleanMessageMentions(msg.message)}</div>
         <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>
       </div>
     `;
-    return div;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  function renderMessages() {
-    // Renders all loaded messages (oldest at top)
-    let prevScrollHeight = chatBox.scrollHeight;
-    let prevScrollTop = chatBox.scrollTop;
+  // Render all messages (infinite scroll compatible)
+  async function renderMessages() {
     chatBox.innerHTML = '';
     chatBox.appendChild(loadingOlderDiv);
-    loadedMessages.forEach(msg => {
-      chatBox.appendChild(createMessageElement(msg));
-    });
-    if (!loadingOlder && loadedMessages.length > 0) {
-      if (prevScrollTop < 100) {
-        chatBox.scrollTop = chatBox.scrollHeight - prevScrollHeight + prevScrollTop;
-      } else {
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
+    for (const msg of loadedMessages) {
+      await displayMessage(msg);
     }
   }
 
@@ -335,7 +365,7 @@
 
     loadedMessages = data || [];
     if (loadedMessages.length < PAGE_SIZE) allOlderLoaded = true;
-    renderMessages();
+    await renderMessages();
     setTimeout(() => {
       chatBox.scrollTop = chatBox.scrollHeight;
     }, 0);
@@ -366,7 +396,7 @@
     if (data && data.length > 0) {
       loadedMessages = [...data, ...loadedMessages];
       if (data.length < PAGE_SIZE) allOlderLoaded = true;
-      renderMessages();
+      await renderMessages();
     } else {
       allOlderLoaded = true;
     }
@@ -391,7 +421,7 @@
     debugLog("Fetching username for sender:", currentUser.id);
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
-      .select('username')
+      .select('username, is_verified')
       .eq('id', currentUser.id)
       .single();
     debugLog("Profile result for send:", profile, profileErr);
@@ -414,19 +444,17 @@
     }
 
     input.value = '';
-    // No typing indicator to clear anymore
   }
 
   function subscribeToMessages() {
     debugLog("Subscribed to messages realtime channel.");
     supabase
       .channel('messages-channel')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async (payload) => {
         debugLog("New message payload:", payload);
-        // Only add if not already in loadedMessages (avoid duplicates)
         if (!loadedMessages.some(m => m.timestamp === payload.new.timestamp && m.user_id === payload.new.user_id)) {
           loadedMessages.push(payload.new);
-          renderMessages();
+          await renderMessages();
           setTimeout(() => {
             chatBox.scrollTop = chatBox.scrollHeight;
           }, 0);
@@ -444,8 +472,6 @@
     }
   });
 
-  // Typing indicator removed
-
   chatBox.addEventListener('scroll', handleScroll);
 
   document.addEventListener('DOMContentLoaded', async () => {
@@ -455,6 +481,22 @@
     subscribeToMessages();
     supabase.auth.onAuthStateChange(() => updateGlobalAvatarAndName());
   });
+
+  // --- DEMO: Make AJTech@croomsconnect.local verified if not already
+  (async function ensureAJTechVerified() {
+    // On first page load, ensure AJTech is verified (for demo purposes)
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_verified')
+      .eq('username', 'AJTech@croomsconnect.local')
+      .single();
+    if (!error && data && !data.is_verified) {
+      await supabase
+        .from('profiles')
+        .update({ is_verified: true })
+        .eq('username', 'AJTech@croomsconnect.local');
+    }
+  })();
 </script>
 </body>
 </html>
