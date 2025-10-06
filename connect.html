@@ -154,7 +154,7 @@
   <div class="chat-header">
     Crooms Connect Chat
     <div class="user-info" id="user-info" style="display: none;">
-      <img id="user-avatar" src="default-avatar.png" alt="avatar">
+      <img id="user-avatar" src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous" alt="avatar">
       <span id="user-name">Loading...</span>
     </div>
   </div>
@@ -181,16 +181,15 @@
   const userNameSpan = document.getElementById('user-name');
 
   let currentUser = null;
-  let currentAvatarUrl = 'default-avatar.png';
   let currentUsername = 'Anonymous';
 
-  function cleanUsername(nameOrEmail) {
-    if (!nameOrEmail) return "Anonymous";
-    if (typeof nameOrEmail !== 'string') return nameOrEmail;
-    if (nameOrEmail.toLowerCase().endsWith('@croomsconnect.local')) {
-      return nameOrEmail.slice(0, -'@croomsconnect.local'.length);
+  function cleanUsername(name) {
+    if (!name) return "Anonymous";
+    if (typeof name !== 'string') return name;
+    if (name.toLowerCase().endsWith('@croomsconnect.local')) {
+      return name.slice(0, -'@croomsconnect.local'.length);
     }
-    return nameOrEmail;
+    return name;
   }
 
   async function updateGlobalAvatarAndName() {
@@ -202,20 +201,15 @@
 
     const userId = authData.user.id;
     const { data: profile } = await supabase
-      .from("users")
-      .select("avatar_url, username, email")
+      .from("profiles")
+      .select("username")
       .eq("id", userId)
       .single();
 
     currentUser = authData.user;
-    // Clean username or email
-    currentUsername = cleanUsername(profile?.username) ||
-                      cleanUsername(authData.user.user_metadata?.username) ||
-                      cleanUsername(authData.user.email) ||
-                      "Anonymous";
-    currentAvatarUrl = profile?.avatar_url || authData.user.user_metadata?.avatar_url || "default-avatar.png";
-
-    userAvatarImg.src = currentAvatarUrl;
+    currentUsername = cleanUsername(profile?.username) || "Anonymous";
+    // DiceBear avatar for everyone
+    userAvatarImg.src = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(currentUsername)}`;
     userNameSpan.textContent = currentUsername;
     userInfoDiv.style.display = 'flex';
   }
@@ -232,14 +226,14 @@
   }
 
   function displayMessage(msg) {
-    // Clean the username everywhere it is shown
+    // Clean username everywhere it is shown
     const username = cleanUsername(msg.username) || "Anonymous";
-    const avatarSrc = msg.avatar_url || `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
+    const avatarSrc = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
     const div = document.createElement('div');
     div.className = 'message';
     div.dataset.userId = msg.user_id;
     div.innerHTML = `
-      <img src="${avatarSrc}" alt="avatar" onerror="this.onerror=null;this.src='default-avatar.png';">
+      <img src="${avatarSrc}" alt="avatar">
       <div class="message-content">
         <div class="username">${username}</div>
         <div class="text">${cleanMessageMentions(msg.message)}</div>
@@ -254,23 +248,18 @@
     const message = input.value.trim();
     if (!message || !currentUser) return;
 
+    // Get username from profiles table
     const { data: profile } = await supabase
-      .from('users')
-      .select('avatar_url, username, email')
+      .from('profiles')
+      .select('username')
       .eq('id', currentUser.id)
       .single();
 
-    const avatar_url = profile?.avatar_url || currentUser.user_metadata?.avatar_url || '';
-    // Clean username/email before sending
-    const username = cleanUsername(profile?.username) ||
-                     cleanUsername(currentUser.user_metadata?.username) ||
-                     cleanUsername(currentUser.email) ||
-                     'Anonymous';
+    const username = cleanUsername(profile?.username) || 'Anonymous';
 
     await supabase.from('messages').insert([{
       user_id: currentUser.id,
       username,
-      avatar_url,
       message,
       timestamp: new Date().toISOString()
     }]);
@@ -282,7 +271,7 @@
   async function loadMessages() {
     const { data, error } = await supabase
       .from('messages')
-      .select('user_id, username, avatar_url, message, timestamp') // <-- FIXED: removed email here
+      .select('user_id, username, message, timestamp')
       .order('timestamp', { ascending: true });
 
     chatBox.innerHTML = '';
@@ -298,19 +287,6 @@
       .channel('messages-channel')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         displayMessage(payload.new);
-      })
-      .subscribe();
-  }
-
-  function subscribeToAvatarChanges() {
-    supabase
-      .channel('users-channel')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users' }, (payload) => {
-        const userId = payload.new.id;
-        const newAvatar = payload.new.avatar_url;
-        document.querySelectorAll(`[data-user-id='${userId}'] img`).forEach(img => {
-          img.src = newAvatar;
-        });
       })
       .subscribe();
   }
@@ -331,7 +307,6 @@
     await updateGlobalAvatarAndName();
     await loadMessages();
     subscribeToMessages();
-    subscribeToAvatarChanges();
     supabase.auth.onAuthStateChange(() => updateGlobalAvatarAndName());
   });
 </script>
