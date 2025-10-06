@@ -134,7 +134,7 @@
 <body>
 <a class="back-button" href="index.html">← Back to Home</a>
 <div class="chat-container">
-<div class="chat-header">Connect</div>
+<div class="chat-header">Crooms Connect Chat</div>
 <div class="chat-messages" id="chat-box">
 <!-- Messages will appear here -->
 </div>
@@ -313,6 +313,13 @@ sendBtn.addEventListener('click', sendMessage);
 document.addEventListener('DOMContentLoaded', async () => {
     await getUser();
     pollMessages();
+});
+</script><script>
+document.getElementById("send-button").addEventListener("click", function () {
+    const message = document.getElementById("message-input").value;
+    if (message.trim()) {
+        console.log("Sending message:", message);
+    }
 });
 </script></body>
 </html>
