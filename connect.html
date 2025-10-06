@@ -185,10 +185,8 @@
   let currentUsername = 'Anonymous';
 
   function cleanUsername(nameOrEmail) {
-    // Remove @croomsconnect.local (case insensitive)
     if (!nameOrEmail) return "Anonymous";
     if (typeof nameOrEmail !== 'string') return nameOrEmail;
-    // If it looks like an email ending with @croomsconnect.local, strip that part
     if (nameOrEmail.toLowerCase().endsWith('@croomsconnect.local')) {
       return nameOrEmail.slice(0, -'@croomsconnect.local'.length);
     }
@@ -225,7 +223,6 @@
   function cleanMessageMentions(text) {
     // Replace any @username with @cleanUsername
     return text.replace(/@([a-zA-Z0-9_@.]+)/g, (match, mentionName) => {
-      // If mentionName ends with @croomsconnect.local, strip that part
       let clean = mentionName;
       if (clean.toLowerCase().endsWith('@croomsconnect.local')) {
         clean = clean.slice(0, -'@croomsconnect.local'.length);
@@ -236,7 +233,7 @@
 
   function displayMessage(msg) {
     // Clean the username everywhere it is shown
-    const username = cleanUsername(msg.username) || cleanUsername(msg.email) || "Anonymous";
+    const username = cleanUsername(msg.username) || "Anonymous";
     const avatarSrc = msg.avatar_url || `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
     const div = document.createElement('div');
     div.className = 'message';
@@ -285,7 +282,7 @@
   async function loadMessages() {
     const { data, error } = await supabase
       .from('messages')
-      .select('user_id, username, avatar_url, message, timestamp, email')
+      .select('user_id, username, avatar_url, message, timestamp') // <-- FIXED: removed email here
       .order('timestamp', { ascending: true });
 
     chatBox.innerHTML = '';
@@ -305,7 +302,6 @@
       .subscribe();
   }
 
-  // 🔁 Realtime avatar updates
   function subscribeToAvatarChanges() {
     supabase
       .channel('users-channel')
