@@ -128,7 +128,7 @@
     color: #aaa;
     margin-left: 10px;
 }
-</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script></head><body>
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script src="https://cdn.tailwindcss.com"></script></head><body>
 <a class="back-button" href="index.html">← Back to Home</a>
 <div class="chat-container">
 <div class="chat-header">Crooms Connect Chat</div>
@@ -483,41 +483,48 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener('DOMContentLoaded', loadMessages);
   </script><script>
 document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("message-input");
-  const typingIndicator = document.getElementById("typing-indicator");
-  const sendButton = document.getElementById("send-button");
-  const chatBox = document.getElementById("chat-box");
+    const input = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-button");
+    const chatBox = document.getElementById("chat-box");
+    const typingIndicator = document.getElementById("typing-indicator");
+    let replyTo = null;
 
-  let typingTimeout;
+    input?.addEventListener("input", () => {
+        typingIndicator.textContent = input.value ? "Someone is typing..." : "";
+    });
 
-  input?.addEventListener("input", () => {
-    if (input.value.trim() !== "") {
-      typingIndicator.style.display = "block";
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => {
-        typingIndicator.style.display = "none";
-      }, 2000);
-    } else {
-      typingIndicator.style.display = "none";
-    }
-  });
+    sendBtn?.addEventListener("click", () => {
+        const message = input.value.trim();
+        if (!message) return;
 
-  // Add reply functionality
-  chatBox?.addEventListener("click", (e) => {
-    if (e.target.classList.contains("reply-button")) {
-      const messageText = e.target.closest(".message")?.querySelector(".message-text")?.textContent;
-      if (messageText) {
-        input.value = `> ${messageText}\n`;
-        input.focus();
-      }
-    }
-  });
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "mb-2";
 
-  // Add tagging functionality
-  sendButton?.addEventListener("click", () => {
-    const message = input.value;
-    const tagged = message.replace(/@\w+@croomsconnect\.local/g, (match) => match.replace("@croomsconnect.local", ""));
-    input.value = tagged;
-  });
+        const timestamp = new Date().toLocaleTimeString();
+        const username = "user@croomsconnect.local".replace("@croomsconnect.local", "");
+
+        let content = `<span class='text-sm text-gray-500'>[${timestamp}]</span> <strong>${username}</strong>: `;
+        if (replyTo) {
+            content += `<div class='ml-4 p-2 border-l-4 border-blue-400 text-sm text-gray-600'>Replying to: ${replyTo}</div>`;
+            replyTo = null;
+        }
+        content += message;
+
+        const replyBtn = document.createElement("button");
+        replyBtn.textContent = "Reply";
+        replyBtn.className = "ml-2 text-blue-500 text-xs";
+        replyBtn.onclick = () => {
+            replyTo = message;
+            input.focus();
+        };
+
+        messageDiv.innerHTML = content;
+        messageDiv.appendChild(replyBtn);
+        chatBox.appendChild(messageDiv);
+
+        input.value = "";
+        typingIndicator.textContent = "";
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
 });
 </script></body></html>
