@@ -1738,5 +1738,53 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 });
 </script>
+<script>
+// This script fetches the authenticated user's profile from the Supabase users table
+// and updates the avatar everywhere on the page, ensuring global consistency.
+
+// Configure Supabase client
+const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Utility to update all avatar images and username text on page
+async function updateGlobalAvatar() {
+  // Get authenticated user info
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user) {
+    console.warn("Not logged in or unable to fetch user.");
+    return;
+  }
+  const userId = authData.user.id;
+  // Get latest avatar_url from users table
+  const { data: profile, error: profileError } = await supabase
+    .from("users")
+    .select("avatar_url, username, email")
+    .eq("id", userId)
+    .single();
+
+  // Fallbacks
+  const username = profile?.username || authData.user.user_metadata?.username || authData.user.email || "Anonymous";
+  const avatarUrl = profile?.avatar_url || authData.user.user_metadata?.avatar_url || "default-avatar.png";
+
+  // Update all avatar display elements
+  document.querySelectorAll("#user-avatar, .user-profile-picture, #modal-avatar").forEach(img => {
+    img.src = avatarUrl;
+  });
+  // Update all username display elements
+  document.querySelectorAll("#user-name, #modal-username").forEach(el => {
+    el.textContent = `Hello, ${username}`;
+  });
+  // Show user info box if present
+  const userInfoDiv = document.getElementById("user-info");
+  if (userInfoDiv) userInfoDiv.style.display = "flex";
+}
+
+// Call this on page load and after avatar/profile update
+document.addEventListener("DOMContentLoaded", updateGlobalAvatar);
+
+// If you have an avatar upload/update workflow elsewhere,
+// after saving to Supabase, also call updateGlobalAvatar() to refresh the UI.
+</script>
 </body>
 </html>
