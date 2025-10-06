@@ -210,10 +210,8 @@
   function cleanUsername(name) {
     if (!name) return "Anonymous";
     if (typeof name !== 'string') return name;
-    if (name.toLowerCase().endsWith('@croomsconnect.local')) {
-      return name.slice(0, -'@croomsconnect.local'.length);
-    }
-    return name;
+    // Always strip @croomsconnect.local at the end (case-insensitive)
+    return name.replace(/@croomsconnect\.local$/i, '');
   }
 
   async function updateGlobalAvatarAndName() {
