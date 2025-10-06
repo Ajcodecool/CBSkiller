@@ -481,4 +481,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('send-button').addEventListener('click', sendMessage);
     document.addEventListener('DOMContentLoaded', loadMessages);
-  </script></body></html>
+  </script><script>
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("message-input");
+  const typingIndicator = document.getElementById("typing-indicator");
+  const sendButton = document.getElementById("send-button");
+  const chatBox = document.getElementById("chat-box");
+
+  let typingTimeout;
+
+  input?.addEventListener("input", () => {
+    if (input.value.trim() !== "") {
+      typingIndicator.style.display = "block";
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+        typingIndicator.style.display = "none";
+      }, 2000);
+    } else {
+      typingIndicator.style.display = "none";
+    }
+  });
+
+  // Add reply functionality
+  chatBox?.addEventListener("click", (e) => {
+    if (e.target.classList.contains("reply-button")) {
+      const messageText = e.target.closest(".message")?.querySelector(".message-text")?.textContent;
+      if (messageText) {
+        input.value = `> ${messageText}\n`;
+        input.focus();
+      }
+    }
+  });
+
+  // Add tagging functionality
+  sendButton?.addEventListener("click", () => {
+    const message = input.value;
+    const tagged = message.replace(/@\w+@croomsconnect\.local/g, (match) => match.replace("@croomsconnect.local", ""));
+    input.value = tagged;
+  });
+});
+</script></body></html>
