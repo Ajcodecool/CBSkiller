@@ -8,6 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
+  <a href="index.html" class="inline-block mt-6 ml-6 px-4 py-2 bg-green-500 text-white rounded shadow hover:bg-green-600">← Back to Home</a>
   <div class="max-w-xl mx-auto mt-10 p-6 bg-white rounded shadow">
     <h1 class="text-2xl font-bold mb-4">Account Settings</h1>
     <div class="mb-4">
@@ -21,39 +22,28 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
-      console.log("✅ DOM fully loaded");
-
+      // Supabase setup
       const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
       const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
-      console.log("🔧 Creating Supabase client...");
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      console.log("🔍 Checking session...");
-      try {
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        console.log("📦 Session data:", sessionData);
-        console.log("⚠️ Session error:", sessionError);
-        if (!sessionData.session) {
-          console.warn("🔒 No active session found. Redirecting to auth.html...");
-          window.location.href = "auth.html";
-          return;
-        }
-        console.log("✅ User is signed in.");
-      } catch (err) {
-        console.error("❌ Error checking session:", err);
+      // Auth/session check
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (!sessionData?.session?.user) {
         window.location.href = "auth.html";
         return;
       }
+      const user = sessionData.session.user;
 
       const fileInput = document.getElementById("profile-pic");
       const preview = document.getElementById("preview");
       const uploadBtn = document.getElementById("upload-btn");
       const status = document.getElementById("status");
 
+      // Show preview when file selected
       fileInput.addEventListener("change", () => {
         const file = fileInput.files[0];
         if (file) {
-          console.log("📁 File selected:", file.name);
           const reader = new FileReader();
           reader.onload = (e) => {
             preview.src = e.target.result;
@@ -70,20 +60,51 @@
           return;
         }
 
-        const fileName = `profile-${Date.now()}-${file.name}`;
-        console.log("🚀 Uploading file:", fileName);
+        status.textContent = "Uploading...";
+        uploadBtn.disabled = true;
 
-        const { data, error } = await supabase.storage
+        // Upload to Supabase Storage bucket "profile-pictures"
+        const fileName = `profile-${user.id}-${Date.now()}-${file.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from("profile-pictures")
-          .upload(fileName, file);
+          .upload(fileName, file, { upsert: true });
 
-        if (error) {
-          console.error("❌ Upload error:", error.message);
-          status.textContent = "Upload failed: " + error.message;
-        } else {
-          console.log("✅ Upload successful:", data);
-          status.textContent = "Upload successful!";
+        if (uploadError) {
+          status.textContent = "Upload failed: " + uploadError.message;
+          uploadBtn.disabled = false;
+          return;
         }
+
+        // Get public URL
+        const { data: publicUrlData, error: publicUrlError } = await supabase.storage
+          .from("profile-pictures")
+          .getPublicUrl(fileName);
+
+        if (publicUrlError || !publicUrlData?.publicUrl) {
+          status.textContent = "Could not get public URL.";
+          uploadBtn.disabled = false;
+          return;
+        }
+
+        const publicUrl = publicUrlData.publicUrl;
+
+        // Update avatar_url in users table (optional, if you have such a table)
+        let updateProfileMsg = "";
+        if (user.id) {
+          const { error: updateError } = await supabase
+            .from("users")
+            .update({ avatar_url: publicUrl })
+            .eq("id", user.id);
+          if (updateError) {
+            updateProfileMsg = " (Could not update your profile: " + updateError.message + ")";
+          }
+        }
+
+        // Update preview and status
+        preview.src = publicUrl;
+        preview.classList.remove("hidden");
+        status.textContent = "Avatar uploaded successfully!" + (updateProfileMsg ? updateProfileMsg : "");
+        uploadBtn.disabled = false;
       });
     });
   </script>
