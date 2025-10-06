@@ -1,203 +1,310 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Account Settings</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet"/><script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script><style>
-    .container {
-      max-width: 500px;
-      margin: auto;
-      text-align: center;
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Connect</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    :root {
+      --primary-bg: #1a1b2f;
+      --content-bg: #2b2d42;
+      --text-color: #f8f9fa;
+      --accent-blue: #4cc9f0;
+      --accent-green: #80ed99;
+      --radius: 12px;
     }
-    .cropper-container {
-      width: 300px;
-      height: 300px;
-      margin: 20px auto;
+    body {
+      background-color: var(--primary-bg);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .chat-container {
+      max-width: 800px;
+      margin: 40px auto;
+      background-color: var(--content-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      height: 80vh;
+      position: relative;
+    }
+    .chat-header {
+      padding: 16px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      border-bottom: 1px solid #444;
+      position: relative;
+    }
+    .user-info {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(44, 46, 72, 0.8);
+      padding: 6px 12px;
+      border-radius: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+    .user-info img {
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-      overflow: hidden;
-      border: 2px solid #ccc;
+      object-fit: cover;
     }
-    #preview {
-      max-width: 100%;
+    .user-info span {
+      font-weight: bold;
+      color: var(--accent-blue);
     }
-    .btn {
-      margin-top: 10px;
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
     }
-    </style></head>
-<body class="bg-gray-100 text-gray-800">
-<a class="inline-block mt-6 ml-6 px-4 py-2 bg-green-500 text-white rounded shadow hover:bg-green-600" href="index.html">← Back to Home</a>
-<div class="max-w-xl mx-auto mt-10 p-6 bg-white rounded shadow">
-<h1 class="text-2xl font-bold mb-4">Account Settings</h1>
-<div class="mb-4">
-<label class="block font-medium mb-2" for="profile-pic">Upload Profile Picture</label>
-<input accept="image/*" class="mb-2" id="profile-pic" type="file"/>
-<img alt="Preview" class="w-32 h-32 object-cover rounded-full border border-gray-300 hidden" id="preview" src=""/>
+    .chat-input {
+      border-top: 1px solid #444;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chat-input textarea {
+      flex: 1;
+      resize: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 1rem;
+      background-color: #f8f9fa;
+      color: #1a1b2f;
+    }
+    .chat-input button {
+      background-color: var(--accent-blue);
+      color: #1a1b2f;
+      font-weight: bold;
+      padding: 10px 16px;
+      border-radius: 8px;
+      transition: background-color 0.2s ease;
+    }
+    .chat-input button:hover {
+      background-color: #6ce0ff;
+    }
+    .message {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .message img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 12px;
+    }
+    .message-content {
+      background-color: #3a3b5a;
+      padding: 10px 14px;
+      border-radius: 10px;
+      max-width: 70%;
+    }
+    .message-content .username {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .message-content .timestamp {
+      font-size: 0.75rem;
+      color: #ccc;
+      margin-top: 4px;
+    }
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: var(--accent-green);
+      color: #1a1b2f;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: background-color 0.2s ease;
+      z-index: 20;
+    }
+    .back-button:hover {
+      background-color: #a0f0b0;
+    }
+    .mention {
+      color: var(--accent-blue);
+      font-weight: bold;
+    }
+    .timestamp {
+      font-size: 0.8em;
+      color: #aaa;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+<a class="back-button" href="index.html">← Back to Home</a>
+<div class="chat-container">
+  <div class="chat-header">
+    Crooms Connect Chat
+    <div class="user-info" id="user-info" style="display: none;">
+      <img id="user-avatar" src="default-avatar.png" alt="avatar">
+      <span id="user-name">Loading...</span>
+    </div>
+  </div>
+  <div class="chat-messages" id="chat-box"></div>
+  <div class="chat-input">
+    <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
+    <button id="send-button">Send</button>
+    <div id="typing-indicator" style="color: var(--accent-blue); margin-top: 5px; font-size: 0.9em;"></div>
+  </div>
 </div>
-<button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" id="upload-btn">Upload</button>
-<p class="mt-4 text-sm text-gray-600" id="status"></p>
-</div>
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-  const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  const fileInput = document.getElementById("profile-pic");
-  const preview = document.getElementById("preview");
-  const uploadBtn = document.getElementById("upload-btn");
-  const status = document.getElementById("status");
+  const SUPABASE_URL = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const { data: sessionData } = await supabase.auth.getSession();
-  if (!sessionData?.session?.user) {
-    window.location.href = "auth.html";
-    return;
-  }
-  const user = sessionData.session.user;
+  const chatBox = document.getElementById('chat-box');
+  const input = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('send-button');
+  const typingIndicator = document.getElementById('typing-indicator');
+  const userInfoDiv = document.getElementById('user-info');
+  const userAvatarImg = document.getElementById('user-avatar');
+  const userNameSpan = document.getElementById('user-name');
 
-  const { data: userData } = await supabase
-    .from("users")
-    .select("avatar_url")
-    .eq("id", user.id)
-    .single();
+  let currentUser = null;
+  let currentAvatarUrl = 'default-avatar.png';
+  let currentUsername = 'Anonymous';
 
-  if (userData?.avatar_url) {
-    preview.src = userData.avatar_url;
-    preview.classList.remove("hidden");
-  }
-
-  fileInput.addEventListener("change", () => {
-    const file = fileInput.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        preview.src = e.target.result;
-        preview.classList.remove("hidden");
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-
-  uploadBtn.addEventListener("click", async () => {
-    const file = fileInput.files[0];
-    if (!file) return alert("Please select a file first.");
-    if (!file.type.startsWith("image/")) return alert("Only image files are allowed.");
-    if (file.size > 5 * 1024 * 1024) return alert("File too large (max 5 MB).");
-
-    uploadBtn.disabled = true;
-    uploadBtn.textContent = "Uploading...";
-    status.textContent = "Uploading...";
-
-    const fileName = `profile-${user.id}-${Date.now()}-${file.name}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("profile-pictures")
-      .upload(fileName, file, { upsert: true });
-
-    if (uploadError) {
-      status.textContent = "Upload failed: " + uploadError.message;
-      uploadBtn.disabled = false;
-      uploadBtn.textContent = "Upload";
+  async function updateGlobalAvatarAndName() {
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData?.user) {
+      userInfoDiv.style.display = 'none';
       return;
     }
 
-    const { data: publicUrlData } = await supabase.storage
-      .from("profile-pictures")
-      .getPublicUrl(fileName);
-
-    const publicUrl = publicUrlData?.publicUrl;
-    if (!publicUrl) {
-      status.textContent = "Could not retrieve image URL.";
-      uploadBtn.disabled = false;
-      uploadBtn.textContent = "Upload";
-      return;
-    }
-
-    const { error: updateError } = await supabase
+    const userId = authData.user.id;
+    const { data: profile } = await supabase
       .from("users")
-      .update({ avatar_url: publicUrl })
-      .eq("id", user.id);
+      .select("avatar_url, username, email")
+      .eq("id", userId)
+      .single();
 
-    await supabase.auth.updateUser({
-      data: { avatar_url: publicUrl }
-    });
+    currentUser = authData.user;
+    currentUsername = profile?.username || authData.user.user_metadata?.username || authData.user.email || "Anonymous";
+    currentAvatarUrl = profile?.avatar_url || authData.user.user_metadata?.avatar_url || "default-avatar.png";
 
-    if (updateError) {
-      status.textContent = "Upload succeeded, but failed to save to profile: " + updateError.message;
-    } else {
-      status.textContent = "Profile picture updated successfully!";
+    userAvatarImg.src = currentAvatarUrl;
+    userNameSpan.textContent = currentUsername;
+    userInfoDiv.style.display = 'flex';
+  }
+
+  function displayMessage(msg) {
+    const avatarSrc = msg.avatar_url || `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(msg.username)}`;
+    const div = document.createElement('div');
+    div.className = 'message';
+    div.dataset.userId = msg.user_id;
+    div.innerHTML = `
+      <img src="${avatarSrc}" alt="avatar" onerror="this.onerror=null;this.src='default-avatar.png';">
+      <div class="message-content">
+        <div class="username">${msg.username}</div>
+        <div class="text">${msg.message.replace(/@([a-zA-Z0-9_]+)/g, '<span class="mention">@$1</span>')}</div>
+        <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+      </div>
+    `;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  async function sendMessage() {
+    const message = input.value.trim();
+    if (!message || !currentUser) return;
+
+    const { data: profile } = await supabase
+      .from('users')
+      .select('avatar_url, username, email')
+      .eq('id', currentUser.id)
+      .single();
+
+    const avatar_url = profile?.avatar_url || currentUser.user_metadata?.avatar_url || '';
+    const username = profile?.username || currentUser.user_metadata?.username || currentUser.email || 'Anonymous';
+
+    await supabase.from('messages').insert([{
+      user_id: currentUser.id,
+      username,
+      avatar_url,
+      message,
+      timestamp: new Date().toISOString()
+    }]);
+
+    input.value = '';
+    typingIndicator.textContent = '';
+  }
+
+  async function loadMessages() {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('user_id, username, avatar_url, message, timestamp')
+      .order('timestamp', { ascending: true });
+
+    chatBox.innerHTML = '';
+    if (error) {
+      chatBox.innerHTML = `<div style='color:red;'>Error loading messages: ${error.message}</div>`;
+      return;
     }
+    data.forEach(displayMessage);
+  }
 
-    preview.src = publicUrl;
-    preview.classList.remove("hidden");
+  function subscribeToMessages() {
+    supabase
+      .channel('messages-channel')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        displayMessage(payload.new);
+      })
+      .subscribe();
+  }
 
-    uploadBtn.disabled = false;
-    uploadBtn.textContent = "Upload";
+  // 🔁 Realtime avatar updates
+  function subscribeToAvatarChanges() {
+    supabase
+      .channel('users-channel')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users' }, (payload) => {
+        const userId = payload.new.id;
+        const newAvatar = payload.new.avatar_url;
+        document.querySelectorAll(`[data-user-id='${userId}'] img`).forEach(img => {
+          img.src = newAvatar;
+        });
+      })
+      .subscribe();
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   });
 
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (!session) window.location.href = "auth.html";
+  input.addEventListener('input', () => {
+    typingIndicator.textContent = input.value.trim() ? `${currentUsername} is typing...` : '';
   });
-});
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    await updateGlobalAvatarAndName();
+    await loadMessages();
+    subscribeToMessages();
+    subscribeToAvatarChanges();
+    supabase.auth.onAuthStateChange(() => updateGlobalAvatarAndName());
+  });
 </script>
-<div class="container"><h2>Account Settings</h2><a href="index.html">← Back to Home</a><h3>Upload Profile Picture</h3><input accept="image/*" id="fileInput" type="file"/><div class="cropper-container"><img alt="Image Preview" id="preview" src=""/></div><button class="btn" id="uploadBtn">Save / Upload</button></div><script>
-    const fileInput = document.getElementById('fileInput');
-    const preview = document.getElementById('preview');
-    const uploadBtn = document.getElementById('uploadBtn');
-    let cropper;
-
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const url = URL.createObjectURL(file);
-        preview.src = url;
-
-        preview.onload = () => {
-          if (cropper) cropper.destroy();
-          cropper = new Cropper(preview, {
-            aspectRatio: 1,
-            viewMode: 1,
-            dragMode: 'move',
-            background: false,
-            guides: false,
-            autoCropArea: 1,
-            cropBoxResizable: false,
-            cropBoxMovable: false,
-            ready() {
-              const cropBox = document.querySelector('.cropper-crop-box');
-              if (cropBox) cropBox.style.borderRadius = '50%';
-            }
-          });
-        };
-      }
-    });
-
-    uploadBtn.addEventListener('click', () => {
-      if (cropper) {
-        const canvas = cropper.getCroppedCanvas({
-          width: 300,
-          height: 300,
-          imageSmoothingQuality: 'high'
-        });
-
-        canvas.toBlob((blob) => {
-          const formData = new FormData();
-          formData.append('avatar', blob, 'avatar.png');
-
-          fetch('/upload-avatar', {
-            method: 'POST',
-            body: formData
-          }).then(response => {
-            if (response.ok) {
-              alert('Avatar uploaded successfully!');
-            } else {
-              alert('Upload failed.');
-            }
-          });
-        });
-      }
-    });
-    </script></body>
+</body>
 </html>
