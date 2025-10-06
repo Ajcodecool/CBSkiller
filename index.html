@@ -494,7 +494,7 @@ margin: 0;
 font-size: 14px;
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script>
+<script>
 document.addEventListener("DOMContentLoaded", async () => {
   const { createClient } = supabase;
   const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
@@ -507,7 +507,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 </script></head>
-<body id="app-body"><img alt="Profile Picture" class="user-profile-picture" style="width:64px;height:64px;border-radius:50%;"/><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script>
+<body id="app-body"><img alt="Profile Picture" class="user-profile-picture" style="width:64px;height:64px;border-radius:50%;"/><script>
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("✅ DOM fully loaded");
 
@@ -1623,8 +1623,7 @@ if (reminderForm) reminderForm.addEventListener('submit', handleReminderSubmit);
 const supabase = supabase.createClient(
   'https://jxxnfsydjrflnephmfjm.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
-);
-</script>
+);</script>
 <!-- User Info Modal -->
 <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50" id="userModal">
 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-80 transform transition-all scale-95 opacity-0 duration-300" id="userModalContent">
@@ -1675,8 +1674,7 @@ function closeUserModal() {
 const supabase = supabase.createClient(
   'https://jxxnfsydjrflnephmfjm.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
-);
-</script>
+);</script>
 <!-- Profile Modal -->
 <div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" id="profileModal">
 <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-80 text-center transform transition-all scale-95 opacity-0" id="modalContent">
@@ -1736,8 +1734,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelectorAll(".user-profile-picture").forEach(img => {
     img.src = data.publicUrl;
   });
-});
-</script>
+});</script>
 <script>
 // This script fetches the authenticated user's profile from the Supabase users table
 // and updates the avatar everywhere on the page, ensuring global consistency.
@@ -1784,7 +1781,6 @@ async function updateGlobalAvatar() {
 document.addEventListener("DOMContentLoaded", updateGlobalAvatar);
 
 // If you have an avatar upload/update workflow elsewhere,
-// after saving to Supabase, also call updateGlobalAvatar() to refresh the UI.
-</script>
+// after saving to Supabase, also call updateGlobalAvatar() to refresh the UI.</script>
 </body>
 </html>
