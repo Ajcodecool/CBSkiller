@@ -149,9 +149,10 @@
 
   // Load all users from the profiles table
   async function loadUsers() {
+    // Only use the profiles table, do NOT use the admin API!
     let { data, error } = await supabase
       .from('profiles')
-      .select('id, username, is_verified')
+      .select('id, username, is_verified, email, avatar_url')
       .order('username', { ascending: true });
 
     if (error) {
@@ -159,26 +160,13 @@
       return;
     }
 
-    // Get emails and avatars from auth (fetch all users)
-    let { data: users, error: err2 } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    if (err2) {
-      showMessage("Failed to fetch emails/avatars: " + err2.message, 'error');
-      users = { users: [] };
-    }
-    let userEmailMap = {};
-    let userAvatarMap = {};
-    for (const u of users.users) {
-      userEmailMap[u.id] = u.email;
-      userAvatarMap[u.id] = u.user_metadata?.avatar_url || "";
-    }
-
     // Render user table
     const userList = document.getElementById('user-list');
     userList.innerHTML = '';
     for (const user of data) {
-      const email = userEmailMap[user.id] || "(not found)";
-      const avatar = userAvatarMap[user.id]
-        ? userAvatarMap[user.id]
+      const email = user.email ? user.email : "(not set)";
+      const avatar = user.avatar_url
+        ? user.avatar_url
         : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(cleanUsername(user.username))}`;
       const isVerified = user.is_verified;
 
