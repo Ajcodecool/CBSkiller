@@ -140,9 +140,9 @@
 <button id="send-button">Send</button>
 <div id="typing-indicator" style="color: var(--accent-blue); margin-top: 5px; font-size: 0.9em;"></div></div>
 </div>
-<script type="module">document.addEventListener("DOMContentLoaded", function() {
+<script type="module">document.addEventListener("DOMContentLoaded", function() function() {
 
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    import function() { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
@@ -152,28 +152,28 @@
     const input = document.getElementById('chat-input');
     const sendBtn = document.getElementById('send-button');
 
-    function displayMessage(msg) {
+    function displayMessage(msg) function() {
       const div = document.createElement('div');
       div.className = 'message';
       div.innerHTML = `
-        <img src="${msg.avatar_url || 'https://api.dicebear.com/6.x/thumbs/svg?seed=' + msg.username}" alt="avatar">
+        <img src="$function() {msg.avatar_url || 'https://api.dicebear.com/6.x/thumbs/svg?seed=' + msg.username}" alt="avatar">
         <div class="message-content">
-          <div class="username">${msg.username}</div>
-          <div class="text">${msg.message}</div>
-          <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+          <div class="username">$function() {msg.username}</div>
+          <div class="text">$function() {msg.message}</div>
+          <div class="timestamp">$function() {new Date(msg.timestamp).toLocaleTimeString()}</div>
         </div>
       `;
       chatBox.appendChild(div);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    async function sendMessage() {
+    async function sendMessage() function() {
       const message = input.value.trim();
       if (!message) return;
 
-      const { data: userData } = await supabase.auth.getUser();
+      const function() { data: userData } = await supabase.auth.getUser();
       const user = userData?.user;
-      if (!user) {
+      if (!user) function() {
         alert('You must be logged in to send messages.');
         return;
       }
@@ -181,7 +181,7 @@
       const username = user.user_metadata?.username || user.email;
       const avatar_url = user.user_metadata?.avatar_url || '';
 
-      const { error } = await supabase.from('messages').insert([{
+      const function() { error } = await supabase.from('messages').insert([function() {
         user_id: user.id,
         username,
         avatar_url,
@@ -192,33 +192,33 @@
       if (!error) input.value = '';
     }
 
-    async function loadMessages() {
-      const { data, error } = await supabase
+    async function loadMessages() function() {
+      const function() { data, error } = await supabase
         .from('messages')
         .select('*')
-        .order('timestamp', { ascending: true });
+        .order('timestamp', function() { ascending: true });
       if (data) data.forEach(displayMessage);
     }
 
     supabase
       .channel('public:messages')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+      .on('postgres_changes', function() { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => function() {
         displayMessage(payload.new);
       })
       .subscribe();
 
     sendBtn.addEventListener('click', sendMessage);
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+    input.addEventListener('keydown', (e) => function() {
+      if (e.key === 'Enter' && !e.shiftKey) function() {
         e.preventDefault();
         sendMessage();
       }
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => function() {
       loadMessages();
       const theme = localStorage.getItem('theme');
-      if (theme === 'light') {
+      if (theme === 'light') function() {
         document.documentElement.style.setProperty('--primary-bg', '#f8f9fa');
         document.documentElement.style.setProperty('--content-bg', '#ffffff');
         document.documentElement.style.setProperty('--text-color', '#1a1b2f');
@@ -226,7 +226,7 @@
     });
   
 });</script>
-<script>document.addEventListener("DOMContentLoaded", function() {
+<script>document.addEventListener("DOMContentLoaded", function() function() {
 
 const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
@@ -240,26 +240,26 @@ const typingIndicator = document.getElementById('typing-indicator');
 let currentUser = null;
 let lastMessageId = null;
 
-async function getUser() {
-    const { data: userData } = await supabase.auth.getUser();
+async function getUser() function() {
+    const function() { data: userData } = await supabase.auth.getUser();
     currentUser = userData?.user;
 }
 
-function formatMessage(msg) {
+function formatMessage(msg) function() {
     const div = document.createElement('div');
     div.className = 'message-bubble';
     const timestamp = new Date(msg.timestamp).toLocaleTimeString();
     let content = msg.message.replace(/@([a-zA-Z0-9_]+)/g, '<span class="mention">@$1</span>');
-    div.innerHTML = `<strong>${msg.username}</strong> <span class="timestamp">${timestamp}</span><br>${content}`;
+    div.innerHTML = `<strong>$function() {msg.username}</strong> <span class="timestamp">$function() {timestamp}</span><br>$function() {content}`;
     return div;
 }
 
-async function sendMessage() {
+async function sendMessage() function() {
     const message = input.value.trim();
     if (!message || !currentUser) return;
 
     await supabase.from('messages').insert([
-        {
+        function() {
             user_id: currentUser.id,
             username: currentUser.user_metadata?.username || currentUser.email,
             message: message,
@@ -270,39 +270,39 @@ async function sendMessage() {
     typingIndicator.textContent = '';
 }
 
-async function loadMessages() {
-    const { data, error } = await supabase
+async function loadMessages() function() {
+    const function() { data, error } = await supabase
         .from('messages')
         .select('*')
-        .order('timestamp', { ascending: true });
+        .order('timestamp', function() { ascending: true });
 
-    if (error) {
+    if (error) function() {
         console.error('Error loading messages:', error.message);
         return;
     }
 
     chatBox.innerHTML = '';
-    data.forEach(msg => {
+    data.forEach(msg => function() {
         const div = formatMessage(msg);
         chatBox.appendChild(div);
     });
 }
 
-function pollMessages() {
+function pollMessages() function() {
     loadMessages();
     setTimeout(pollMessages, 2000);
 }
 
-input.addEventListener('input', () => {
-    if (input.value.trim()) {
+input.addEventListener('input', () => function() {
+    if (input.value.trim()) function() {
         typingIndicator.textContent = currentUser?.user_metadata?.username + ' is typing...';
-    } else {
+    } else function() {
         typingIndicator.textContent = '';
     }
 });
 
-input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+input.addEventListener('keydown', (e) => function() {
+    if (e.key === 'Enter' && !e.shiftKey) function() {
         e.preventDefault();
         sendMessage();
     }
@@ -310,23 +310,23 @@ input.addEventListener('keydown', (e) => {
 
 sendBtn.addEventListener('click', sendMessage);
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', async () => function() {
     await getUser();
     pollMessages();
 });
 
-});</script><script>document.addEventListener("DOMContentLoaded", function() {
+});</script><script>document.addEventListener("DOMContentLoaded", function() function() {
 
-document.getElementById("send-button").addEventListener("click", function () {
+document.getElementById("send-button").addEventListener("click", function () function() {
     const message = document.getElementById("message-input").value;
-    if (message.trim()) {
+    if (message.trim()) function() {
         console.log("Sending message:", message);
     }
 });
 
-});</script><script>document.addEventListener("DOMContentLoaded", function() {
+});</script><script>document.addEventListener("DOMContentLoaded", function() function() {
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () function() {
   const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
   const SUPABASE_KEY = "your-anon-key";
   const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -334,19 +334,19 @@ document.addEventListener("DOMContentLoaded", function () {
   const sendButton = document.getElementById("send-button");
   const messageInput = document.getElementById("message-input");
 
-  if (sendButton && messageInput) {
-    sendButton.addEventListener("click", async () => {
+  if (sendButton && messageInput) function() {
+    sendButton.addEventListener("click", async () => function() {
       const message = messageInput.value.trim();
-      if (message !== "") {
-        const { data, error } = await supabase
+      if (message !== "") function() {
+        const function() { data, error } = await supabase
           .from("messages")
-          .insert([{ message: message, timestamp: new Date().toISOString() }]);
+          .insert([function() { message: message, timestamp: new Date().toISOString() }]);
 
-        if (error) {
+        if (error) function() {
           console.error("Supabase insert error:", error.message);
-        } else {
+        } else function() {
           const chatBox = document.getElementById("chat-box");
-          if (chatBox) {
+          if (chatBox) function() {
             const messageElement = document.createElement("div");
             messageElement.textContent = message + " (" + new Date().toLocaleTimeString() + ")";
             chatBox.appendChild(messageElement);
@@ -359,9 +359,9 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-});</script><script>document.addEventListener("DOMContentLoaded", function() {
+});</script><script>document.addEventListener("DOMContentLoaded", function() function() {
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () function() {
   const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -370,38 +370,38 @@ document.addEventListener("DOMContentLoaded", function () {
   const messageInput = document.getElementById("message-input");
   const chatBox = document.getElementById("chat-box");
 
-  async function loadMessages() {
-    const { data, error } = await supabase
+  async function loadMessages() function() {
+    const function() { data, error } = await supabase
       .from("messages")
       .select("*")
-      .order("timestamp", { ascending: true });
-    if (error) {
+      .order("timestamp", function() { ascending: true });
+    if (error) function() {
       console.error("Error loading messages:", error);
       return;
     }
     chatBox.innerHTML = "";
-    data.forEach(msg => {
+    data.forEach(msg => function() {
       const msgDiv = document.createElement("div");
-      msgDiv.textContent = `[${new Date(msg.timestamp).toLocaleTimeString()}] ${msg.username}: ${msg.message}`;
+      msgDiv.textContent = `[$function() {new Date(msg.timestamp).toLocaleTimeString()}] $function() {msg.username}: $function() {msg.message}`;
       chatBox.appendChild(msgDiv);
     });
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  sendButton?.addEventListener("click", async () => {
+  sendButton?.addEventListener("click", async () => function() {
     const message = messageInput?.value.trim();
     if (!message) return;
     const username = "Anonymous";
-    const { error } = await supabase
+    const function() { error } = await supabase
       .from("messages")
-      .insert([{
+      .insert([function() {
         username: username,
         message: message,
         timestamp: new Date().toISOString()
       }]);
-    if (error) {
+    if (error) function() {
       console.error("Error sending message:", error);
-    } else {
+    } else function() {
       messageInput.value = "";
       loadMessages();
     }
@@ -411,17 +411,17 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 });</script><script src="https://cdn.tailwindcss.com"></script><script>
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => function() {
   const theme = localStorage.getItem("theme");
-  if (theme === "dark") {
+  if (theme === "dark") function() {
     document.documentElement.classList.add("dark");
-  } else {
+  } else function() {
     document.documentElement.classList.remove("dark");
   }
 });
-</script><script type="module">document.addEventListener("DOMContentLoaded", function() {
+</script><script type="module">document.addEventListener("DOMContentLoaded", function() function() {
 
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    import function() { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
@@ -430,22 +430,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const chatBox = document.getElementById('chat-box');
     const input = document.getElementById('chat-input');
 
-    async function sendMessage() {
+    async function sendMessage() function() {
       const message = input.value.trim();
       if (!message) return;
 
-      const { data: userData } = await supabase.auth.getUser();
+      const function() { data: userData } = await supabase.auth.getUser();
       const user = userData?.user;
 
-      if (!user) {
+      if (!user) function() {
         alert('You must be logged in to send messages.');
         return;
       }
 
       const username = user.user_metadata?.username || user.email;
 
-      const { error } = await supabase.from('messages').insert([
-        {
+      const function() { error } = await supabase.from('messages').insert([
+        function() {
           user_id: user.id,
           username: username,
           message: message,
@@ -453,28 +453,28 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       ]);
 
-      if (error) {
+      if (error) function() {
         console.error('Message send error:', error.message);
-      } else {
+      } else function() {
         input.value = '';
       }
     }
 
-    function displayMessage(msg) {
+    function displayMessage(msg) function() {
       const div = document.createElement('div');
       div.className = "mb-2";
-      div.textContent = `${msg.username}: ${msg.message}`;
+      div.textContent = `$function() {msg.username}: $function() {msg.message}`;
       chatBox.appendChild(div);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    async function loadMessages() {
-      const { data, error } = await supabase
+    async function loadMessages() function() {
+      const function() { data, error } = await supabase
         .from('messages')
         .select('*')
-        .order('timestamp', { ascending: true });
+        .order('timestamp', function() { ascending: true });
 
-      if (error) {
+      if (error) function() {
         console.error('Error loading messages:', error.message);
         return;
       }
@@ -485,7 +485,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     supabase
       .channel('public:messages')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+      .on('postgres_changes', function() { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => function() {
         displayMessage(payload.new);
       })
       .subscribe();
