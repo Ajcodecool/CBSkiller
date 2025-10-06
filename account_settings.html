@@ -1,112 +1,135 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Account Settings</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
-<a class="inline-block mt-6 ml-6 px-4 py-2 bg-green-500 text-white rounded shadow hover:bg-green-600" href="index.html">← Back to Home</a>
+<a href="index.html" class="inline-block mt-6 ml-6 px-4 py-2 bg-green-500 text-white rounded shadow hover:bg-green-600">← Back to Home</a>
+
 <div class="max-w-xl mx-auto mt-10 p-6 bg-white rounded shadow">
-<h1 class="text-2xl font-bold mb-4">Account Settings</h1>
-<div class="mb-4">
-<label class="block font-medium mb-2" for="profile-pic">Upload Profile Picture</label>
-<input accept="image/*" class="mb-2" id="profile-pic" type="file"/>
-<img alt="Preview" class="w-32 h-32 object-cover rounded-full border border-gray-300 hidden" id="preview" src=""/>
+  <h1 class="text-2xl font-bold mb-4">Account Settings</h1>
+  <div class="mb-4">
+    <label for="profile-pic" class="block font-medium mb-2">Upload Profile Picture</label>
+    <input type="file" id="profile-pic" accept="image/*" class="mb-2"/>
+    <img id="preview" src="" alt="Preview" class="w-32 h-32 object-cover rounded-full border border-gray-300 hidden"/>
+  </div>
+  <button id="upload-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Upload</button>
+  <p id="status" class="mt-4 text-sm text-gray-600"></p>
 </div>
-<button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" id="upload-btn">Upload</button>
-<p class="mt-4 text-sm text-gray-600" id="status"></p>
-</div>
+
 <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      // Supabase setup
-      const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
-      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+document.addEventListener("DOMContentLoaded", async () => {
+  const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      // Auth/session check
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (!sessionData?.session?.user) {
-        window.location.href = "auth.html";
-        return;
-      }
-      const user = sessionData.session.user;
+  const fileInput = document.getElementById("profile-pic");
+  const preview = document.getElementById("preview");
+  const uploadBtn = document.getElementById("upload-btn");
+  const status = document.getElementById("status");
 
-      const fileInput = document.getElementById("profile-pic");
-      const preview = document.getElementById("preview");
-      const uploadBtn = document.getElementById("upload-btn");
-      const status = document.getElementById("status");
+  // Check user session
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData?.session?.user) {
+    window.location.href = "auth.html";
+    return;
+  }
+  const user = sessionData.session.user;
 
-      // Show preview when file selected
-      fileInput.addEventListener("change", () => {
-        const file = fileInput.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            preview.src = e.target.result;
-            preview.classList.remove("hidden");
-          };
-          reader.readAsDataURL(file);
-        }
-      });
+  // Load existing avatar from users table
+  const { data: userData, error: fetchError } = await supabase
+    .from("users")
+    .select("avatar_url")
+    .eq("id", user.id)
+    .single();
 
-      uploadBtn.addEventListener("click", async () => {
-        const file = fileInput.files[0];
-        if (!file) {
-          alert("Please select a file first.");
-          return;
-        }
+  if (userData?.avatar_url) {
+    preview.src = userData.avatar_url;
+    preview.classList.remove("hidden");
+  }
 
-        status.textContent = "Uploading...";
-        uploadBtn.disabled = true;
-
-        // Upload to Supabase Storage bucket "profile-pictures"
-        const fileName = `profile-${user.id}-${Date.now()}-${file.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("profile-pictures")
-          .upload(fileName, file, { upsert: true });
-
-        if (uploadError) {
-          status.textContent = "Upload failed: " + uploadError.message;
-          uploadBtn.disabled = false;
-          return;
-        }
-
-        // Get public URL
-        const { data: publicUrlData, error: publicUrlError } = await supabase.storage
-          .from("profile-pictures")
-          .getPublicUrl(fileName);
-
-        if (publicUrlError || !publicUrlData?.publicUrl) {
-          status.textContent = "Could not get public URL.";
-          uploadBtn.disabled = false;
-          return;
-        }
-
-        const publicUrl = publicUrlData.publicUrl;
-
-        // Update avatar_url in users table (optional, if you have such a table)
-        let updateProfileMsg = "";
-        if (user.id) {
-          const { error: updateError } = await supabase
-            .from("users")
-            .update({ avatar_url: publicUrl })
-            .eq("id", user.id);
-          if (updateError) {
-            updateProfileMsg = " (Could not update your profile: " + updateError.message + ")";
-          }
-        }
-
-        // Update preview and status
-        preview.src = publicUrl;
+  // File preview
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.src = e.target.result;
         preview.classList.remove("hidden");
-        status.textContent = "Avatar uploaded successfully!" + (updateProfileMsg ? updateProfileMsg : "");
-        uploadBtn.disabled = false;
-      });
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Upload handler
+  uploadBtn.addEventListener("click", async () => {
+    const file = fileInput.files[0];
+    if (!file) return alert("Please select a file first.");
+    if (!file.type.startsWith("image/")) return alert("Only image files are allowed.");
+    if (file.size > 5 * 1024 * 1024) return alert("File too large (max 5 MB).");
+
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = "Uploading...";
+    status.textContent = "Uploading...";
+
+    const fileName = `profile-${user.id}-${Date.now()}-${file.name}`;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("profile-pictures")
+      .upload(fileName, file, { upsert: true });
+
+    if (uploadError) {
+      status.textContent = "Upload failed: " + uploadError.message;
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = "Upload";
+      return;
+    }
+
+    // Get public URL
+    const { data: publicUrlData } = await supabase.storage
+      .from("profile-pictures")
+      .getPublicUrl(fileName);
+
+    const publicUrl = publicUrlData?.publicUrl;
+    if (!publicUrl) {
+      status.textContent = "Could not retrieve image URL.";
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = "Upload";
+      return;
+    }
+
+    // Update avatar in users table
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({ avatar_url: publicUrl })
+      .eq("id", user.id);
+
+    // Also update Supabase Auth user metadata
+    await supabase.auth.updateUser({
+      data: { avatar_url: publicUrl }
     });
-  </script>
+
+    if (updateError) {
+      status.textContent = "Upload succeeded, but failed to save to profile: " + updateError.message;
+    } else {
+      status.textContent = "Profile picture updated successfully!";
+    }
+
+    preview.src = publicUrl;
+    preview.classList.remove("hidden");
+
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = "Upload";
+  });
+
+  // Re-auth check in case session expires
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (!session) window.location.href = "auth.html";
+  });
+});
+</script>
 </body>
 </html>
