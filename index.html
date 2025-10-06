@@ -507,7 +507,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 </script></head>
-<body id="app-body"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script>
+<body id="app-body"><img alt="Profile Picture" class="user-profile-picture" style="width:64px;height:64px;border-radius:50%;"/><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script>
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("✅ DOM fully loaded");
 
@@ -1713,5 +1713,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    console.warn("🔒 No user found. Redirecting to auth.html...");
+    window.location.href = "auth.html";
+    return;
+  }
+
+  const imagePath = `profile-pictures/${user.id}/profile.jpg`;
+  const { data, error } = await supabase.storage.from("profile-pictures").getPublicUrl(imagePath);
+  if (error) {
+    console.error("❌ Failed to get profile picture URL:", error);
+    return;
+  }
+
+  document.querySelectorAll(".user-profile-picture").forEach(img => {
+    img.src = data.publicUrl;
+  });
+});
+</script>
 </body>
 </html>
+ 
