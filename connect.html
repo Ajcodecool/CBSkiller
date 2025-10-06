@@ -252,7 +252,7 @@
   }
 
   function displayMessage(msg) {
-    // Clean username everywhere it is shown
+    // Clean username everywhere it is shown, including for avatar seed!
     const username = cleanUsername(msg.username) || "Anonymous";
     const avatarSrc = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
     const div = document.createElement('div');
