@@ -1,34 +1,30 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Account Settings</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    #preview { width: 150px; height: 150px; object-fit: cover; border-radius: 50%; margin-top: 10px; }
-    #status { margin-top: 10px; font-weight: bold; }
-  </style>
-</head>
-<body>
-  <h1>Account Settings</h1>
-  <p>Upload New Profile Picture</p>
-  <input type="file" id="fileInput" accept="image/*" />
-  <br/>
-  <img id="preview" src="" alt="Image Preview" />
-  <br/>
-  <button id="uploadBtn">Upload</button>
-  <div id="status"></div>
-
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <div class="max-w-xl mx-auto mt-10 p-6 bg-white rounded shadow">
+    <h1 class="text-2xl font-bold mb-4">Account Settings</h1>
+    <div class="mb-4">
+      <label for="profile-pic" class="block font-medium mb-2">Upload Profile Picture</label>
+      <input type="file" id="profile-pic" accept="image/*" class="mb-2" />
+      <img id="preview" src="" alt="Preview" class="w-32 h-32 object-cover rounded-full border border-gray-300 hidden" />
+    </div>
+    <button id="upload-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Upload</button>
+    <p id="status" class="mt-4 text-sm text-gray-600"></p>
+  </div>
+
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       console.log("✅ DOM fully loaded");
 
       const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
       const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
-
       console.log("🔧 Creating Supabase client...");
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -37,52 +33,56 @@
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         console.log("📦 Session data:", sessionData);
         console.log("⚠️ Session error:", sessionError);
-
-        if (sessionError || !sessionData.session) {
+        if (!sessionData.session) {
           console.warn("🔒 No active session found. Redirecting to auth.html...");
           window.location.href = "auth.html";
           return;
         }
-
         console.log("✅ User is signed in.");
       } catch (err) {
-        console.error("❌ Error during session check:", err);
+        console.error("❌ Error checking session:", err);
         window.location.href = "auth.html";
         return;
       }
 
-      const fileInput = document.getElementById("fileInput");
+      const fileInput = document.getElementById("profile-pic");
       const preview = document.getElementById("preview");
-      const uploadBtn = document.getElementById("uploadBtn");
+      const uploadBtn = document.getElementById("upload-btn");
       const status = document.getElementById("status");
 
       fileInput.addEventListener("change", () => {
         const file = fileInput.files[0];
         if (file) {
-          console.log("📸 File selected:", file.name);
-          preview.src = URL.createObjectURL(file);
+          console.log("📁 File selected:", file.name);
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            preview.src = e.target.result;
+            preview.classList.remove("hidden");
+          };
+          reader.readAsDataURL(file);
         }
       });
 
       uploadBtn.addEventListener("click", async () => {
         const file = fileInput.files[0];
         if (!file) {
-          status.textContent = "⚠️ Please select a file first.";
-          console.warn("⚠️ No file selected.");
+          alert("Please select a file first.");
           return;
         }
 
         const fileName = `profile-${Date.now()}-${file.name}`;
-        console.log("⬆️ Uploading file:", fileName);
+        console.log("🚀 Uploading file:", fileName);
 
-        const { data, error } = await supabase.storage.from("profile-pictures").upload(fileName, file);
+        const { data, error } = await supabase.storage
+          .from("profile-pictures")
+          .upload(fileName, file);
 
         if (error) {
-          console.error("❌ Upload failed:", error.message);
-          status.textContent = "❌ Upload failed: " + error.message;
+          console.error("❌ Upload error:", error.message);
+          status.textContent = "Upload failed: " + error.message;
         } else {
           console.log("✅ Upload successful:", data);
-          status.textContent = "✅ Upload successful!";
+          status.textContent = "Upload successful!";
         }
       });
     });
