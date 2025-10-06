@@ -507,7 +507,37 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 </script></head>
-<body id="app-body">
+<body id="app-body"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script>
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("✅ DOM fully loaded");
+
+  try {
+    console.log("📦 Loading Supabase client...");
+    const { createClient } = window.supabase;
+    const supabaseUrl = "https://jxxnfsydjrflnephmfjm.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log("✅ Supabase client created");
+
+    console.log("🔍 Checking session...");
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      console.error("❌ Error checking session:", sessionError);
+    }
+
+    if (!sessionData || !sessionData.session) {
+      console.warn("🔒 No active session found. Redirecting to auth.html...");
+      window.location.href = "auth.html";
+    } else {
+      console.log("✅ User is signed in:", sessionData.session.user);
+    }
+  } catch (err) {
+    console.error("🚨 Unexpected error during authentication check:", err);
+    window.location.href = "auth.html";
+  }
+});
+</script>
 <div class="header">
 <div class="flex items-center">
 <span class="title-text">CROOMS CONNECT</span>
