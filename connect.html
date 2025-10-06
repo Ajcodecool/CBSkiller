@@ -1,122 +1,148 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
 <head>
-<title>Crooms Connect Chatroom</title>
-<style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
-    header { background: #4CAF50; color: white; padding: 10px; text-align: center; }
-    .chat-container { padding: 20px; max-width: 800px; margin: auto; }
-    .message { background: white; padding: 10px; margin-bottom: 10px; border-radius: 8px; display: flex; align-items: flex-start; }
-    .avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
-    .message-content { flex: 1; }
-    .message-content .name { font-weight: bold; margin-bottom: 5px; }
-    .editor { background: white; padding: 10px; border-radius: 8px; margin-top: 20px; }
-    .editor-toolbar button { margin-right: 5px; }
-    #messageInput { width: 100%; height: 100px; margin-top: 10px; }
-    .rainbow { background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet); -webkit-background-clip: text; color: transparent; font-weight: bold; }
-  </style>
-</head>
-<body>
-<header>
-<h1>Connect Chatroom</h1>
-</header>
-<div class="chat-container" id="chatContainer">
-<!-- Example message -->
-<div class="message">
-<img alt="Avatar" class="avatar" src="default_avatar.png"/>
-<div class="message-content">
-<div class="name">Student Name</div>
-<div class="text">Welcome to the chatroom!</div>
-</div>
-</div>
-</div>
-<div class="chat-container editor">
-<div class="editor-toolbar">
-<button onclick="formatText('bold')"><b>B</b></button>
-<button onclick="formatText('italic')"><i>I</i></button>
-<button onclick="applyRainbow()">🌈</button>
-<select onchange="changeFont(this.value)">
-<option value="Arial">Arial</option>
-<option value="Courier New">Courier New</option>
-<option value="Georgia">Georgia</option>
-<option value="Times New Roman">Times New Roman</option>
-</select>
-</div>
-<div contenteditable="true" id="messageInput" style="border:1px solid #ccc;"></div>
-<button onclick="sendMessage()" style="margin-top:10px;padding:8px 16px;background-color:#4CAF50;color:white;border:none;border-radius:4px;">Send</button>
-</div>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Crooms Connect - Chat</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <script>
-    function formatText(command) {
-      document.execCommand(command, false, null);
-    }
+document.addEventListener("DOMContentLoaded", () => {
+  const theme = localStorage.getItem("theme");
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+});
+</script><style>
+.send-button {
+  background-color: var(--accent-blue, #4cc9f0);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  transition: transform 0.2s ease, background-color 0.3s ease;
+}
+.send-button:hover {
+  transform: scale(1.05);
+  background-color: #6ce0ff;
+}
+#chat-input {
+  font-family: 'Inter', sans-serif;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+#chat-input:focus {
+  outline: none;
+  border-color: var(--accent-blue, #4cc9f0);
+}
+</style></head>
+<body class="bg-gray-900 text-white font-sans">
+<div class="max-w-2xl mx-auto mt-10 p-6 bg-gray-800 rounded-lg shadow-lg">
+<h1 class="text-3xl font-bold mb-4 text-center">Crooms Connect Chat</h1>
+<div class="h-96 overflow-y-scroll bg-gray-700 p-4 rounded mb-4" id="chat-box"></div>
+<div class="flex space-x-2">
 
-    function applyRainbow() {
-      const selection = window.getSelection();
-      if (selection.rangeCount > 0) {
-        const span = document.createElement("span");
-        span.className = "rainbow";
-        span.innerHTML = selection.toString();
-        const range = selection.getRangeAt(0);
-        range.deleteContents();
-        range.insertNode(span);
+<div id="editor-toolbar" style="margin-bottom: 10px;">
+<button onclick="document.execCommand('bold')" title="Bold"><b>B</b></button>
+<button onclick="document.execCommand('italic')" title="Italic"><i>I</i></button>
+<button onclick="document.execCommand('underline')" title="Underline"><u>U</u></button>
+<select onchange="document.execCommand('fontName', false, this.value)">
+<option value="Arial">Arial</option>
+<option value="Courier New">Courier</option>
+<option value="Georgia">Georgia</option>
+<option value="Times New Roman">Times</option>
+</select>
+<input onchange="document.execCommand('foreColor', false, this.value)" title="Text Color" type="color"/>
+</div>
+<input class="flex-1 p-2 rounded bg-gray-600 text-white" id="chat-input" placeholder="Type your message..." type="text"/>
+<button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded" id="send-button">Send</button>
+</div>
+</div>
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const chatBox = document.getElementById('chat-box');
+    const input = document.getElementById('chat-input');
+
+    async function sendMessage() {
+      const message = input.value.trim();
+      if (!message) return;
+
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+
+      if (!user) {
+        alert('You must be logged in to send messages.');
+        return;
+      }
+
+      const username = user.user_metadata?.username || user.email;
+
+      const { error } = await supabase.from('messages').insert([
+        {
+          user_id: user.id,
+          username: username,
+          message: message,
+          timestamp: new Date().toISOString()
+        }
+      ]);
+
+      if (error) {
+        console.error('Message send error:', error.message);
+      } else {
+        input.value = '';
       }
     }
 
-    function changeFont(font) {
-      document.execCommand("fontName", false, font);
+    function displayMessage(msg) {
+      const div = document.createElement('div');
+      div.className = "mb-2";
+      div.textContent = `${msg.username}: ${msg.message}`;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    function sendMessage() {
-      const input = document.getElementById("messageInput");
-      const messageHTML = input.innerHTML;
-      const container = document.getElementById("chatContainer");
+    async function loadMessages() {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .order('timestamp', { ascending: true });
 
-      const messageDiv = document.createElement("div");
-      messageDiv.className = "message";
+      if (error) {
+        console.error('Error loading messages:', error.message);
+        return;
+      }
 
-      const avatar = document.createElement("img");
-      avatar.src = "default_avatar.png";
-      avatar.className = "avatar";
-
-      const contentDiv = document.createElement("div");
-      contentDiv.className = "message-content";
-
-      const nameDiv = document.createElement("div");
-      nameDiv.className = "name";
-      nameDiv.textContent = "You";
-
-      const textDiv = document.createElement("div");
-      textDiv.className = "text";
-      textDiv.innerHTML = messageHTML;
-
-      contentDiv.appendChild(nameDiv);
-      contentDiv.appendChild(textDiv);
-      messageDiv.appendChild(avatar);
-      messageDiv.appendChild(contentDiv);
-      container.appendChild(messageDiv);
-
-      input.innerHTML = "";
+      chatBox.innerHTML = '';
+      data.forEach(displayMessage);
     }
+
+    supabase
+      .channel('public:messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        displayMessage(payload.new);
+      })
+      .subscribe();
+
+    document.getElementById('send-button').addEventListener('click', sendMessage);
+    document.addEventListener('DOMContentLoaded', loadMessages);
   </script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const root = document.documentElement;
-  const savedTheme = localStorage.getItem("crooms-theme");
-  if (savedTheme === "light") {
-    root.style.setProperty("--primary-bg", "#f8f9fa");
-    root.style.setProperty("--content-bg", "#ffffff");
-    root.style.setProperty("--text-color", "#1a1b2f");
-    root.style.setProperty("--accent-blue", "#007bff");
-    root.style.setProperty("--accent-green", "#28a745");
-  } else {
-    root.style.setProperty("--primary-bg", "#1a1b2f");
-    root.style.setProperty("--content-bg", "#2b2d42");
-    root.style.setProperty("--text-color", "#f8f9fa");
-    root.style.setProperty("--accent-blue", "#4cc9f0");
-    root.style.setProperty("--accent-green", "#80ed99");
-  }
+  const input = document.getElementById("chat-input");
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById("send-button").click();
+    }
+  });
 });
 </script></body>
 </html>
