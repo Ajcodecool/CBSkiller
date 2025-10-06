@@ -2,114 +2,89 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Account Settings</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      background-color: #f4f4f4;
-    }
-    .account-container {
-      max-width: 500px;
-      margin: auto;
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    .avatar {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-bottom: 1rem;
-    }
-    .username {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-    }
-    .file-input {
-      margin: 1rem 0;
-    }
-    .btn {
-      padding: 0.5rem 1rem;
-      margin: 0.5rem;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    .logout-btn {
-      background-color: #e74c3c;
-      color: white;
-      border: none;
-    }
-    .upload-btn {
-      background-color: #3498db;
-      color: white;
-      border: none;
-    }
-  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body>
-  <div class="account-container">
-    <img id="user-avatar" class="avatar" src="" alt="Profile Picture"/>
-    <div class="username" id="user-name">Loading...</div>
-    <input type="file" id="avatar-upload" class="file-input" accept="image/*"/>
-    <button class="btn upload-btn" onclick="uploadAvatar()">Upload New Profile Picture</button>
-    <br/>
-    <button class="btn logout-btn" onclick="logout()">Logout</button>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen flex items-center justify-center">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
+    <h2 class="text-2xl font-bold mb-4 text-center">Account Settings</h2>
+    <div id="user-info" class="flex flex-col items-center space-y-4">
+      <img id="user-avatar" src="" alt="Profile Picture" class="w-32 h-32 rounded-full object-cover border-4 border-gray-300 dark:border-gray-600" />
+      <p id="user-name" class="text-lg font-semibold"></p>
+    </div>
+    <form id="upload-form" class="mt-6 space-y-4">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload New Profile Picture</label>
+      <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.bmp,.webp" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-100 dark:bg-gray-700 dark:border-gray-600" />
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition">Upload</button>
+    </form>
+    <div id="message" class="mt-4 text-center text-sm font-medium"></div>
+    <a href="index.html" class="block mt-6 text-center text-blue-600 hover:underline">← Back to Home</a>
   </div>
 
   <script>
-    const supabase = supabase.createClient('https://your-project.supabase.co', 'public-anon-key');
+    const supabase = supabase.createClient(
+      'https://jxxnfsydjrflnephmfjm.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'
+    );
 
-    async function loadUserInfo() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const username = user.user_metadata?.username || user.email;
-        const avatarUrl = user.user_metadata?.avatar_url || 'https://via.placeholder.com/100';
-        document.getElementById('user-name').textContent = username;
-        document.getElementById('user-avatar').src = avatarUrl;
-      }
-    }
-
-    async function uploadAvatar() {
-      const fileInput = document.getElementById('avatar-upload');
-      const file = fileInput.files[0];
-      if (!file) return alert('Please select a file.');
-
-      const { data: { user } } = await supabase.auth.getUser();
-      const filePath = `${user.id}/${file.name}`;
-
-      const { data, error } = await supabase.storage
-        .from('profile-pictures')
-        .upload(filePath, file, { upsert: true });
-
-      if (error) {
-        alert('Upload failed: ' + error.message);
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        document.getElementById('message').textContent = 'User not logged in.';
         return;
       }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile-pictures')
-        .getPublicUrl(filePath);
+      const username = user.user_metadata?.username || user.email;
+      const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
 
-      await supabase.auth.updateUser({
-        data: { avatar_url: publicUrl }
+      document.getElementById('user-name').textContent = username;
+      document.getElementById('user-avatar').src = avatarUrl;
+
+      document.getElementById('upload-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById('file-input');
+        const file = fileInput.files[0];
+        const message = document.getElementById('message');
+
+        if (!file) {
+          message.textContent = 'Please select a file.';
+          return;
+        }
+
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/bmp', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+          message.textContent = 'Invalid file type. Please upload JPEG, JPG, PNG, BMP, or WEBP.';
+          return;
+        }
+
+        const fileName = `${user.id}/${Date.now()}_${file.name}`;
+        const { data, error: uploadError } = await supabase.storage
+          .from('profile-pictures')
+          .upload(fileName, file, { upsert: true });
+
+        if (uploadError) {
+          message.textContent = 'Upload failed. Please try again.';
+          return;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('profile-pictures')
+          .getPublicUrl(fileName);
+
+        const { error: updateError } = await supabase.auth.updateUser({
+          data: { avatar_url: urlData.publicUrl }
+        });
+
+        if (updateError) {
+          message.textContent = 'Failed to update profile picture.';
+        } else {
+          document.getElementById('user-avatar').src = urlData.publicUrl;
+          message.textContent = 'Profile picture updated successfully!';
+        }
       });
-
-      document.getElementById('user-avatar').src = publicUrl;
-      alert('Profile picture updated!');
-    }
-
-    async function logout() {
-      await supabase.auth.signOut();
-      window.location.href = 'auth_fixed.html';
-    }
-
-    loadUserInfo();
+    });
   </script>
 </body>
 </html>
