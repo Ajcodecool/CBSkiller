@@ -1,4 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Crooms Connect</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+  <header>
+    <img class="user-avatar" src="default_avatar.png" alt="User Avatar" width="50" height="50" />
+    <h1>Welcome to Crooms Connect</h1>
+    <a href="account_settings_debug_fixed_updated (1).html">Manage Account</a>
+  </header>
 
+  
 <div id="user-info" style="display: none; align-items: center; gap: 10px; margin: 10px;">
 <img alt="Profile Picture" id="user-avatar" src="" style="width: 40px; height: 40px; border-radius: 50%;"/>
 <span id="user-name" style="font-weight: bold;"></span>
@@ -1741,4 +1754,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 </script>
 </body>
 </html>
- 
+
+
+  <script>
+    const supabase = supabase.createClient("https://jxxnfsydjrflnephmfjm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w");
+
+    async function loadUserAvatar() {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) return;
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('avatar_url')
+        .eq('id', userId)
+        .single();
+
+      if (error || !data?.avatar_url) return;
+
+      document.querySelectorAll('.user-avatar').forEach(img => {
+        img.src = data.avatar_url;
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', loadUserAvatar);
+  </script>
+</body>
+</html>
