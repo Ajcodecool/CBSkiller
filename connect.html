@@ -168,7 +168,6 @@
   <div class="chat-header">
     Crooms Connect Chat
     <div class="user-info" id="user-info">
-      <!-- Username and avatar will be injected here -->
       <img src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous" alt="avatar">
       <span>Anonymous</span>
     </div>
@@ -198,7 +197,7 @@
   let currentUser = null;
 
   async function fetchAndDisplayUserInfo() {
-    const { data: userData } = await supabase.auth.getUser();
+    const { data: userData, error } = await supabase.auth.getUser();
     const user = userData?.user;
     currentUser = user;
     let username, avatar_url;
@@ -260,8 +259,12 @@
   async function loadMessages() {
     const { data, error } = await supabase
       .from('messages')
-      .select('*')
+      .select('user_id,username,avatar_url,message,timestamp')
       .order('timestamp', { ascending: true });
+    if (error) {
+      console.error('Error loading messages:', error.message);
+      return;
+    }
     if (data) {
       chatBox.innerHTML = '';
       data.forEach(displayMessage);
