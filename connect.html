@@ -128,7 +128,7 @@
     color: #aaa;
     margin-left: 10px;
 }
-</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script></head><body>
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script></head><body>
 <a class="back-button" href="index.html">← Back to Home</a>
 <div class="chat-container">
 <div class="chat-header">Crooms Connect Chat</div>
@@ -140,8 +140,7 @@
 <button id="send-button">Send</button>
 <div id="typing-indicator" style="color: var(--accent-blue); margin-top: 5px; font-size: 0.9em;"></div></div>
 </div>
-<script type="module">document.addEventListener('DOMContentLoaded', function() {
-
+<script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
@@ -224,10 +223,8 @@
         document.documentElement.style.setProperty('--text-color', '#1a1b2f');
       }
     });
-  
-});</script>
-<script>document.addEventListener('DOMContentLoaded', function() {
-
+  </script>
+<script>
 const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -314,18 +311,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     await getUser();
     pollMessages();
 });
-
-});</script><script>document.addEventListener('DOMContentLoaded', function() {
-
+</script><script>
 document.getElementById("send-button").addEventListener("click", function () {
     const message = document.getElementById("message-input").value;
     if (message.trim()) {
         console.log("Sending message:", message);
     }
 });
-
-});</script><script>document.addEventListener('DOMContentLoaded', function() {
-
+</script><script>
 document.addEventListener("DOMContentLoaded", function () {
   const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
   const SUPABASE_KEY = "your-anon-key";
@@ -358,9 +351,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
-
-});</script><script>document.addEventListener('DOMContentLoaded', function() {
-
+</script><script>
 document.addEventListener("DOMContentLoaded", function () {
   const SUPABASE_URL = "https://jxxnfsydjrflnephmfjm.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
@@ -409,9 +400,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   loadMessages();
 });
-
-});</script><script src="https://cdn.tailwindcss.com"></script><script>document.addEventListener('DOMContentLoaded', function() {
-
+</script><script src="https://cdn.tailwindcss.com"></script><script>
 document.addEventListener("DOMContentLoaded", () => {
   const theme = localStorage.getItem("theme");
   if (theme === "dark") {
@@ -420,9 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.documentElement.classList.remove("dark");
   }
 });
-
-});</script><script type="module">document.addEventListener('DOMContentLoaded', function() {
-
+</script><script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
@@ -494,5 +481,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('send-button').addEventListener('click', sendMessage);
     document.addEventListener('DOMContentLoaded', loadMessages);
-  
-});</script></body></html>
+  </script></body></html>
