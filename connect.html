@@ -185,8 +185,8 @@
   let currentUsername = 'Anonymous';
 
   async function updateGlobalAvatarAndName() {
-    const { data: authData, error: authError } = await supabase.auth.getUser();
-    if (authError || !authData?.user) {
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData?.user) {
       userInfoDiv.style.display = 'none';
       return;
     }
@@ -211,6 +211,7 @@
     const avatarSrc = msg.avatar_url || `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(msg.username)}`;
     const div = document.createElement('div');
     div.className = 'message';
+    div.dataset.userId = msg.user_id;
     div.innerHTML = `
       <img src="${avatarSrc}" alt="avatar" onerror="this.onerror=null;this.src='default-avatar.png';">
       <div class="message-content">
@@ -236,7 +237,7 @@
     const avatar_url = profile?.avatar_url || currentUser.user_metadata?.avatar_url || '';
     const username = profile?.username || currentUser.user_metadata?.username || currentUser.email || 'Anonymous';
 
-    const { error } = await supabase.from('messages').insert([{
+    await supabase.from('messages').insert([{
       user_id: currentUser.id,
       username,
       avatar_url,
@@ -244,12 +245,8 @@
       timestamp: new Date().toISOString()
     }]);
 
-    if (!error) {
-      input.value = '';
-      typingIndicator.textContent = '';
-    } else {
-      console.error("Message send error:", error.message);
-    }
+    input.value = '';
+    typingIndicator.textContent = '';
   }
 
   async function loadMessages() {
@@ -260,7 +257,7 @@
 
     chatBox.innerHTML = '';
     if (error) {
-      chatBox.innerHTML = `<div style="color:red;">Error loading messages: ${error.message}</div>`;
+      chatBox.innerHTML = `<div style='color:red;'>Error loading messages: ${error.message}</div>`;
       return;
     }
     data.forEach(displayMessage);
@@ -269,12 +266,22 @@
   function subscribeToMessages() {
     supabase
       .channel('messages-channel')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages'
-      }, (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         displayMessage(payload.new);
+      })
+      .subscribe();
+  }
+
+  // 🔁 Realtime avatar updates
+  function subscribeToAvatarChanges() {
+    supabase
+      .channel('users-channel')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users' }, (payload) => {
+        const userId = payload.new.id;
+        const newAvatar = payload.new.avatar_url;
+        document.querySelectorAll(`[data-user-id='${userId}'] img`).forEach(img => {
+          img.src = newAvatar;
+        });
       })
       .subscribe();
   }
@@ -292,16 +299,11 @@
   });
 
   document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      await updateGlobalAvatarAndName();
-      await loadMessages();
-      subscribeToMessages();
-      supabase.auth.onAuthStateChange((_event, _session) => {
-        updateGlobalAvatarAndName();
-      });
-    } catch (err) {
-      console.error("Initialization error:", err);
-    }
+    await updateGlobalAvatarAndName();
+    await loadMessages();
+    subscribeToMessages();
+    subscribeToAvatarChanges();
+    supabase.auth.onAuthStateChange(() => updateGlobalAvatarAndName());
   });
 </script>
 </body>
