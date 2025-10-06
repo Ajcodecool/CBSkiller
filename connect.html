@@ -68,6 +68,9 @@
       flex: 1;
       overflow-y: auto;
       padding: 16px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
     }
     .chat-input {
       border-top: 1px solid #444;
@@ -159,6 +162,13 @@
       overflow-y: auto;
       box-sizing: border-box;
     }
+    #loading-older {
+      color: #aaa;
+      font-size: 0.95em;
+      text-align: center;
+      margin-bottom: 12px;
+      margin-top: 2px;
+    }
   </style>
 </head>
 <body>
@@ -172,7 +182,9 @@
     </div>
   </div>
   <div id="debug" class="debug-log" style="display:none"></div>
-  <div class="chat-messages" id="chat-box"></div>
+  <div class="chat-messages" id="chat-box">
+    <div id="loading-older" style="display:none">Loading...</div>
+  </div>
   <div class="chat-input">
     <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
     <button id="send-button">Send</button>
@@ -197,6 +209,7 @@
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   const chatBox = document.getElementById('chat-box');
+  const loadingOlderDiv = document.getElementById('loading-older');
   const input = document.getElementById('chat-input');
   const sendBtn = document.getElementById('send-button');
   const typingIndicator = document.getElementById('typing-indicator');
@@ -206,6 +219,13 @@
 
   let currentUser = null;
   let currentUsername = 'Anonymous';
+
+  // Infinite scroll state
+  const PAGE_SIZE = 20;
+  let loadedMessages = []; // Always sorted from oldest (index 0) to newest (last)
+  let loadingOlder = false;
+  let allOlderLoaded = false;
+  let totalMessageCount = null; // We'll fetch this on first load
 
   function cleanUsername(name) {
     if (!name) return "Anonymous";
@@ -255,8 +275,7 @@
     });
   }
 
-  function displayMessage(msg) {
-    // Clean username everywhere it is shown, including for avatar seed!
+  function createMessageElement(msg) {
     const username = cleanUsername(msg.username) || "Anonymous";
     const avatarSrc = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
     const div = document.createElement('div');
@@ -270,8 +289,102 @@
         <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>
       </div>
     `;
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight;
+    return div;
+  }
+
+  function renderMessages() {
+    // Renders all loaded messages (oldest at top)
+    // Save scroll position if prepending
+    let prevScrollHeight = chatBox.scrollHeight;
+    let prevScrollTop = chatBox.scrollTop;
+    chatBox.innerHTML = '';
+    chatBox.appendChild(loadingOlderDiv);
+    loadedMessages.forEach(msg => {
+      chatBox.appendChild(createMessageElement(msg));
+    });
+    if (!loadingOlder && loadedMessages.length > 0) {
+      // If just loaded more, keep scroll at the same message
+      if (prevScrollTop < 100) {
+        // If user was at the top, keep them at the same message after prepend
+        chatBox.scrollTop = chatBox.scrollHeight - prevScrollHeight + prevScrollTop;
+      } else {
+        // Otherwise scroll to bottom on initial load
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    }
+  }
+
+  async function fetchTotalMessageCount() {
+    const { count } = await supabase
+      .from('messages')
+      .select('id', { count: 'exact', head: true });
+    debugLog("Total message count:", count);
+    return count || 0;
+  }
+
+  async function loadInitialMessages() {
+    debugLog("loadInitialMessages() called");
+    // Find total count
+    totalMessageCount = await fetchTotalMessageCount();
+    // Load newest PAGE_SIZE messages
+    const start = Math.max(0, totalMessageCount - PAGE_SIZE);
+    const end = totalMessageCount - 1;
+    const { data, error } = await supabase
+      .from('messages')
+      .select('user_id, username, message, timestamp')
+      .order('timestamp', { ascending: true })
+      .range(start, end);
+
+    debugLog("Loaded initial messages:", data, error);
+
+    loadedMessages = data || [];
+    if (loadedMessages.length < PAGE_SIZE) allOlderLoaded = true;
+    renderMessages();
+    // Scroll to bottom on initial load
+    setTimeout(() => {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }, 0);
+  }
+
+  async function loadOlderMessages() {
+    if (loadingOlder || allOlderLoaded) return;
+    loadingOlder = true;
+    loadingOlderDiv.style.display = '';
+    debugLog("loadOlderMessages() called");
+    // Calculate which messages to load
+    const messagesToLoad = PAGE_SIZE;
+    const currentlyLoaded = loadedMessages.length;
+    const start = Math.max(0, totalMessageCount - currentlyLoaded - messagesToLoad);
+    const end = totalMessageCount - currentlyLoaded - 1;
+    if (end < start) {
+      loadingOlder = false;
+      loadingOlderDiv.style.display = 'none';
+      allOlderLoaded = true;
+      debugLog("All older messages loaded");
+      return;
+    }
+    const { data, error } = await supabase
+      .from('messages')
+      .select('user_id, username, message, timestamp')
+      .order('timestamp', { ascending: true })
+      .range(start, end);
+    debugLog("Loaded older messages:", data, error);
+    if (data && data.length > 0) {
+      loadedMessages = [...data, ...loadedMessages];
+      if (data.length < PAGE_SIZE) allOlderLoaded = true;
+      renderMessages();
+    } else {
+      allOlderLoaded = true;
+    }
+    loadingOlder = false;
+    loadingOlderDiv.style.display = 'none';
+  }
+
+  function handleScroll() {
+    // If user scrolls to the top, load older messages
+    if (chatBox.scrollTop < 100 && !loadingOlder && !allOlderLoaded) {
+      loadOlderMessages();
+    }
   }
 
   async function sendMessage() {
@@ -309,35 +422,19 @@
     typingIndicator.textContent = '';
   }
 
-  async function loadMessages() {
-    debugLog("loadMessages() called");
-    const { data, error } = await supabase
-      .from('messages')
-      .select('user_id, username, message, timestamp')
-      .order('timestamp', { ascending: true });
-
-    debugLog("Loaded messages:", data, error);
-
-    chatBox.innerHTML = '';
-    if (error) {
-      chatBox.innerHTML = `<div style='color:red;'>Error loading messages: ${error.message}</div>`;
-      debugLog("Error loading messages", error);
-      return;
-    }
-    if (!data || data.length === 0) {
-      chatBox.innerHTML = `<div style='color:#aaa;'>No messages yet.</div>`;
-      debugLog("No messages found in table.");
-    }
-    data.forEach(displayMessage);
-  }
-
   function subscribeToMessages() {
     debugLog("Subscribed to messages realtime channel.");
     supabase
       .channel('messages-channel')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         debugLog("New message payload:", payload);
-        displayMessage(payload.new);
+        // If this is a new message (not loaded), append to end
+        loadedMessages.push(payload.new);
+        renderMessages();
+        setTimeout(() => {
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }, 0);
+        totalMessageCount += 1;
       })
       .subscribe();
   }
@@ -354,10 +451,12 @@
     typingIndicator.textContent = input.value.trim() ? `${currentUsername} is typing...` : '';
   });
 
+  chatBox.addEventListener('scroll', handleScroll);
+
   document.addEventListener('DOMContentLoaded', async () => {
     debugLog("DOMContentLoaded event fired");
     await updateGlobalAvatarAndName();
-    await loadMessages();
+    await loadInitialMessages();
     subscribeToMessages();
     supabase.auth.onAuthStateChange(() => updateGlobalAvatarAndName());
   });
