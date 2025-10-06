@@ -153,6 +153,19 @@
       color: #aaa;
       margin-left: 10px;
     }
+    .avatar-fallback {
+      background: var(--accent-blue);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.3em;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 12px;
+    }
   </style>
 </head>
 <body>
@@ -220,10 +233,14 @@
 
   // Display one message
   function displayMessage(msg) {
+    // Fallback: Use DiceBear avatar if no avatar_url
+    const avatarSrc = msg.avatar_url 
+      ? msg.avatar_url 
+      : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(msg.username)}`;
     const div = document.createElement('div');
     div.className = 'message';
     div.innerHTML = `
-      <img src="${msg.avatar_url || 'default-avatar.png'}" alt="avatar">
+      <img src="${avatarSrc}" alt="avatar" onerror="this.onerror=null;this.src='default-avatar.png';">
       <div class="message-content">
         <div class="username">${msg.username}</div>
         <div class="text">${msg.message.replace(/@([a-zA-Z0-9_]+)/g, '<span class="mention">@$1</span>')}</div>
@@ -245,7 +262,7 @@
       .select('avatar_url, username, email')
       .eq('id', currentUser.id)
       .single();
-    const avatar_url = profile?.avatar_url || currentUser.user_metadata?.avatar_url || 'default-avatar.png';
+    const avatar_url = profile?.avatar_url || currentUser.user_metadata?.avatar_url || '';
     const username = profile?.username || currentUser.user_metadata?.username || currentUser.email || 'Anonymous';
 
     const { error } = await supabase.from('messages').insert([{
@@ -263,9 +280,13 @@
   async function loadMessages() {
     const { data, error } = await supabase
       .from('messages')
-      .select('*')
+      .select('user_id, username, avatar_url, message, timestamp')
       .order('timestamp', { ascending: true });
     chatBox.innerHTML = '';
+    if (error) {
+      chatBox.innerHTML = '<div style="color:red;">Error loading messages: ' + error.message + '</div>';
+      return;
+    }
     if (data) data.forEach(displayMessage);
   }
 
@@ -297,7 +318,6 @@
   document.addEventListener('DOMContentLoaded', async () => {
     await updateGlobalAvatarAndName();
     await loadMessages();
-    // Optionally, refresh avatar/name when auth state changes
     supabase.auth.onAuthStateChange((_event, _session) => {
       updateGlobalAvatarAndName();
     });
