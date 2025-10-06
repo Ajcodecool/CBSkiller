@@ -235,7 +235,11 @@
 
     currentUser = authData.user;
     currentUsername = cleanUsername(profile?.username) || "Anonymous";
-    userAvatarImg.src = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(currentUsername)}`;
+    // Use custom avatar if present in user_metadata, else DiceBear
+    const customAvatar = authData.user.user_metadata?.avatar_url;
+    userAvatarImg.src = customAvatar && customAvatar.trim() !== ""
+      ? customAvatar
+      : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(currentUsername)}`;
     userNameSpan.textContent = currentUsername;
     userInfoDiv.style.display = 'flex';
   }
