@@ -137,13 +137,6 @@
     .back-button:hover {
       background-color: #a0f0b0;
     }
-    .message-bubble {
-      background-color: var(--content-bg);
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 10px;
-      box-shadow: var(--shadow);
-    }
     .mention {
       color: var(--accent-blue);
       font-weight: bold;
@@ -153,19 +146,6 @@
       color: #aaa;
       margin-left: 10px;
     }
-    .avatar-fallback {
-      background: var(--accent-blue);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 1.3em;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      margin-right: 12px;
-    }
   </style>
 </head>
 <body>
@@ -173,15 +153,12 @@
 <div class="chat-container">
   <div class="chat-header">
     Crooms Connect Chat
-    <!-- User Info Box -->
     <div class="user-info" id="user-info" style="display: none;">
       <img id="user-avatar" src="default-avatar.png" alt="avatar">
       <span id="user-name">Loading...</span>
     </div>
   </div>
-  <div class="chat-messages" id="chat-box">
-    <!-- Messages will appear here -->
-  </div>
+  <div class="chat-messages" id="chat-box"></div>
   <div class="chat-input">
     <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
     <button id="send-button">Send</button>
@@ -190,11 +167,11 @@
 </div>
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
   const SUPABASE_URL = 'https://jxxnfsydjrflnephmfjm.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // DOM elements
   const chatBox = document.getElementById('chat-box');
   const input = document.getElementById('chat-input');
   const sendBtn = document.getElementById('send-button');
@@ -207,16 +184,15 @@
   let currentAvatarUrl = 'default-avatar.png';
   let currentUsername = 'Anonymous';
 
-  // Fetch user profile from DB and update UI
   async function updateGlobalAvatarAndName() {
     const { data: authData, error: authError } = await supabase.auth.getUser();
     if (authError || !authData?.user) {
       userInfoDiv.style.display = 'none';
       return;
     }
+
     const userId = authData.user.id;
-    // Fetch from users table
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from("users")
       .select("avatar_url, username, email")
       .eq("id", userId)
@@ -231,12 +207,8 @@
     userInfoDiv.style.display = 'flex';
   }
 
-  // Display one message
   function displayMessage(msg) {
-    // Fallback: Use DiceBear avatar if no avatar_url
-    const avatarSrc = msg.avatar_url 
-      ? msg.avatar_url 
-      : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(msg.username)}`;
+    const avatarSrc = msg.avatar_url || `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(msg.username)}`;
     const div = document.createElement('div');
     div.className = 'message';
     div.innerHTML = `
@@ -251,17 +223,16 @@
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  // Send a message to Supabase
   async function sendMessage() {
     const message = input.value.trim();
     if (!message || !currentUser) return;
 
-    // Refetch latest profile for avatar_url and username
     const { data: profile } = await supabase
       .from('users')
       .select('avatar_url, username, email')
       .eq('id', currentUser.id)
       .single();
+
     const avatar_url = profile?.avatar_url || currentUser.user_metadata?.avatar_url || '';
     const username = profile?.username || currentUser.user_metadata?.username || currentUser.email || 'Anonymous';
 
@@ -272,31 +243,41 @@
       message,
       timestamp: new Date().toISOString()
     }]);
-    if (!error) input.value = '';
-    typingIndicator.textContent = '';
+
+    if (!error) {
+      input.value = '';
+      typingIndicator.textContent = '';
+    } else {
+      console.error("Message send error:", error.message);
+    }
   }
 
-  // Load all messages
   async function loadMessages() {
     const { data, error } = await supabase
       .from('messages')
       .select('user_id, username, avatar_url, message, timestamp')
       .order('timestamp', { ascending: true });
+
     chatBox.innerHTML = '';
     if (error) {
-      chatBox.innerHTML = '<div style="color:red;">Error loading messages: ' + error.message + '</div>';
+      chatBox.innerHTML = `<div style="color:red;">Error loading messages: ${error.message}</div>`;
       return;
     }
-    if (data) data.forEach(displayMessage);
+    data.forEach(displayMessage);
   }
 
-  // Realtime message listener
-  supabase
-    .channel('public:messages')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-      displayMessage(payload.new);
-    })
-    .subscribe();
+  function subscribeToMessages() {
+    supabase
+      .channel('messages-channel')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages'
+      }, (payload) => {
+        displayMessage(payload.new);
+      })
+      .subscribe();
+  }
 
   sendBtn.addEventListener('click', sendMessage);
   input.addEventListener('keydown', (e) => {
@@ -307,20 +288,20 @@
   });
 
   input.addEventListener('input', () => {
-    if (input.value.trim()) {
-      typingIndicator.textContent = `${currentUsername} is typing...`;
-    } else {
-      typingIndicator.textContent = '';
-    }
+    typingIndicator.textContent = input.value.trim() ? `${currentUsername} is typing...` : '';
   });
 
-  // Initial page load
   document.addEventListener('DOMContentLoaded', async () => {
-    await updateGlobalAvatarAndName();
-    await loadMessages();
-    supabase.auth.onAuthStateChange((_event, _session) => {
-      updateGlobalAvatarAndName();
-    });
+    try {
+      await updateGlobalAvatarAndName();
+      await loadMessages();
+      subscribeToMessages();
+      supabase.auth.onAuthStateChange((_event, _session) => {
+        updateGlobalAvatarAndName();
+      });
+    } catch (err) {
+      console.error("Initialization error:", err);
+    }
   });
 </script>
 </body>
