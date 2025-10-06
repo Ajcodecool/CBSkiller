@@ -6,7 +6,7 @@
 <!DOCTYPE html>
 
 <html lang="en">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -495,7 +495,18 @@ font-size: 14px;
 }
 </style>
 </head>
-<body id="app-body">
+<body id="app-body"><script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = "auth_fixed.html";
+  }
+});
+</script>
 <div class="header">
 <div class="flex items-center">
 <span class="title-text">CROOMS CONNECT</span>
