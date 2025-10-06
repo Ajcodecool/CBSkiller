@@ -1,9 +1,10 @@
 
 <!DOCTYPE html>
+
 <html>
 <head>
-  <title>Crooms Connect Chatroom</title>
-  <style>
+<title>Crooms Connect Chatroom</title>
+<style>
     body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
     header { background: #4CAF50; color: white; padding: 10px; text-align: center; }
     .chat-container { padding: 20px; max-width: 800px; margin: auto; }
@@ -18,36 +19,35 @@
   </style>
 </head>
 <body>
-  <header>
-    <h1>Connect Chatroom</h1>
-  </header>
-  <div class="chat-container" id="chatContainer">
-    <!-- Example message -->
-    <div class="message">
-      <img src="default_avatar.png" class="avatar" alt="Avatar">
-      <div class="message-content">
-        <div class="name">Student Name</div>
-        <div class="text">Welcome to the chatroom!</div>
-      </div>
-    </div>
-  </div>
-  <div class="chat-container editor">
-    <div class="editor-toolbar">
-      <button onclick="formatText('bold')"><b>B</b></button>
-      <button onclick="formatText('italic')"><i>I</i></button>
-      <button onclick="applyRainbow()">🌈</button>
-      <select onchange="changeFont(this.value)">
-        <option value="Arial">Arial</option>
-        <option value="Courier New">Courier New</option>
-        <option value="Georgia">Georgia</option>
-        <option value="Times New Roman">Times New Roman</option>
-      </select>
-    </div>
-    <div id="messageInput" contenteditable="true" style="border:1px solid #ccc;"></div>
-    <button onclick="sendMessage()" style="margin-top:10px;padding:8px 16px;background-color:#4CAF50;color:white;border:none;border-radius:4px;">Send</button>
-  </div>
-
-  <script>
+<header>
+<h1>Connect Chatroom</h1>
+</header>
+<div class="chat-container" id="chatContainer">
+<!-- Example message -->
+<div class="message">
+<img alt="Avatar" class="avatar" src="default_avatar.png"/>
+<div class="message-content">
+<div class="name">Student Name</div>
+<div class="text">Welcome to the chatroom!</div>
+</div>
+</div>
+</div>
+<div class="chat-container editor">
+<div class="editor-toolbar">
+<button onclick="formatText('bold')"><b>B</b></button>
+<button onclick="formatText('italic')"><i>I</i></button>
+<button onclick="applyRainbow()">🌈</button>
+<select onchange="changeFont(this.value)">
+<option value="Arial">Arial</option>
+<option value="Courier New">Courier New</option>
+<option value="Georgia">Georgia</option>
+<option value="Times New Roman">Times New Roman</option>
+</select>
+</div>
+<div contenteditable="true" id="messageInput" style="border:1px solid #ccc;"></div>
+<button onclick="sendMessage()" style="margin-top:10px;padding:8px 16px;background-color:#4CAF50;color:white;border:none;border-radius:4px;">Send</button>
+</div>
+<script>
     function formatText(command) {
       document.execCommand(command, false, null);
     }
@@ -100,5 +100,23 @@
       input.innerHTML = "";
     }
   </script>
-</body>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const root = document.documentElement;
+  const savedTheme = localStorage.getItem("crooms-theme");
+  if (savedTheme === "light") {
+    root.style.setProperty("--primary-bg", "#f8f9fa");
+    root.style.setProperty("--content-bg", "#ffffff");
+    root.style.setProperty("--text-color", "#1a1b2f");
+    root.style.setProperty("--accent-blue", "#007bff");
+    root.style.setProperty("--accent-green", "#28a745");
+  } else {
+    root.style.setProperty("--primary-bg", "#1a1b2f");
+    root.style.setProperty("--content-bg", "#2b2d42");
+    root.style.setProperty("--text-color", "#f8f9fa");
+    root.style.setProperty("--accent-blue", "#4cc9f0");
+    root.style.setProperty("--accent-green", "#80ed99");
+  }
+});
+</script></body>
 </html>
