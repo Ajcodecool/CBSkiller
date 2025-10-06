@@ -76,6 +76,7 @@
 
     let cropper = null;
     let user = null;
+    let oldAvatarPath = null; // Store the storage path of the current avatar
 
     // ---- INITIALIZATION ----
     async function init() {
@@ -97,9 +98,26 @@
         currentAvatar.src = userData.avatar_url;
         currentAvatar.style.display = '';
         noAvatarText.style.display = 'none';
+
+        // Parse the storage path from the public URL
+        // Example: https://<project>.supabase.co/storage/v1/object/public/profile-pictures/profile-xxx-yyy.png
+        try {
+          const url = new URL(userData.avatar_url);
+          const parts = url.pathname.split('/');
+          // Find the index of 'profile-pictures' and get the path after that
+          const idx = parts.indexOf('profile-pictures');
+          if (idx !== -1) {
+            oldAvatarPath = parts.slice(idx + 1).join('/'); // skip the bucket name itself
+          } else {
+            oldAvatarPath = null;
+          }
+        } catch (e) {
+          oldAvatarPath = null;
+        }
       } else {
         currentAvatar.style.display = 'none';
         noAvatarText.style.display = '';
+        oldAvatarPath = null;
       }
 
       uploadBtn.disabled = true;
@@ -169,7 +187,22 @@
             return;
           }
 
-          // Compose file name and upload to Supabase
+          // 1. Delete old avatar from storage if it exists
+          if (oldAvatarPath) {
+            try {
+              const { error: removeError } = await supabase.storage
+                .from("profile-pictures")
+                .remove([oldAvatarPath]);
+              if (removeError) {
+                // Not fatal; just log
+                console.warn("Failed to delete old avatar:", removeError.message);
+              }
+            } catch (err) {
+              console.warn("Error while deleting old avatar:", err);
+            }
+          }
+
+          // 2. Compose file name and upload to Supabase
           const fileName = `profile-${user.id}-${Date.now()}.png`;
           status.textContent = "Uploading...";
           const { data: uploadData, error: uploadError } = await supabase.storage
@@ -182,7 +215,7 @@
             return;
           }
 
-          // Get public URL
+          // 3. Get public URL
           const { data: publicUrlData } = await supabase.storage
             .from("profile-pictures")
             .getPublicUrl(fileName);
@@ -194,7 +227,7 @@
             return;
           }
 
-          // Save to user table and auth user metadata
+          // 4. Save to user table and auth user metadata
           const { error: updateError } = await supabase
             .from("users")
             .update({ avatar_url: publicUrl })
@@ -210,13 +243,15 @@
             status.textContent = "Profile picture updated!";
           }
 
-          // Update preview
+          // 5. Update preview and cache new path
           currentAvatar.src = publicUrl;
           currentAvatar.style.display = '';
           noAvatarText.style.display = 'none';
           cropperWrapper.style.display = 'none';
           fileInput.value = "";
           uploadBtn.disabled = true;
+
+          oldAvatarPath = fileName; // update to new file for next time
         }, "image/png", 0.95);
     });
 
