@@ -56,14 +56,55 @@ overflow-x: hidden;
 transition: background-color 0.3s, color 0.3s;
 }
 <!-- Add Supabase JS Client -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
-// --- Supabase Credentials ---
-const supabaseUrl = 'https://jxxnfsydrflnephmfjm.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const SUPABASE_URL = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// --- Helper Functions ---
+// --- Profile avatar logic (always show pfp with fallback) ---
+document.addEventListener('DOMContentLoaded', async () => {
+  const userInfoDiv = document.getElementById('user-info');
+  const userNameSpan = document.getElementById('user-name');
+  const userAvatarImg = document.getElementById('user-avatar');
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    let avatarUrl = user.user_metadata?.avatar_url;
+    let username = user.user_metadata?.username || user.email || "Anonymous";
+
+    // Try to get from 'profiles' table if you use it (optional)
+    try {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('avatar_url, username')
+        .eq('id', user.id)
+        .single();
+      if (profileData) {
+        avatarUrl = profileData.avatar_url || avatarUrl;
+        username = profileData.username || username;
+      }
+    } catch (err) {}
+
+    // Fallback to DiceBear avatar if missing/broken
+    if (!avatarUrl || avatarUrl.trim() === "" || avatarUrl === "default-avatar.png") {
+      avatarUrl = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
+    }
+
+    userNameSpan.textContent = username;
+    userAvatarImg.src = avatarUrl;
+    userAvatarImg.onerror = function() {
+      this.onerror = null;
+      this.src = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
+    };
+    userInfoDiv.style.display = 'flex';
+  } else {
+    userInfoDiv.style.display = 'none';
+  }
+});
+
+// --- You can paste your reminder functions below this block ---
 // Insert a reminder
 async function addReminder(title, timestamp) {
   const { data, error } = await supabase
@@ -99,7 +140,7 @@ async function fetchReminders() {
     list.appendChild(li);
   });
 }
-
+</script>
 // --- DOM Event Listeners ---
 document.addEventListener('DOMContentLoaded', () => {
   fetchReminders();
@@ -1600,9 +1641,7 @@ if (reminderForm) reminderForm.addEventListener('submit', handleReminderSubmit);
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-  // Ensure Supabase client is set up
-  // const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+  // Only one Supabase client!
   const { data: { user } } = await supabase.auth.getUser();
 
   const userInfoDiv = document.getElementById('user-info');
@@ -1613,7 +1652,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let avatarUrl = user.user_metadata?.avatar_url;
     let username = user.user_metadata?.username || user.email || 'Anonymous';
 
-    // Try fetching from profiles table (optional, if you use it)
+    // Optional: Try to get from your profiles table
     try {
       const { data: profileData } = await supabase
         .from('profiles')
@@ -1625,20 +1664,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         avatarUrl = profileData.avatar_url || avatarUrl;
         username = profileData.username || username;
       }
-    } catch (err) {
-      // Ignore fetch error, fallback to user_metadata
-    }
+    } catch (err) {}
 
-    // Fallback to DiceBear avatar if missing
+    // If avatar is missing or broken, use DiceBear fallback
     if (!avatarUrl || avatarUrl.trim() === "" || avatarUrl === "default-avatar.png") {
       avatarUrl = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
     }
 
     userNameSpan.textContent = username;
     userAvatarImg.src = avatarUrl;
-    // If loading fails, fallback to DiceBear avatar
     userAvatarImg.onerror = function() {
-      this.onerror = null; // Prevent infinite loop
+      this.onerror = null;
       this.src = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
     };
     userInfoDiv.style.display = 'flex';
@@ -1812,5 +1848,6 @@ document.addEventListener("DOMContentLoaded", updateGlobalAvatar);
 // after saving to Supabase, also call updateGlobalAvatar() to refresh the UI.</script>
 </body>
 </html>
+
 
 
