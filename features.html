@@ -1,0 +1,93 @@
+<!-- features.html -->
+<div id="features-content">
+
+  <!-- Notifications / Reminders Card -->
+  <div id="notifications-card" class="card">
+    <h3>Reminders & Notifications</h3>
+    <button id="test-notification-button">Test Notification</button>
+  </div>
+
+  <!-- Reminder Modal -->
+  <div class="modal" id="reminder-modal">
+    <div class="modal-content">
+      <h2>Reminders</h2>
+      <form id="reminder-form">
+        <input type="text" placeholder="Reminder..." required />
+        <button type="submit">Add</button>
+      </form>
+      <button id="close-reminder-modal">Close</button>
+    </div>
+  </div>
+
+  <!-- Dynamic Info Section -->
+  <div class="info-section">
+    <p data-food="Pizza">Pizza</p>
+    <p data-food="Burger">Burger</p>
+    <p data-food="Salad">Salad</p>
+    <img id="preview" src="" style="display:none; position:absolute; width:100px; height:100px;" />
+  </div>
+
+</div>
+
+<script>
+  // --- Features / Notifications Logic ---
+  const notificationsCard = document.getElementById('notifications-card');
+  const testNotificationButton = document.getElementById('test-notification-button');
+  const reminderModal = document.getElementById('reminder-modal');
+  const closeReminderModalButton = document.getElementById('close-reminder-modal');
+  const reminderForm = document.getElementById('reminder-form');
+  const preview = document.getElementById('preview');
+
+  const showReminderModal = () => {
+    reminderModal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  };
+  const hideReminderModal = () => {
+    reminderModal.classList.remove('show');
+    document.body.style.overflow = '';
+  };
+
+  const showInAppNotification = (title, message) => {
+    // Your existing in-app notification code
+    console.log("Notification:", title, message);
+  };
+
+  const handleReminderSubmit = (e) => {
+    e.preventDefault();
+    const input = reminderForm.querySelector('input');
+    showInAppNotification("Reminder Added", input.value);
+    input.value = '';
+    hideReminderModal();
+  };
+
+  // Event Listeners
+  if (notificationsCard) notificationsCard.addEventListener('click', showReminderModal);
+  if (testNotificationButton) {
+    testNotificationButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showInAppNotification("Test Notification", "This should slide in smoothly!");
+    });
+  }
+  if (closeReminderModalButton) closeReminderModalButton.addEventListener('click', hideReminderModal);
+  if (reminderModal) reminderModal.addEventListener('click', (e) => {
+    if (e.target === reminderModal) hideReminderModal();
+  });
+  if (reminderForm) reminderForm.addEventListener('submit', handleReminderSubmit);
+
+  // --- Lunch Preview Logic ---
+  document.querySelectorAll(".info-section p").forEach(item => {
+    item.addEventListener("mouseenter", async (e) => {
+      const food = e.target.getAttribute("data-food");
+      const imgUrl = `https://placehold.co/300x300/4cc9f0/1a1b2f?text=${encodeURIComponent(food)}`;
+      preview.src = imgUrl;
+      preview.style.display = "block";
+    });
+    item.addEventListener("mousemove", (e) => {
+      preview.style.left = (e.pageX + 20) + "px";
+      preview.style.top = (e.pageY + 20) + "px";
+    });
+    item.addEventListener("mouseleave", () => {
+      preview.style.display = "none";
+    });
+  });
+</script>
