@@ -1,0 +1,71 @@
+<section id="hero" class="hero-section">
+  <!-- Period Timer -->
+  <div id="period-timer" class="period-timer">
+    <!-- Timer text will be injected here dynamically -->
+    <span id="timer-text" class="timer-text"></span>
+  </div>
+
+  <!-- Lunch Display / Info Section -->
+  <div class="info-section">
+    <div id="lunch-display" class="lunch-display">
+      <p data-food="Pizza">Pizza</p>
+      <p data-food="Salad">Salad</p>
+      <p data-food="Sandwich">Sandwich</p>
+    </div>
+
+    <!-- Preview Image -->
+    <img id="preview" src="" alt="Food Preview" style="display:none; position:absolute; width:150px; height:150px; border-radius:10px;"/>
+  </div>
+</section>
+
+<script>
+  // Timer and Lunch Update Loop
+  const updatePeriodTimer = () => {
+    const totalSecondsLeft = 3600; // Example value, replace with your logic
+    const currentPeriod = "Period 1"; // Example
+    const timerTextSpan = document.getElementById("timer-text");
+    const timeLeft = formatTimeLeft(totalSecondsLeft); // Use your existing function
+
+    if (timerTextSpan) {
+      timerTextSpan.innerText = `${timeLeft} left`;
+      timerTextSpan.classList.remove('timer-active');
+      timerTextSpan.style.color = 'var(--text-color)';
+
+      if (totalSecondsLeft > 0 && currentPeriod !== "After School" && currentPeriod !== "Weekend/Break") {
+        timerTextSpan.classList.add('timer-active');
+        const fifteenMinutesInSeconds = 15 * 60;
+        timerTextSpan.style.color = totalSecondsLeft > fifteenMinutesInSeconds ? 'var(--accent-green)' : 'var(--accent-red)';
+      }
+    }
+    updateInfoSection(); // Existing function
+    checkIntervalReminders(); // Existing function
+  };
+
+  const updateLunchDisplay = () => {
+    // Your existing lunch display update logic
+  };
+
+  // Food preview hover logic
+  const fetchImage = async (food) => `https://placehold.co/300x300/4cc9f0/1a1b2f?text=${encodeURIComponent(food)}`;
+  const preview = document.getElementById("preview");
+  document.querySelectorAll(".info-section p").forEach(item => {
+    item.addEventListener("mouseenter", async (e) => {
+      const imgUrl = await fetchImage(e.target.getAttribute("data-food"));
+      preview.src = imgUrl;
+      preview.style.display = "block";
+    });
+    item.addEventListener("mousemove", (e) => {
+      preview.style.left = (e.pageX + 20) + "px";
+      preview.style.top = (e.pageY + 20) + "px";
+    });
+    item.addEventListener("mouseleave", () => {
+      preview.style.display = "none";
+    });
+  });
+
+  // Main loop
+  setInterval(() => {
+    updatePeriodTimer();
+    updateLunchDisplay();
+  }, 1000);
+</script>
