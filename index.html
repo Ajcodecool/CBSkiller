@@ -1599,25 +1599,46 @@ if (reminderForm) reminderForm.addEventListener('submit', handleReminderSubmit);
 });
 </script>
 <script>
-  document.addEventListener('DOMContentLoaded', async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+document.addEventListener('DOMContentLoaded', async () => {
+  // Use your Supabase client here
+  const { data: { user }, error } = await supabase.auth.getUser();
 
-    if (user) {
-      const userInfoDiv = document.getElementById('user-info');
-      const userNameSpan = document.getElementById('user-name');
-      const userAvatarImg = document.getElementById('user-avatar');
+  const userInfoDiv = document.getElementById('user-info');
+  const userNameSpan = document.getElementById('user-name');
+  const userAvatarImg = document.getElementById('user-avatar');
 
-      const username = user.user_metadata?.username || user.email;
-      const avatarUrl = user.user_metadata?.avatar_url || 'default-avatar.png';
+  if (user) {
+    // Try to fetch the profile from your 'profiles' table for latest avatar
+    let avatarUrl = user.user_metadata?.avatar_url;
+    let username = user.user_metadata?.username || user.email || 'Anonymous';
 
-      userNameSpan.textContent = username;
-      userAvatarImg.src = avatarUrl;
+    try {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('avatar_url, username')
+        .eq('id', user.id)
+        .single();
 
-      userInfoDiv.style.display = 'flex';
-    } else {
-      document.getElementById('user-info').style.display = 'none';
+      if (profileData) {
+        avatarUrl = profileData.avatar_url || avatarUrl;
+        username = profileData.username || username;
+      }
+    } catch (err) {
+      // Even if profile fetch fails, fallback to user_metadata
     }
-  });
+
+    // Fallback to DiceBear avatar if none set
+    if (!avatarUrl || avatarUrl.trim() === "" || avatarUrl === "default-avatar.png") {
+      avatarUrl = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
+    }
+
+    userNameSpan.textContent = username;
+    userAvatarImg.src = avatarUrl;
+    userInfoDiv.style.display = 'flex';
+  } else {
+    userInfoDiv.style.display = 'none';
+  }
+});
 </script>
 <div id="user-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:1000;"><div style="background:white; margin:10% auto; padding:20px; width:300px; text-align:center; border-radius:10px;">Loading user info...<button onclick="closeUserModal()" style="margin-top:10px;">Close</button></div></div><script>
 const supabase = supabase.createClient(
@@ -1784,3 +1805,4 @@ document.addEventListener("DOMContentLoaded", updateGlobalAvatar);
 // after saving to Supabase, also call updateGlobalAvatar() to refresh the UI.</script>
 </body>
 </html>
+
