@@ -1600,18 +1600,20 @@ if (reminderForm) reminderForm.addEventListener('submit', handleReminderSubmit);
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-  // Use your Supabase client here
-  const { data: { user }, error } = await supabase.auth.getUser();
+  // Ensure Supabase client is set up
+  // const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const { data: { user } } = await supabase.auth.getUser();
 
   const userInfoDiv = document.getElementById('user-info');
   const userNameSpan = document.getElementById('user-name');
   const userAvatarImg = document.getElementById('user-avatar');
 
   if (user) {
-    // Try to fetch the profile from your 'profiles' table for latest avatar
     let avatarUrl = user.user_metadata?.avatar_url;
     let username = user.user_metadata?.username || user.email || 'Anonymous';
 
+    // Try fetching from profiles table (optional, if you use it)
     try {
       const { data: profileData } = await supabase
         .from('profiles')
@@ -1624,16 +1626,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         username = profileData.username || username;
       }
     } catch (err) {
-      // Even if profile fetch fails, fallback to user_metadata
+      // Ignore fetch error, fallback to user_metadata
     }
 
-    // Fallback to DiceBear avatar if none set
+    // Fallback to DiceBear avatar if missing
     if (!avatarUrl || avatarUrl.trim() === "" || avatarUrl === "default-avatar.png") {
       avatarUrl = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
     }
 
     userNameSpan.textContent = username;
     userAvatarImg.src = avatarUrl;
+    // If loading fails, fallback to DiceBear avatar
+    userAvatarImg.onerror = function() {
+      this.onerror = null; // Prevent infinite loop
+      this.src = `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
+    };
     userInfoDiv.style.display = 'flex';
   } else {
     userInfoDiv.style.display = 'none';
@@ -1805,4 +1812,5 @@ document.addEventListener("DOMContentLoaded", updateGlobalAvatar);
 // after saving to Supabase, also call updateGlobalAvatar() to refresh the UI.</script>
 </body>
 </html>
+
 
