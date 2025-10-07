@@ -1,503 +1,576 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>Connect Chat (Verified Badge Demo)</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <style>
-    :root {
-      --primary-bg: #1a1b2f;
-      --content-bg: #2b2d42;
-      --text-color: #f8f9fa;
-      --accent-blue: #4cc9f0;
-      --accent-green: #80ed99;
-      --radius: 12px;
-    }
-    body {
-      background-color: var(--primary-bg);
-      color: var(--text-color);
-      font-family: 'Inter', sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    .chat-container {
-      max-width: 800px;
-      margin: 40px auto;
-      background-color: var(--content-bg);
-      border-radius: var(--radius);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      display: flex;
-      flex-direction: column;
-      height: 80vh;
-      position: relative;
-    }
-    .chat-header {
-      padding: 16px;
-      font-size: 1.5rem;
-      font-weight: bold;
-      border-bottom: 1px solid #444;
-      position: relative;
-    }
-    .user-info {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(44, 46, 72, 0.8);
-      padding: 6px 12px;
-      border-radius: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      z-index: 10;
-    }
-    .user-info img {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    .user-info span {
-      font-weight: bold;
-      color: var(--accent-blue);
-    }
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-    .chat-input {
-      border-top: 1px solid #444;
-      padding: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .chat-input textarea {
-      flex: 1;
-      resize: none;
-      border-radius: 8px;
-      padding: 10px;
-      font-size: 1rem;
-      background-color: #f8f9fa;
-      color: #1a1b2f;
-    }
-    .chat-input button {
-      background-color: var(--accent-blue);
-      color: #1a1b2f;
-      font-weight: bold;
-      padding: 10px 16px;
-      border-radius: 8px;
-      transition: background-color 0.2s ease;
-    }
-    .chat-input button:hover {
-      background-color: #6ce0ff;
-    }
-    .message {
-      display: flex;
-      align-items: flex-start;
-      margin-bottom: 16px;
-    }
-    .message img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      margin-right: 12px;
-    }
-    .message-content {
-      background-color: #3a3b5a;
-      padding: 10px 14px;
-      border-radius: 10px;
-      max-width: 70%;
-    }
-    .message-content .username {
-      font-weight: bold;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .message-content .timestamp {
-      font-size: 0.75rem;
-      color: #ccc;
-      margin-top: 4px;
-    }
-    .back-button {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      background-color: var(--accent-green);
-      color: #1a1b2f;
-      padding: 8px 14px;
-      border-radius: 8px;
-      font-weight: bold;
-      transition: background-color 0.2s ease;
-      z-index: 20;
-    }
-    .back-button:hover {
-      background-color: #a0f0b0;
-    }
-    .mention {
-      color: var(--accent-blue);
-      font-weight: bold;
-    }
-    .timestamp {
-      font-size: 0.8em;
-      color: #aaa;
-      margin-left: 10px;
-    }
-    .verified-badge {
-      width: 18px;
-      height: 18px;
-      margin-left: 2px;
-      vertical-align: middle;
-      display: inline-block;
-    }
-    .debug-log {
-      background: #222;
-      color: #c0ffb3;
-      font-size: 13px;
-      padding: 7px 10px;
-      margin: 0;
-      border-bottom: 1px solid #333;
-      overflow-x: auto;
-      font-family: monospace;
-      max-height: 140px;
-      overflow-y: auto;
-      box-sizing: border-box;
-    }
-    #loading-older {
-      color: #aaa;
-      font-size: 0.95em;
-      text-align: center;
-      margin-bottom: 12px;
-      margin-top: 2px;
-    }
-  </style>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Connect Chat (Verified Badge Demo)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+        :root {
+            --primary-bg: #1a1b2f;
+            --content-bg: #2b2d42;
+            --text-color: #f8f9fa;
+            --accent-blue: #4cc9f0;
+            --accent-green: #80ed99;
+            --radius: 12px;
+        }
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .chat-container {
+            max-width: 800px;
+            margin: 40px auto;
+            background-color: var(--content-bg);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+            position: relative;
+        }
+        .chat-header {
+            padding: 16px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-bottom: 1px solid #444;
+            position: relative;
+        }
+        .user-info {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(44, 46, 72, 0.8);
+            padding: 6px 12px;
+            border-radius: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .user-info img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .user-info span {
+            font-weight: bold;
+            color: var(--accent-blue);
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .chat-input {
+            border-top: 1px solid #444;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chat-input textarea {
+            flex: 1;
+            resize: none;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 1rem;
+            background-color: #f8f9fa;
+            color: #1a1b2f;
+        }
+        .chat-input button {
+            background-color: var(--accent-blue);
+            color: #1a1b2f;
+            font-weight: bold;
+            padding: 10px 16px;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+        }
+        .chat-input button:hover {
+            background-color: #6ce0ff;
+        }
+        .message {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+        .message img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+        .message-content {
+            background-color: #3a3b5a;
+            padding: 10px 14px;
+            border-radius: 10px;
+            max-width: 70%;
+        }
+        .message-content .username {
+            font-weight: bold;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .message-content .timestamp {
+            font-size: 0.75rem;
+            color: #ccc;
+            margin-top: 4px;
+        }
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: var(--accent-green);
+            color: #1a1b2f;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+            z-index: 20;
+        }
+        .back-button:hover {
+            background-color: #a0f0b0;
+        }
+        .mention {
+            color: var(--accent-blue);
+            font-weight: bold;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: #aaa;
+            margin-left: 10px;
+        }
+        .verified-badge {
+            width: 18px;
+            height: 18px;
+            margin-left: 2px;
+            vertical-align: middle;
+            display: inline-block;
+        }
+        #loading-older {
+            color: #aaa;
+            font-size: 0.95em;
+            text-align: center;
+            margin-bottom: 12px;
+            margin-top: 2px;
+        }
+    </style>
 </head>
 <body>
 <a class="back-button" href="index.html">← Back to Home</a>
 <div class="chat-container">
-  <div class="chat-header">
-    Crooms Connect Chat
-    <div class="user-info" id="user-info" style="display: none;">
-      <img id="user-avatar" src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous" alt="avatar">
-      <span id="user-name">Loading...</span>
-      <img id="user-verified" src="verify.png" class="verified-badge" alt="verified" title="Verified" style="display:none;">
+    <div class="chat-header">
+        Crooms Connect Chat
+        <div class="user-info" id="user-info" style="display: none;">
+            <img id="user-avatar" src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous" alt="avatar">
+            <span id="user-name">Loading...</span>
+            <img id="user-verified" src="verify.png" class="verified-badge" alt="verified" title="Verified" style="display:none;">
+        </div>
     </div>
-  </div>
-  <div id="debug" class="debug-log" style="display:none"></div>
-  <div class="chat-messages" id="chat-box">
-    <div id="loading-older" style="display:none">Loading...</div>
-  </div>
-  <div class="chat-input">
-    <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
-    <button id="send-button">Send</button>
-  </div>
+    <div class="chat-messages" id="chat-box">
+        <div id="loading-older" style="display:none">Loading...</div>
+    </div>
+    <div class="chat-input">
+        <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
+        <button id="send-button">Send</button>
+    </div>
 </div>
 <script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  // === DEBUG LOGGING FUNCTION ===
-  function debugLog(...args) {
-    const debugDiv = document.getElementById('debug');
-    debugDiv.style.display = '';
-    const text = args.map(a => (typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a))).join(' ');
-    debugDiv.textContent = `[${new Date().toLocaleTimeString()}] ` + text + "\n" + debugDiv.textContent;
-    // Also log in console for details
-    console.log('DEBUG:', ...args);
-  }
-
-  const SUPABASE_URL = 'https://jxxnfsydjrflnephmfjm.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  const chatBox = document.getElementById('chat-box');
-  const loadingOlderDiv = document.getElementById('loading-older');
-  const input = document.getElementById('chat-input');
-  const sendBtn = document.getElementById('send-button');
-  const userInfoDiv = document.getElementById('user-info');
-  const userAvatarImg = document.getElementById('user-avatar');
-  const userNameSpan = document.getElementById('user-name');
-  const userVerifiedImg = document.getElementById('user-verified');
-
-  let currentUser = null;
-  let currentUsername = 'Anonymous';
-  let currentUserIsVerified = false;
-
-  // Infinite scroll state
-  const PAGE_SIZE = 20;
-  let loadedMessages = []; // Always sorted from oldest (index 0) to newest (last)
-  let loadingOlder = false;
-  let allOlderLoaded = false;
-  let totalMessageCount = null; // We'll fetch this on first load
-
-  // --- CACHE FOR PROFILE VERIFICATION ---
-  const verifiedCache = {};
-
-  // Clean username helper
-  function cleanUsername(name) {
-    if (!name) return "Anonymous";
-    if (typeof name !== 'string') return name;
-    return name.replace(/@croomsconnect\.local$/i, '');
-  }
-
-  // Async check if a username is verified (with caching)
-  async function isUserVerified(username) {
-    if (verifiedCache.hasOwnProperty(username)) return verifiedCache[username];
-    // Query profiles for is_verified
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('is_verified')
-      .eq('username', username)
-      .single();
-    const verified = !!(data && data.is_verified);
-    verifiedCache[username] = verified;
-    return verified;
-  }
-
-  async function updateGlobalAvatarAndName() {
-    debugLog("updateGlobalAvatarAndName() called");
-    const { data: authData, error: authErr } = await supabase.auth.getUser();
-    debugLog("Auth data:", authData, "Auth error:", authErr);
-
-    // If not signed in, redirect to auth.html
-    if (!authData?.user) {
-      window.location.href = "auth.html";
-      return;
+    // === REPLACED DEBUG LOGGING FUNCTION ===
+    function debugLog(...args) {
+        // Only log to console, not to the page
+        console.log('DEBUG:', ...args);
     }
 
-    const userId = authData.user.id;
-    debugLog("Fetching profile for userId:", userId);
-    const { data: profile, error: profileErr } = await supabase
-      .from("profiles")
-      .select("username, is_verified")
-      .eq("id", userId)
-      .single();
-    debugLog("Profile query:", profile, "Profile error:", profileErr);
+    const SUPABASE_URL = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    currentUser = authData.user;
-    currentUsername = cleanUsername(profile?.username) || "Anonymous";
-    currentUserIsVerified = !!profile?.is_verified;
-    // Use custom avatar if present in user_metadata, else DiceBear
-    const customAvatar = authData.user.user_metadata?.avatar_url;
-    userAvatarImg.src = customAvatar && customAvatar.trim() !== ""
-      ? customAvatar
-      : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(currentUsername)}`;
-    userNameSpan.textContent = currentUsername;
-    userVerifiedImg.style.display = currentUserIsVerified ? "" : "none";
-    userInfoDiv.style.display = 'flex';
-  }
+    const chatBox = document.getElementById('chat-box');
+    const loadingOlderDiv = document.getElementById('loading-older');
+    const input = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-button');
+    const userInfoDiv = document.getElementById('user-info');
+    const userAvatarImg = document.getElementById('user-avatar');
+    const userNameSpan = document.getElementById('user-name');
+    const userVerifiedImg = document.getElementById('user-verified');
 
-  function cleanMessageMentions(text) {
-    // Replace any @username with @cleanUsername
-    return text.replace(/@([a-zA-Z0-9_@.]+)/g, (match, mentionName) => {
-      let clean = mentionName;
-      if (clean.toLowerCase().endsWith('@croomsconnect.local')) {
-        clean = clean.slice(0, -'@croomsconnect.local'.length);
-      }
-      return `<span class="mention">@${clean}</span>`;
-    });
-  }
+    let currentUser = null;
+    let currentUsername = 'Anonymous';
+    let currentUserIsVerified = false;
 
-  // async displayMessage to allow for verified badge lookup
-  async function displayMessage(msg) {
-    const username = cleanUsername(msg.username) || "Anonymous";
-    const avatarSrc = msg.avatar_url && msg.avatar_url.trim() !== ""
-      ? msg.avatar_url
-      : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
-    const div = document.createElement('div');
-    div.className = 'message';
-    div.dataset.userId = msg.user_id;
+    // Infinite scroll state
+    const PAGE_SIZE = 20;
+    let loadedMessages = []; // Always sorted from oldest (index 0) to newest (last)
+    let loadingOlder = false;
+    let allOlderLoaded = false;
+    let totalMessageCount = null; // We'll fetch this on first load
 
-    // Check verified status (async, cache)
-    const verified = await isUserVerified(msg.username);
-
-    div.innerHTML = `
-      <img src="${avatarSrc}" alt="avatar">
-      <div class="message-content">
-        <div class="username">
-          ${username}
-          ${verified ? `<img src="verify.png" class="verified-badge" alt="verified" title="Verified">` : ""}
-        </div>
-        <div class="text">${cleanMessageMentions(msg.message)}</div>
-        <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>
-      </div>
-    `;
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
-
-  // Render all messages (infinite scroll compatible)
-  async function renderMessages() {
-    chatBox.innerHTML = '';
-    chatBox.appendChild(loadingOlderDiv);
-    for (const msg of loadedMessages) {
-      await displayMessage(msg);
-    }
-  }
-
-  async function fetchTotalMessageCount() {
-    const { count } = await supabase
-      .from('messages')
-      .select('id', { count: 'exact', head: true });
-    debugLog("Total message count:", count);
-    return count || 0;
-  }
-
-  async function loadInitialMessages() {
-    debugLog("loadInitialMessages() called");
-    totalMessageCount = await fetchTotalMessageCount();
-    const start = Math.max(0, totalMessageCount - PAGE_SIZE);
-    const end = totalMessageCount - 1;
-    const { data, error } = await supabase
-      .from('messages')
-      .select('user_id, username, avatar_url, message, timestamp')
-      .order('timestamp', { ascending: true })
-      .range(start, end);
-
-    debugLog("Loaded initial messages:", data, error);
-
-    loadedMessages = data || [];
-    if (loadedMessages.length < PAGE_SIZE) allOlderLoaded = true;
-    await renderMessages();
-    setTimeout(() => {
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }, 0);
-  }
-
-  async function loadOlderMessages() {
-    if (loadingOlder || allOlderLoaded) return;
-    loadingOlder = true;
-    loadingOlderDiv.style.display = '';
-    debugLog("loadOlderMessages() called");
-    const messagesToLoad = PAGE_SIZE;
-    const currentlyLoaded = loadedMessages.length;
-    const start = Math.max(0, totalMessageCount - currentlyLoaded - messagesToLoad);
-    const end = totalMessageCount - currentlyLoaded - 1;
-    if (end < start) {
-      loadingOlder = false;
-      loadingOlderDiv.style.display = 'none';
-      allOlderLoaded = true;
-      debugLog("All older messages loaded");
-      return;
-    }
-    const { data, error } = await supabase
-      .from('messages')
-      .select('user_id, username, avatar_url, message, timestamp')
-      .order('timestamp', { ascending: true })
-      .range(start, end);
-    debugLog("Loaded older messages:", data, error);
-    if (data && data.length > 0) {
-      loadedMessages = [...data, ...loadedMessages];
-      if (data.length < PAGE_SIZE) allOlderLoaded = true;
-      await renderMessages();
-    } else {
-      allOlderLoaded = true;
-    }
-    loadingOlder = false;
-    loadingOlderDiv.style.display = 'none';
-  }
-
-  function handleScroll() {
-    if (chatBox.scrollTop < 100 && !loadingOlder && !allOlderLoaded) {
-      loadOlderMessages();
-    }
-  }
-
-  async function sendMessage() {
-    debugLog("sendMessage() called");
-    const message = input.value.trim();
-    if (!message || !currentUser) {
-      debugLog("No message to send or user not logged in.", {message, currentUser});
-      return;
-    }
-
-    debugLog("Fetching username for sender:", currentUser.id);
-    const { data: profile, error: profileErr } = await supabase
-      .from('profiles')
-      .select('username, is_verified')
-      .eq('id', currentUser.id)
-      .single();
-    debugLog("Profile result for send:", profile, profileErr);
-
-    const username = cleanUsername(profile?.username) || 'Anonymous';
-    const avatar_url = currentUser.user_metadata?.avatar_url || '';
-
-    const { data: insertData, error: insertErr } = await supabase.from('messages').insert([{
-      user_id: currentUser.id,
-      username,
-      avatar_url,
-      message,
-      timestamp: new Date().toISOString()
-    }]);
-    debugLog("Insert message:", insertData, insertErr);
-
-    if (insertErr) {
-      debugLog("Failed to insert message!", insertErr);
-      chatBox.innerHTML += `<div style="color:red;">Failed to send message: ${insertErr.message}</div>`;
-    }
-
-    input.value = '';
-  }
-
-  function subscribeToMessages() {
-    debugLog("Subscribed to messages realtime channel.");
-    supabase
-      .channel('messages-channel')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async (payload) => {
-        debugLog("New message payload:", payload);
-        if (!loadedMessages.some(m => m.timestamp === payload.new.timestamp && m.user_id === payload.new.user_id)) {
-          loadedMessages.push(payload.new);
-          await renderMessages();
-          setTimeout(() => {
-            chatBox.scrollTop = chatBox.scrollHeight;
-          }, 0);
-          totalMessageCount += 1;
+    // --- CACHE FOR PROFILE VERIFICATION ---
+    const verifiedCache = {};
+    // Function to clear cache for full refresh
+    function clearVerifiedCache() {
+        for (const key in verifiedCache) {
+            delete verifiedCache[key];
         }
-      })
-      .subscribe();
-  }
-
-  sendBtn.addEventListener('click', sendMessage);
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
+        debugLog("Verified cache cleared for refresh.");
     }
-  });
 
-  chatBox.addEventListener('scroll', handleScroll);
-
-  document.addEventListener('DOMContentLoaded', async () => {
-    debugLog("DOMContentLoaded event fired");
-    await updateGlobalAvatarAndName();
-    await loadInitialMessages();
-    subscribeToMessages();
-    supabase.auth.onAuthStateChange(() => updateGlobalAvatarAndName());
-  });
-
-  // --- DEMO: Make AJTech@croomsconnect.local verified if not already
-  (async function ensureAJTechVerified() {
-    // On first page load, ensure AJTech is verified (for demo purposes)
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('is_verified')
-      .eq('username', 'AJTech@croomsconnect.local')
-      .single();
-    if (!error && data && !data.is_verified) {
-      await supabase
-        .from('profiles')
-        .update({ is_verified: true })
-        .eq('username', 'AJTech@croomsconnect.local');
+    // Clean username helper
+    function cleanUsername(name) {
+        if (!name) return "Anonymous";
+        if (typeof name !== 'string') return name;
+        return name.replace(/@croomsconnect\.local$/i, '');
     }
-  })();
+
+    // Async check if a username is verified (with caching)
+    async function isUserVerified(username) {
+        if (verifiedCache.hasOwnProperty(username)) return verifiedCache[username];
+        // Query profiles for is_verified
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('is_verified')
+            .eq('username', username)
+            .single();
+        const verified = !!(data && data.is_verified);
+        verifiedCache[username] = verified;
+        return verified;
+    }
+
+    async function updateGlobalAvatarAndName() {
+        debugLog("updateGlobalAvatarAndName() called");
+        const { data: authData, error: authErr } = await supabase.auth.getUser();
+        debugLog("Auth data:", authData, "Auth error:", authErr);
+
+        // If not signed in, redirect to auth.html
+        if (!authData?.user) {
+            window.location.href = "auth.html";
+            return;
+        }
+
+        const userId = authData.user.id;
+        debugLog("Fetching profile for userId:", userId);
+        const { data: profile, error: profileErr } = await supabase
+            .from("profiles")
+            .select("username, is_verified")
+            .eq("id", userId)
+            .single();
+        debugLog("Profile query:", profile, "Profile error:", profileErr);
+
+        currentUser = authData.user;
+        currentUsername = cleanUsername(profile?.username) || "Anonymous";
+        currentUserIsVerified = !!profile?.is_verified;
+        // Use custom avatar if present in user_metadata, else DiceBear
+        const customAvatar = authData.user.user_metadata?.avatar_url;
+        userAvatarImg.src = customAvatar && customAvatar.trim() !== ""
+            ? customAvatar
+            : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(currentUsername)}`;
+        userNameSpan.textContent = currentUsername;
+        userVerifiedImg.style.display = currentUserIsVerified ? "" : "none";
+        userInfoDiv.style.display = 'flex';
+    }
+
+    function cleanMessageMentions(text) {
+        // Replace any @username with @cleanUsername
+        return text.replace(/@([a-zA-Z0-9_@.]+)/g, (match, mentionName) => {
+            let clean = mentionName;
+            if (clean.toLowerCase().endsWith('@croomsconnect.local')) {
+                clean = clean.slice(0, -'@croomsconnect.local'.length);
+            }
+            return `<span class="mention">@${clean}</span>`;
+        });
+    }
+
+    // async displayMessage to allow for verified badge lookup
+    async function displayMessage(msg, isPrepend = false) {
+        const username = cleanUsername(msg.username) || "Anonymous";
+        const avatarSrc = msg.avatar_url && msg.avatar_url.trim() !== ""
+            ? msg.avatar_url
+            : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
+        const div = document.createElement('div');
+        div.className = 'message';
+        div.dataset.userId = msg.user_id;
+        div.dataset.timestamp = msg.timestamp; // Add timestamp for identification
+
+        // Check verified status (async, cache)
+        const verified = await isUserVerified(msg.username);
+
+        div.innerHTML = `
+            <img src="${avatarSrc}" alt="avatar">
+            <div class="message-content">
+                <div class="username">
+                    ${username}
+                    ${verified ? `<img src="verify.png" class="verified-badge" alt="verified" title="Verified">` : ""}
+                </div>
+                <div class="text">${cleanMessageMentions(msg.message)}</div>
+                <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+            </div>
+        `;
+        
+        if (isPrepend) {
+            // Used for loading older messages
+            chatBox.insertBefore(div, chatBox.children[1]); // Insert after loadingOlderDiv
+        } else {
+            // Used for initial load, refresh, and new messages
+            chatBox.appendChild(div);
+        }
+    }
+
+    // Render all messages (infinite scroll compatible)
+    async function renderMessages(isInitialLoad = false) {
+        // Preserve scroll position logic for loading older
+        const oldScrollHeight = chatBox.scrollHeight;
+        const oldScrollTop = chatBox.scrollTop;
+        const shouldScrollToBottom = isInitialLoad || oldScrollTop + chatBox.clientHeight >= oldScrollHeight - 20;
+
+        chatBox.innerHTML = '';
+        chatBox.appendChild(loadingOlderDiv);
+        
+        for (const msg of loadedMessages) {
+            await displayMessage(msg);
+        }
+
+        if (shouldScrollToBottom) {
+            setTimeout(() => {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 0);
+        } else if (!isInitialLoad && !loadingOlder) {
+            // Restore position for refresh if not at bottom and not loading older
+            const newScrollHeight = chatBox.scrollHeight;
+            const diff = newScrollHeight - oldScrollHeight;
+            chatBox.scrollTop = oldScrollTop + diff;
+        }
+    }
+
+    async function fetchTotalMessageCount() {
+        const { count } = await supabase
+            .from('messages')
+            .select('id', { count: 'exact', head: true });
+        debugLog("Total message count:", count);
+        return count || 0;
+    }
+
+    async function loadInitialMessages() {
+        debugLog("loadInitialMessages() called");
+        totalMessageCount = await fetchTotalMessageCount();
+        const start = Math.max(0, totalMessageCount - PAGE_SIZE);
+        const end = totalMessageCount - 1;
+        const { data, error } = await supabase
+            .from('messages')
+            .select('user_id, username, avatar_url, message, timestamp')
+            .order('timestamp', { ascending: true })
+            .range(start, end);
+
+        debugLog("Loaded initial messages:", data, error);
+
+        loadedMessages = data || [];
+        if (loadedMessages.length < PAGE_SIZE) allOlderLoaded = true;
+        await renderMessages(true);
+    }
+
+    async function loadOlderMessages() {
+        if (loadingOlder || allOlderLoaded) return;
+        loadingOlder = true;
+        loadingOlderDiv.style.display = '';
+        debugLog("loadOlderMessages() called");
+        
+        const oldScrollHeight = chatBox.scrollHeight; // Capture height before load
+        
+        const messagesToLoad = PAGE_SIZE;
+        const currentlyLoaded = loadedMessages.length;
+        const start = Math.max(0, totalMessageCount - currentlyLoaded - messagesToLoad);
+        const end = totalMessageCount - currentlyLoaded - 1;
+        
+        if (end < start) {
+            loadingOlder = false;
+            loadingOlderDiv.style.display = 'none';
+            allOlderLoaded = true;
+            debugLog("All older messages loaded");
+            return;
+        }
+        
+        const { data, error } = await supabase
+            .from('messages')
+            .select('user_id, username, avatar_url, message, timestamp')
+            .order('timestamp', { ascending: true })
+            .range(start, end);
+        debugLog("Loaded older messages:", data, error);
+        
+        if (data && data.length > 0) {
+            loadedMessages = [...data, ...loadedMessages];
+            if (data.length < PAGE_SIZE) allOlderLoaded = true;
+            
+            // Re-render, but manage scroll position manually
+            chatBox.innerHTML = '';
+            chatBox.appendChild(loadingOlderDiv);
+            for (const msg of loadedMessages) {
+                // Not using isPrepend here, as we fully re-render for simplicity after a fetch
+                await displayMessage(msg); 
+            }
+
+            // Restore scroll position to the message that was previously at the top
+            const newScrollHeight = chatBox.scrollHeight;
+            const diff = newScrollHeight - oldScrollHeight;
+            chatBox.scrollTop = diff;
+
+        } else {
+            allOlderLoaded = true;
+        }
+        loadingOlder = false;
+        loadingOlderDiv.style.display = 'none';
+    }
+
+    function handleScroll() {
+        if (chatBox.scrollTop < 100 && !loadingOlder && !allOlderLoaded) {
+            loadOlderMessages();
+        }
+    }
+
+    async function sendMessage() {
+        debugLog("sendMessage() called");
+        const message = input.value.trim();
+        if (!message || !currentUser) {
+            debugLog("No message to send or user not logged in.", {message, currentUser});
+            return;
+        }
+
+        debugLog("Fetching profile for sender:", currentUser.id);
+        const { data: profile, error: profileErr } = await supabase
+            .from('profiles')
+            .select('username, is_verified')
+            .eq('id', currentUser.id)
+            .single();
+        debugLog("Profile result for send:", profile, profileErr);
+
+        const username = profile?.username || 'Anonymous'; // Use the full username for the database
+        const avatar_url = currentUser.user_metadata?.avatar_url || '';
+
+        const { data: insertData, error: insertErr } = await supabase.from('messages').insert([{
+            user_id: currentUser.id,
+            username,
+            avatar_url,
+            message,
+            timestamp: new Date().toISOString()
+        }]);
+        debugLog("Insert message:", insertData, insertErr);
+
+        if (insertErr) {
+            console.error("Failed to insert message!", insertErr);
+            chatBox.innerHTML += `<div style="color:red;">Failed to send message: ${insertErr.message}</div>`;
+        }
+
+        input.value = '';
+    }
+
+    function subscribeToMessages() {
+        debugLog("Subscribed to messages realtime channel.");
+        supabase
+            .channel('messages-channel')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async (payload) => {
+                debugLog("New message payload:", payload);
+                // Check if message is already loaded (can happen if user sent it or on slow connections)
+                if (!loadedMessages.some(m => m.timestamp === payload.new.timestamp && m.user_id === payload.new.user_id)) {
+                    loadedMessages.push(payload.new);
+                    // Only display the new message without full re-render, then scroll
+                    await displayMessage(payload.new); 
+                    totalMessageCount += 1;
+                    setTimeout(() => {
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    }, 0);
+                }
+            })
+            .subscribe();
+    }
+
+    // --- NEW: Full refresh function for verification badges/latest status ---
+    async function fullRefreshMessages() {
+        if (loadingOlder) return; // Don't refresh if already loading older pages
+        debugLog("Performing full 5-second refresh...");
+        
+        // 1. Clear the verification status cache to ensure badges are up-to-date
+        clearVerifiedCache();
+
+        // 2. Determine the correct range to load all currently visible messages, plus any new ones
+        const messagesToLoad = loadedMessages.length + PAGE_SIZE; // Load more than loaded, or initial page size
+        totalMessageCount = await fetchTotalMessageCount(); // Get latest count
+        
+        const start = Math.max(0, totalMessageCount - messagesToLoad);
+        const end = totalMessageCount - 1;
+
+        const { data, error } = await supabase
+            .from('messages')
+            .select('user_id, username, avatar_url, message, timestamp')
+            .order('timestamp', { ascending: true })
+            .range(start, end);
+
+        if (error) {
+            console.error("Error during refresh fetch:", error);
+            return;
+        }
+
+        loadedMessages = data || [];
+        // Re-evaluate 'allOlderLoaded' based on the new total count and load range
+        allOlderLoaded = (totalMessageCount - loadedMessages.length) <= 0;
+        loadingOlderDiv.style.display = allOlderLoaded ? 'none' : 'block';
+
+        // 3. Re-render everything
+        await renderMessages(); 
+
+        // 4. Update the current user's info for their verified badge
+        await updateGlobalAvatarAndName();
+    }
+    // ---------------------------------------------------------------------
+
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    chatBox.addEventListener('scroll', handleScroll);
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        debugLog("DOMContentLoaded event fired");
+        await updateGlobalAvatarAndName();
+        await loadInitialMessages();
+        subscribeToMessages();
+        supabase.auth.onAuthStateChange(() => updateGlobalAvatarAndName());
+
+        // --- NEW: Set up 5-second refresh ---
+        setInterval(fullRefreshMessages, 5000); 
+        // ------------------------------------
+    });
+
+    // --- DEMO: Make AJTech@croomsconnect.local verified if not already
+    (async function ensureAJTechVerified() {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('is_verified')
+            .eq('username', 'AJTech@croomsconnect.local')
+            .single();
+        if (!error && data && !data.is_verified) {
+            await supabase
+                .from('profiles')
+                .update({ is_verified: true })
+                .eq('username', 'AJTech@croomsconnect.local');
+        }
+    })();
 </script>
 </body>
 </html>
