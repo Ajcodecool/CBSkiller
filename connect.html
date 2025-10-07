@@ -266,9 +266,10 @@
     debugLog("updateGlobalAvatarAndName() called");
     const { data: authData, error: authErr } = await supabase.auth.getUser();
     debugLog("Auth data:", authData, "Auth error:", authErr);
+
+    // If not signed in, redirect to auth.html
     if (!authData?.user) {
-      userInfoDiv.style.display = 'none';
-      debugLog("No authenticated user.");
+      window.location.href = "auth.html";
       return;
     }
 
