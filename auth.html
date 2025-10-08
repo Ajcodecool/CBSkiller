@@ -132,8 +132,8 @@
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         
         // --- Configuration ---
-        // This is the page users are sent to after successful authentication.
-        const MAIN_APP_URL = 'connect_chat.html'; 
+        // 🎯 FIX: Changed the redirect URL to connect.html
+        const MAIN_APP_URL = 'connect.html'; 
         // Placeholder domain for username-only login
         const PLACEHOLDER_DOMAIN = '@croomsconnect.local';
 
@@ -219,15 +219,21 @@
         
         /**
          * Checks for an existing session and redirects to the main app if found.
+         * If no session is found, it does nothing, keeping the user on the login page.
          */
         const checkSessionAndRedirect = async () => {
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 
                 if (session) {
-                    console.log("Active session found. Redirecting to main app.");
+                    // This block only runs if the user IS authenticated.
+                    console.log("Active session found. Redirecting to main app: " + MAIN_APP_URL);
                     sessionStorage.setItem('loggedIn', 'true'); 
                     window.location.href = MAIN_APP_URL; 
+                } else {
+                    // This block runs if the user IS NOT authenticated (anonymous).
+                    // We do nothing, which keeps them on the login page.
+                    console.log("No active session found. User must sign in.");
                 }
             } catch(e) {
                 console.error("Session check failed.", e);
@@ -239,7 +245,6 @@
          * Handles the sign-in process using username (converted to dummy email).
          */
         const handleSignIn = async (e) => {
-            // IMPORTANT: e.preventDefault() stops the form from submitting normally (reloading the page)
             e.preventDefault(); 
             clearMessage();
             showLoading(false);
@@ -258,7 +263,7 @@
                     ? 'Invalid username or password.' 
                     : error.message);
             } else {
-                // Successful sign in, redirect to main app
+                // Successful sign in, redirect to main app (connect.html)
                 sessionStorage.setItem('loggedIn', 'true'); 
                 window.location.href = MAIN_APP_URL;
             }
@@ -341,7 +346,8 @@
         /* ========================================================================= */
         
         document.addEventListener('DOMContentLoaded', () => {
-            // Check if already signed in on page load
+            // This function checks the session and only redirects if a session IS found.
+            // If the user is anonymous, they stay on this page.
             checkSessionAndRedirect(); 
 
             // Event Listeners
