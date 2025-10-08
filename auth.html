@@ -26,7 +26,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px; /* Added for mobile safety */
+            padding: 20px;
         }
 
         .auth-card {
@@ -145,9 +145,8 @@
 
         
         // --- Configuration ---
-        // NOTE: Changed to 'connect_chat.html' as this is the intended redirect target.
-        const MAIN_APP_URL = 'connect.html'; 
-        // --- Placeholder domain to allow username-only login ---
+        // Setting the redirect URL to connect_chat.html
+        const MAIN_APP_URL = 'connect_chat.html'; 
         const PLACEHOLDER_DOMAIN = '@croomsconnect.local';
 
         // --- DOM Elements ---
@@ -215,7 +214,7 @@
                 signInForm.classList.remove('hidden');
                 signUpForm.classList.add('hidden');
                 toggleAuthButton.textContent = "Need an account? Sign Up";
-                authHeaderText.textContent = "Sign in using your username and password."; // UPDATED
+                authHeaderText.textContent = "Sign in using your username and password.";
             } else {
                 // Currently on Sign In, switch to Sign Up
                 signInForm.classList.add('hidden');
@@ -239,10 +238,10 @@
                 
                 if (session) {
                     console.log("Active session found. Redirecting to main app.");
-                    sessionStorage.setItem('loggedIn', 'true'); window.location.href = MAIN_APP_URL;
+                    sessionStorage.setItem('loggedIn', 'true'); 
+                    window.location.href = MAIN_APP_URL; // ✅ FIXED: Use consistent variable
                 }
             } catch(e) {
-                // Suppress errors during initial check if keys are bad, wait for user input
                 console.error("Session check failed.", e);
             }
         };
@@ -256,11 +255,8 @@
             clearMessage();
             showLoading(false);
 
-            // Get username instead of email
             const username = document.getElementById('signin-username').value.trim();
             const password = document.getElementById('signin-password').value;
-            
-            // Convert the username into the dummy email format required by Supabase Auth
             const email = username + PLACEHOLDER_DOMAIN;
 
             const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -269,13 +265,13 @@
 
             if (error) {
                 console.error('Sign In Error:', error);
-                // Customize error message for username flow
                 displayMessage(error.message.includes('Invalid login credentials') 
                     ? 'Invalid username or password.' 
                     : error.message);
             } else {
                 // Successful sign in, redirect to main app
-                sessionStorage.setItem('loggedIn', 'true'); window.location.href = MAIN_APP_URL;
+                sessionStorage.setItem('loggedIn', 'true'); 
+                window.location.href = MAIN_APP_URL; // ✅ FIXED: Use consistent variable
             }
         };
 
@@ -289,8 +285,6 @@
 
             const username = document.getElementById('signup-username').value.trim();
             const password = document.getElementById('signup-password').value;
-            
-            // Construct the dummy email address for Supabase Auth
             const email = username + PLACEHOLDER_DOMAIN;
             
             // Basic client-side validation
@@ -313,7 +307,6 @@
             
             if (error) {
                 console.error('Sign Up Error:', error);
-                // If it's a "User already registered" error, it means the username is taken
                 displayMessage(error.message.includes('User already registered')
                     ? 'This username is already taken. Please choose another.'
                     : error.message);
@@ -341,13 +334,13 @@
             
             // Step 3: Handle redirection based on whether a session was created
             if (data.session) {
-                // If the user is immediately signed in (e.g., email confirmation is off)
-                sessionStorage.setItem('loggedIn', 'true'); window.location.href = MAIN_APP_URL;
+                // If the user is immediately signed in
+                sessionStorage.setItem('loggedIn', 'true'); 
+                window.location.href = MAIN_APP_URL; // ✅ FIXED: Use consistent variable
             } else {
-                // If the user needs to manually sign in
+                // If the user needs to manually sign in (e.g., email confirmation is required)
                 toggleView(); // Switch back to login view
                 displayMessage("Success! Your account is created. Please sign in below.", 'success');
-                // Clear the sign up form fields
                 document.getElementById('signup-username').value = '';
                 document.getElementById('signup-password').value = '';
             }
