@@ -686,7 +686,7 @@
     </div>
     <div class="chat-input">
         <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
-        <button id="send-button">Send</button>
+        <button id="send-button" onclick="handleSendClick()" >Send</button>
     </div>
 </div>
 <script type="module">
@@ -841,7 +841,7 @@
         div.dataset.timestamp = msg.timestamp; 
 
         const verified = await isUserVerified(msg.username);
-        const avatarStyle = (isIOS || isWin98) ? 'display: none;' : 'display: block;';
+        const avatarStyle = 'display: block;';
         const timestampText = new Date(msg.timestamp).toLocaleTimeString();
         
         // MSN theme shows the username (often with color) and message on one line, so we need the username/badge inside the bubble content.
@@ -869,21 +869,22 @@
         const shouldScrollToBottom = isInitialLoad || oldScrollTop + chatBox.clientHeight >= oldScrollHeight - 20;
 
         chatBox.innerHTML = '';
-        chatBox.appendChild(loadingOlderDiv);
+chatBox.appendChild(loadingOlderDiv);
+const previousScrollHeight = chatBox.scrollHeight;
         
         for (const msg of loadedMessages) {
             await displayMessage(msg);
         }
 
         if (shouldScrollToBottom) {
-            setTimeout(() => {
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }, 0);
-        } else if (!isInitialLoad && !loadingOlder) {
-            const newScrollHeight = chatBox.scrollHeight;
-            const diff = newScrollHeight - oldScrollHeight;
-            chatBox.scrollTop = oldScrollTop + diff;
-        }
+  setTimeout(() => {
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }, 0);
+} else if (!isInitialLoad && !loadingOlder) {
+  const newScrollHeight = chatBox.scrollHeight;
+  const diff = newScrollHeight - previousScrollHeight;
+  chatBox.scrollTop = oldScrollTop + diff;
+}
     }
 
     async function fetchTotalMessageCount() {
@@ -1073,5 +1074,22 @@
         }
     })();
 </script>
+
+<script>
+  function isUserSignedIn() {
+    // Placeholder authentication check
+    return false; // Change this logic based on actual authentication
+  }
+
+  function handleSendClick() {
+    if (!isUserSignedIn()) {
+      window.location.href = "auth.html";
+    } else {
+      // Proceed with sending the message
+      console.log("Message sent");
+    }
+  }
+</script>
+
 </body>
 </html>
