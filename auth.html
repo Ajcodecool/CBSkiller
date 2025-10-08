@@ -124,29 +124,17 @@
 
     <script>
         // =================================================================
-        // Supabase Credentials
+        // Supabase Credentials (KEEP THESE SECRET IN A REAL APP)
         // =================================================================
         const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co'; 
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'; 
         
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-        supabase.auth.getSession().then(({ data, error }) => {
-            if (error) {
-                console.error("Supabase session error:", error.message);
-                const authMessage = document.getElementById('auth-message');
-                if (authMessage) {
-                    authMessage.textContent = "Supabase initialization failed: " + error.message;
-                    authMessage.classList.remove('hidden');
-                    authMessage.classList.add('bg-red-800', 'text-white');
-                }
-            }
-        });
-
         
         // --- Configuration ---
-        // Setting the redirect URL to connect_chat.html
+        // This is the page users are sent to after successful authentication.
         const MAIN_APP_URL = 'connect_chat.html'; 
+        // Placeholder domain for username-only login
         const PLACEHOLDER_DOMAIN = '@croomsconnect.local';
 
         // --- DOM Elements ---
@@ -239,7 +227,7 @@
                 if (session) {
                     console.log("Active session found. Redirecting to main app.");
                     sessionStorage.setItem('loggedIn', 'true'); 
-                    window.location.href = MAIN_APP_URL; // ✅ FIXED: Use consistent variable
+                    window.location.href = MAIN_APP_URL; 
                 }
             } catch(e) {
                 console.error("Session check failed.", e);
@@ -251,7 +239,8 @@
          * Handles the sign-in process using username (converted to dummy email).
          */
         const handleSignIn = async (e) => {
-            e.preventDefault();
+            // IMPORTANT: e.preventDefault() stops the form from submitting normally (reloading the page)
+            e.preventDefault(); 
             clearMessage();
             showLoading(false);
 
@@ -271,7 +260,7 @@
             } else {
                 // Successful sign in, redirect to main app
                 sessionStorage.setItem('loggedIn', 'true'); 
-                window.location.href = MAIN_APP_URL; // ✅ FIXED: Use consistent variable
+                window.location.href = MAIN_APP_URL;
             }
         };
 
@@ -336,9 +325,9 @@
             if (data.session) {
                 // If the user is immediately signed in
                 sessionStorage.setItem('loggedIn', 'true'); 
-                window.location.href = MAIN_APP_URL; // ✅ FIXED: Use consistent variable
+                window.location.href = MAIN_APP_URL;
             } else {
-                // If the user needs to manually sign in (e.g., email confirmation is required)
+                // If the user needs to manually sign in 
                 toggleView(); // Switch back to login view
                 displayMessage("Success! Your account is created. Please sign in below.", 'success');
                 document.getElementById('signup-username').value = '';
