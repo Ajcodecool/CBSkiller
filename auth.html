@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- Load Supabase client library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 <head>
     <meta charset="utf-8"/>
@@ -86,16 +85,12 @@
 <body>
     <div class="auth-card text-center">
         <h1 class="text-3xl font-extrabold text-white mb-6">Crooms Connect</h1>
-        <!-- UPDATED HEADER -->
         <p class="text-gray-400 mb-8" id="auth-header-text">Sign in using your username and password.</p>
 
-        <!-- Dynamic Message/Error Display -->
         <div id="auth-message" class="mb-4 p-3 rounded-lg text-sm transition duration-300 hidden"></div>
 
-        <!-- Sign In Form -->
         <form id="sign-in-form" class="space-y-4">
             <div class="form-group">
-                <!-- NOW ASKING FOR USERNAME -->
                 <input type="text" id="signin-username" required class="w-full" placeholder="Username">
             </div>
             <div class="form-group">
@@ -107,13 +102,10 @@
             </button>
         </form>
 
-        <!-- Sign Up Form (Hidden by default) -->
         <form id="sign-up-form" class="space-y-4 hidden">
             <div class="form-group">
-                <!-- IMPORTANT: This input creates the 'username' in the 'profiles' table -->
                 <input type="text" id="signup-username" required class="w-full" placeholder="Choose a Unique Username (e.g., JSmith24)">
             </div>
-            <!-- EMAIL FIELD REMOVED -->
             <div class="form-group">
                 <input type="password" id="signup-password" required class="w-full" placeholder="Password (min. 6 characters)">
             </div>
@@ -132,29 +124,30 @@
 
     <script>
         // =================================================================
-        // FIX APPLIED: Supabase Credentials have been inserted here!
+        // Supabase Credentials
         // =================================================================
         const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co'; 
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'; 
         
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-supabase.auth.getSession().then(({ data, error }) => {
-  if (error) {
-    console.error("Supabase session error:", error.message);
-    const authMessage = document.getElementById('auth-message');
-    if (authMessage) {
-      authMessage.textContent = "Supabase initialization failed: " + error.message;
-      authMessage.classList.remove('hidden');
-      authMessage.classList.add('bg-red-800', 'text-white');
-    }
-  }
-});
+        supabase.auth.getSession().then(({ data, error }) => {
+            if (error) {
+                console.error("Supabase session error:", error.message);
+                const authMessage = document.getElementById('auth-message');
+                if (authMessage) {
+                    authMessage.textContent = "Supabase initialization failed: " + error.message;
+                    authMessage.classList.remove('hidden');
+                    authMessage.classList.add('bg-red-800', 'text-white');
+                }
+            }
+        });
 
         
         // --- Configuration ---
-        const MAIN_APP_URL = 'index.html'; 
-        // --- NEW: Placeholder domain to allow username-only login ---
+        // NOTE: Changed to 'connect_chat.html' as this is the intended redirect target.
+        const MAIN_APP_URL = 'connect_chat.html'; 
+        // --- Placeholder domain to allow username-only login ---
         const PLACEHOLDER_DOMAIN = '@croomsconnect.local';
 
         // --- DOM Elements ---
@@ -246,11 +239,11 @@ supabase.auth.getSession().then(({ data, error }) => {
                 
                 if (session) {
                     console.log("Active session found. Redirecting to main app.");
-                    sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'connect_chat.html';
+                    sessionStorage.setItem('loggedIn', 'true'); window.location.href = MAIN_APP_URL;
                 }
             } catch(e) {
                 // Suppress errors during initial check if keys are bad, wait for user input
-                console.error("Session check failed, likely due to placeholder keys.", e);
+                console.error("Session check failed.", e);
             }
         };
 
@@ -282,7 +275,7 @@ supabase.auth.getSession().then(({ data, error }) => {
                     : error.message);
             } else {
                 // Successful sign in, redirect to main app
-                sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'connect_chat.html';
+                sessionStorage.setItem('loggedIn', 'true'); window.location.href = MAIN_APP_URL;
             }
         };
 
@@ -349,7 +342,7 @@ supabase.auth.getSession().then(({ data, error }) => {
             // Step 3: Handle redirection based on whether a session was created
             if (data.session) {
                 // If the user is immediately signed in (e.g., email confirmation is off)
-                sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'connect_chat.html';
+                sessionStorage.setItem('loggedIn', 'true'); window.location.href = MAIN_APP_URL;
             } else {
                 // If the user needs to manually sign in
                 toggleView(); // Switch back to login view
@@ -376,50 +369,5 @@ supabase.auth.getSession().then(({ data, error }) => {
         });
 
     </script>
-
-<script>
-  console.log("🔧 Supabase Auth Debug: Script loaded");
-
-  document.addEventListener("DOMContentLoaded", async () => {
-    console.log("🔧 Supabase Auth Debug: DOM fully loaded");
-
-    const supabaseUrl = "https://jxxnfsydjrflnephmfjm.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w";
-
-    console.log("🔧 Supabase Auth Debug: Creating Supabase client");
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-    const signInForm = document.getElementById("sign-in-form");
-    if (!signInForm) {
-      console.warn("⚠️ Supabase Auth Debug: Sign-in form not found");
-      return;
-    }
-
-    signInForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      console.log("🔧 Supabase Auth Debug: Sign-in form submitted");
-
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      console.log("🔧 Supabase Auth Debug: Attempting sign-in with email:", email);
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) {
-        console.error("❌ Supabase Auth Debug: Sign-in error", error);
-        alert("Sign-in failed: " + error.message);
-      } else {
-        console.log("✅ Supabase Auth Debug: Sign-in successful", data);
-        alert("Sign-in successful!");
-        window.location.href = "fixed_crooms_connect_redirect_final_fixed_updated_authenticated.html";
-      }
-    });
-  });
-</script>
-
 </body>
 </html>
