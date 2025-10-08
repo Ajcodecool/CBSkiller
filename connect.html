@@ -653,7 +653,28 @@
         }
 
     </style>
-</head>
+<script>
+function isUserSignedIn() {
+    // Replace this with actual authentication logic
+    return false; // Simulate anonymous user
+}
+
+function handleSendClick() {
+    if (!isUserSignedIn()) {
+        alert("You must be signed in to send messages.");
+        window.location.href = "auth.html";
+        return false;
+    }
+    // Proceed with sending message
+    sendMessage();
+    return true;
+}
+
+function sendMessage() {
+    // Actual message sending logic here
+    console.log("Message sent.");
+}
+</script></head>
 <body>
 <script>
   if (sessionStorage.getItem("loggedIn") !== "true") {
@@ -685,7 +706,7 @@
 </div>
 <div class="chat-input">
 <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
-<button id="send-button">Send</button>
+<button id="send-button" onclick="handleSendClick()">Send</button>
 </div>
 </div>
 <script type="module">
@@ -1073,31 +1094,5 @@ const previousScrollHeight = chatBox.scrollHeight;
         }
     })();
 </script>
-<script>
-function isUserSignedIn() {
-    // Replace this with actual authentication logic
-    return false; // Simulate anonymous user
-}
-
-function handleSendClick() {
-    if (!isUserSignedIn()) {
-        alert("You must be signed in to send messages.");
-        window.location.href = "auth.html";
-        return false;
-    }
-    return true;
-}
-
-// Attach the handler to the Send button
-document.addEventListener("DOMContentLoaded", function() {
-    const sendButton = document.querySelector("#sendButton");
-    if (sendButton) {
-        sendButton.onclick = function(event) {
-            if (!handleSendClick()) {
-                event.preventDefault();
-            }
-        };
-    }
-});
-</script></body>
+</body>
 </html>
