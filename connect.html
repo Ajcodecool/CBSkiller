@@ -1,13 +1,14 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Connect Chat (Multi-Theme Demo)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Connect Chat (Multi-Theme Demo)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<style>
         /* =======================================
            0. CORE VARIABLES (Base for Dark Theme)
            ======================================= */
@@ -659,35 +660,33 @@
     window.location.href = "auth.html";
   }
 </script>
- class="theme-dark">
+ class="theme-dark"&gt;
 <a class="back-button" href="index.html">← Back to Home</a>
 <div class="chat-container">
-    <div class="chat-header">
-        <div class="text-xl">Crooms Connect Chat</div>
-        
-        <!-- THEME SELECT DROPDOWN -->
-        <select id="theme-selector" class="p-2 rounded-md bg-gray-700 text-white text-sm font-semibold transition duration-150">
-            <option value="dark">Modern Dark</option>
-            <option value="light">Light</option>
-            <option value="win98">Windows 98</option>
-            <option value="win7">Windows 7 Aero</option>
-            <option value="ios">iOS iMessage</option>
-            <option value="msn">MSN Messenger</option>
-        </select>
-        
-        <div class="user-info" id="user-info" style="display: none;">
-            <img id="user-avatar" src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous" alt="avatar">
-            <span id="user-name">Loading...</span>
-            <img id="user-verified" src="verify.png" class="verified-badge" alt="verified" title="Verified" style="display:none;">
-        </div>
-    </div>
-    <div class="chat-messages" id="chat-box">
-        <div id="loading-older" style="display:none">Loading...</div>
-    </div>
-    <div class="chat-input">
-        <textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
-        <button id="send-button" onclick="handleSendClick()" >Send</button>
-    </div>
+<div class="chat-header">
+<div class="text-xl">Crooms Connect Chat</div>
+<!-- THEME SELECT DROPDOWN -->
+<select class="p-2 rounded-md bg-gray-700 text-white text-sm font-semibold transition duration-150" id="theme-selector">
+<option value="dark">Modern Dark</option>
+<option value="light">Light</option>
+<option value="win98">Windows 98</option>
+<option value="win7">Windows 7 Aero</option>
+<option value="ios">iOS iMessage</option>
+<option value="msn">MSN Messenger</option>
+</select>
+<div class="user-info" id="user-info" style="display: none;">
+<img alt="avatar" id="user-avatar" src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous"/>
+<span id="user-name">Loading...</span>
+<img alt="verified" class="verified-badge" id="user-verified" src="verify.png" style="display:none;" title="Verified"/>
+</div>
+</div>
+<div class="chat-messages" id="chat-box">
+<div id="loading-older" style="display:none">Loading...</div>
+</div>
+<div class="chat-input">
+<textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
+<button id="send-button">Send</button>
+</div>
 </div>
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -1074,22 +1073,31 @@ const previousScrollHeight = chatBox.scrollHeight;
         }
     })();
 </script>
-
 <script>
-  function isUserSignedIn() {
-    // Placeholder authentication check
-    return false; // Change this logic based on actual authentication
-  }
+function isUserSignedIn() {
+    // Replace this with actual authentication logic
+    return false; // Simulate anonymous user
+}
 
-  function handleSendClick() {
+function handleSendClick() {
     if (!isUserSignedIn()) {
-      window.location.href = "auth.html";
-    } else {
-      // Proceed with sending the message
-      console.log("Message sent");
+        alert("You must be signed in to send messages.");
+        window.location.href = "auth.html";
+        return false;
     }
-  }
-</script>
+    return true;
+}
 
-</body>
+// Attach the handler to the Send button
+document.addEventListener("DOMContentLoaded", function() {
+    const sendButton = document.querySelector("#sendButton");
+    if (sendButton) {
+        sendButton.onclick = function(event) {
+            if (!handleSendClick()) {
+                event.preventDefault();
+            }
+        };
+    }
+});
+</script></body>
 </html>
