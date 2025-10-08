@@ -1,361 +1,309 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Load Supabase client library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Crooms Connect - Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Inherit theme variables for consistent look */
-        :root {
-            --primary-bg: #1a1b2f; 
-            --content-bg: #2b2d42; 
-            --text-color: #f8f9fa; 
-            --shadow: 0 4px 12px rgba(0,0,0,0.4);
-            --accent-blue: #4cc9f0;
-            --accent-green: #80ed99;
-            --radius: 15px;
-        }
-        
-        body {
-            background-color: var(--primary-bg);
-            color: var(--text-color);
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Crooms Connect - Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --primary-bg: #1a1b2f;
+      --content-bg: #2b2d42;
+      --text-color: #f8f9fa;
+      --shadow: 0 4px 12px rgba(0,0,0,0.4);
+      --accent-blue: #4cc9f0;
+      --accent-green: #80ed99;
+      --radius: 15px;
+    }
 
-        .auth-card {
-            background-color: var(--content-bg);
-            box-shadow: var(--shadow);
-            border-radius: var(--radius);
-            padding: 40px;
-            width: 100%;
-            max-width: 400px;
-        }
+    body {
+      background-color: var(--primary-bg);
+      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
 
-        .btn {
-            background-color: var(--accent-blue);
-            color: #1a1b2f;
-            font-weight: 700;
-            padding: 10px 20px;
-            border-radius: 8px;
-            transition: background-color 0.2s, transform 0.1s;
-        }
-        .btn:hover {
-            background-color: #6ce0ff;
-            transform: translateY(-1px);
-        }
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        input[type="text"], input[type="password"] {
-            color: #1a1b2f; 
-            border-radius: 6px;
-            padding: 12px;
-            background-color: #f8f9fa;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
+    .auth-card {
+      background-color: var(--content-bg);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+    }
 
-        /* Loading Spinner */
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid var(--accent-blue);
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    .btn {
+      background-color: var(--accent-blue);
+      color: #1a1b2f;
+      font-weight: 700;
+      padding: 10px 20px;
+      border-radius: 8px;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .btn:hover {
+      background-color: #6ce0ff;
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    input[type="text"], input[type="password"] {
+      color: #1a1b2f;
+      border-radius: 6px;
+      padding: 12px;
+      background-color: #f8f9fa;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid var(--accent-blue);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 
 <body>
-    <div class="auth-card text-center">
-        <h1 class="text-3xl font-extrabold text-white mb-6">Crooms Connect</h1>
-        <p class="text-gray-400 mb-8" id="auth-header-text">Sign in using your username and password.</p>
+  <div class="auth-card text-center">
+    <h1 class="text-3xl font-extrabold text-white mb-6">Crooms Connect</h1>
+    <p class="text-gray-400 mb-8" id="auth-header-text">
+      Sign in using your username and password.
+    </p>
 
-        <div id="auth-message" class="mb-4 p-3 rounded-lg text-sm transition duration-300 hidden"></div>
+    <div id="auth-message" class="mb-4 p-3 rounded-lg text-sm transition duration-300 hidden"></div>
 
-        <form id="sign-in-form" class="space-y-4">
-            <div class="form-group">
-                <input type="text" id="signin-username" required class="w-full" placeholder="Username">
-            </div>
-            <div class="form-group">
-                <input type="password" id="signin-password" required class="w-full" placeholder="Password">
-            </div>
-            <button type="submit" id="signin-btn" class="btn w-full flex justify-center items-center space-x-2">
-                <span id="signin-text">Sign In</span>
-                <div id="signin-spinner" class="spinner hidden"></div>
-            </button>
-        </form>
+    <!-- Sign In Form -->
+    <form id="sign-in-form" class="space-y-4">
+      <div class="form-group">
+        <input type="text" id="signin-username" required class="w-full" placeholder="Username">
+      </div>
+      <div class="form-group">
+        <input type="password" id="signin-password" required class="w-full" placeholder="Password">
+      </div>
+      <button type="submit" id="signin-btn" class="btn w-full flex justify-center items-center space-x-2">
+        <span id="signin-text">Sign In</span>
+        <div id="signin-spinner" class="spinner hidden"></div>
+      </button>
+    </form>
 
-        <form id="sign-up-form" class="space-y-4 hidden">
-            <div class="form-group">
-                <input type="text" id="signup-username" required class="w-full" placeholder="Choose a Unique Username (e.g., JSmith24)">
-            </div>
-            <div class="form-group">
-                <input type="password" id="signup-password" required class="w-full" placeholder="Password (min. 6 characters)">
-            </div>
-            <button type="submit" id="signup-btn" class="btn w-full bg-accent-green hover:bg-green-400 flex justify-center items-center space-x-2">
-                <span id="signup-text">Sign Up</span>
-                <div id="signup-spinner" class="spinner hidden"></div>
-            </button>
-        </form>
-        
-        <p class="mt-6 text-sm">
-            <button id="toggle-auth-view" class="text-gray-400 hover:text-accent-blue transition">
-                Need an account? Sign Up
-            </button>
-        </p>
-    </div>
+    <!-- Sign Up Form -->
+    <form id="sign-up-form" class="space-y-4 hidden">
+      <div class="form-group">
+        <input type="text" id="signup-username" required class="w-full" placeholder="Choose a Unique Username (e.g., JSmith24)">
+      </div>
+      <div class="form-group">
+        <input type="password" id="signup-password" required class="w-full" placeholder="Password (min. 6 characters)">
+      </div>
+      <button type="submit" id="signup-btn" class="btn w-full flex justify-center items-center space-x-2">
+        <span id="signup-text">Sign Up</span>
+        <div id="signup-spinner" class="spinner hidden"></div>
+      </button>
+    </form>
 
-    <script>
-        // =================================================================
-        // Supabase Credentials (KEEP THESE SECRET IN A REAL APP)
-        // =================================================================
-        const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co'; 
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w'; 
-        
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        
-        // --- Configuration ---
-        // 🎯 FIX: Changed the redirect URL to connect.html
-        const MAIN_APP_URL = 'connect.html'; 
-        // Placeholder domain for username-only login
-        const PLACEHOLDER_DOMAIN = '@croomsconnect.local';
+    <p class="mt-6 text-sm">
+      <button id="toggle-auth-view" class="text-gray-400 hover:text-accent-blue transition">
+        Need an account? Sign Up
+      </button>
+    </p>
+  </div>
 
-        // --- DOM Elements ---
-        const signInForm = document.getElementById('sign-in-form');
-        const signUpForm = document.getElementById('sign-up-form');
-        const toggleAuthButton = document.getElementById('toggle-auth-view');
-        const authMessage = document.getElementById('auth-message');
-        const authHeaderText = document.getElementById('auth-header-text');
-        
-        // Spinner elements
-        const signInBtn = document.getElementById('signin-btn');
-        const signInText = document.getElementById('signin-text');
-        const signInSpinner = document.getElementById('signin-spinner');
-        const signUpBtn = document.getElementById('signup-btn');
-        const signUpText = document.getElementById('signup-text');
-        const signUpSpinner = document.getElementById('signup-spinner');
+  <script>
+    const supabaseUrl = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+    const MAIN_APP_URL = 'connect.html';
+    const PLACEHOLDER_DOMAIN = '@croomsconnect.local';
 
-        /* ========================================================================= */
-        /* 1. UTILITY FUNCTIONS                                                      */
-        /* ========================================================================= */
-        
-        const showLoading = (isSignUp) => {
-            if (isSignUp) {
-                signUpText.classList.add('hidden');
-                signUpSpinner.classList.remove('hidden');
-                signUpBtn.disabled = true;
-            } else {
-                signInText.classList.add('hidden');
-                signInSpinner.classList.remove('hidden');
-                signInBtn.disabled = true;
-            }
-        };
+    const signInForm = document.getElementById('sign-in-form');
+    const signUpForm = document.getElementById('sign-up-form');
+    const toggleAuthButton = document.getElementById('toggle-auth-view');
+    const authMessage = document.getElementById('auth-message');
+    const authHeaderText = document.getElementById('auth-header-text');
 
-        const hideLoading = (isSignUp) => {
-            if (isSignUp) {
-                signUpText.classList.remove('hidden');
-                signUpSpinner.classList.add('hidden');
-                signUpBtn.disabled = false;
-            } else {
-                signInText.classList.remove('hidden');
-                signInSpinner.classList.add('hidden');
-                signInBtn.disabled = false;
-            }
-        };
+    const signInBtn = document.getElementById('signin-btn');
+    const signInText = document.getElementById('signin-text');
+    const signInSpinner = document.getElementById('signin-spinner');
+    const signUpBtn = document.getElementById('signup-btn');
+    const signUpText = document.getElementById('signup-text');
+    const signUpSpinner = document.getElementById('signup-spinner');
 
-        const displayMessage = (message, type = 'error') => {
-            authMessage.textContent = message;
-            authMessage.classList.remove('hidden', 'bg-red-800', 'bg-green-700');
-            if (type === 'error') {
-                authMessage.classList.add('bg-red-800', 'text-white');
-            } else {
-                authMessage.classList.add('bg-green-700', 'text-white');
-            }
-        };
-        
-        const clearMessage = () => {
-            authMessage.classList.add('hidden');
-        };
+    const showLoading = (isSignUp) => {
+      if (isSignUp) {
+        signUpText.classList.add('hidden');
+        signUpSpinner.classList.remove('hidden');
+        signUpBtn.disabled = true;
+      } else {
+        signInText.classList.add('hidden');
+        signInSpinner.classList.remove('hidden');
+        signInBtn.disabled = true;
+      }
+    };
 
-        const toggleView = () => {
-            clearMessage();
-            if (signInForm.classList.contains('hidden')) {
-                // Currently on Sign Up, switch to Sign In
-                signInForm.classList.remove('hidden');
-                signUpForm.classList.add('hidden');
-                toggleAuthButton.textContent = "Need an account? Sign Up";
-                authHeaderText.textContent = "Sign in using your username and password.";
-            } else {
-                // Currently on Sign In, switch to Sign Up
-                signInForm.classList.add('hidden');
-                signUpForm.classList.remove('hidden');
-                toggleAuthButton.textContent = "Already have an account? Sign In";
-                authHeaderText.textContent = "Create your Crooms Connect profile.";
-            }
-        };
+    const hideLoading = (isSignUp) => {
+      if (isSignUp) {
+        signUpText.classList.remove('hidden');
+        signUpSpinner.classList.add('hidden');
+        signUpBtn.disabled = false;
+      } else {
+        signInText.classList.remove('hidden');
+        signInSpinner.classList.add('hidden');
+        signInBtn.disabled = false;
+      }
+    };
 
+    const displayMessage = (message, type = 'error') => {
+      authMessage.textContent = message;
+      authMessage.classList.remove('hidden', 'bg-red-800', 'bg-green-700');
+      if (type === 'error') {
+        authMessage.classList.add('bg-red-800', 'text-white');
+      } else {
+        authMessage.classList.add('bg-green-700', 'text-white');
+      }
+    };
 
-        /* ========================================================================= */
-        /* 2. AUTHENTICATION LOGIC                                                   */
-        /* ========================================================================= */
-        
-        /**
-         * Checks for an existing session and redirects to the main app if found.
-         * If no session is found, it does nothing, keeping the user on the login page.
-         */
-        const checkSessionAndRedirect = async () => {
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                
-                if (session) {
-                    // This block only runs if the user IS authenticated.
-                    console.log("Active session found. Redirecting to main app: " + MAIN_APP_URL);
-                    sessionStorage.setItem('loggedIn', 'true'); 
-                    window.location.href = MAIN_APP_URL; 
-                } else {
-                    // This block runs if the user IS NOT authenticated (anonymous).
-                    // We do nothing, which keeps them on the login page.
-                    console.log("No active session found. User must sign in.");
-                }
-            } catch(e) {
-                console.error("Session check failed.", e);
-            }
-        };
+    const clearMessage = () => {
+      authMessage.classList.add('hidden');
+    };
 
+    const toggleView = () => {
+      clearMessage();
+      if (signInForm.classList.contains('hidden')) {
+        signInForm.classList.remove('hidden');
+        signUpForm.classList.add('hidden');
+        toggleAuthButton.textContent = "Need an account? Sign Up";
+        authHeaderText.textContent = "Sign in using your username and password.";
+      } else {
+        signInForm.classList.add('hidden');
+        signUpForm.classList.remove('hidden');
+        toggleAuthButton.textContent = "Already have an account? Sign In";
+        authHeaderText.textContent = "Create your Crooms Connect profile.";
+      }
+    };
 
-        /**
-         * Handles the sign-in process using username (converted to dummy email).
-         */
-        const handleSignIn = async (e) => {
-            e.preventDefault(); 
-            clearMessage();
-            showLoading(false);
+    const checkSessionAndRedirect = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log("Active session found. Redirecting to main app.");
+          sessionStorage.setItem('loggedIn', 'true');
+          window.location.href = MAIN_APP_URL;
+        }
+      } catch(e) {
+        console.error("Session check failed:", e);
+      }
+    };
 
-            const username = document.getElementById('signin-username').value.trim();
-            const password = document.getElementById('signin-password').value;
-            const email = username + PLACEHOLDER_DOMAIN;
+    const handleSignIn = async (e) => {
+      e.preventDefault();
+      clearMessage();
+      showLoading(false);
 
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
-            
-            hideLoading(false);
+      const username = document.getElementById('signin-username').value.trim();
+      const password = document.getElementById('signin-password').value;
+      const email = username + PLACEHOLDER_DOMAIN;
 
-            if (error) {
-                console.error('Sign In Error:', error);
-                displayMessage(error.message.includes('Invalid login credentials') 
-                    ? 'Invalid username or password.' 
-                    : error.message);
-            } else {
-                // Successful sign in, redirect to main app (connect.html)
-                sessionStorage.setItem('loggedIn', 'true'); 
-                window.location.href = MAIN_APP_URL;
-            }
-        };
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-        /**
-         * Handles the sign-up process and profile creation.
-         */
-        const handleSignUp = async (e) => {
-            e.preventDefault();
-            clearMessage();
-            showLoading(true);
+      hideLoading(false);
 
-            const username = document.getElementById('signup-username').value.trim();
-            const password = document.getElementById('signup-password').value;
-            const email = username + PLACEHOLDER_DOMAIN;
-            
-            // Basic client-side validation
-            if (username.length < 3) {
-                 displayMessage("Username must be at least 3 characters long.");
-                 hideLoading(true);
-                 return;
-            }
-            if (password.length < 6) {
-                 displayMessage("Password must be at least 6 characters long.");
-                 hideLoading(true);
-                 return;
-            }
+      if (error) {
+        console.error('Sign In Error:', error);
+        displayMessage(error.message.includes('Invalid login credentials')
+          ? 'Invalid username or password.'
+          : error.message);
+      } else {
+        sessionStorage.setItem('loggedIn', 'true');
+        window.location.href = MAIN_APP_URL;
+      }
+    };
 
-            // Step 1: Create the Auth User using the dummy email
-            const { data, error } = await supabase.auth.signUp({ 
-                email, 
-                password
-            });
-            
-            if (error) {
-                console.error('Sign Up Error:', error);
-                displayMessage(error.message.includes('User already registered')
-                    ? 'This username is already taken. Please choose another.'
-                    : error.message);
-                hideLoading(true);
-                return;
-            }
-            
-            // Step 2: Create the user's profile in the 'profiles' table
-            if (data.user) {
-                const { error: profileError } = await supabase
-                    .from('profiles')
-                    .insert([
-                        { id: data.user.id, username: username }
-                    ]);
-                
-                if (profileError) {
-                    console.error('Profile Creation Error:', profileError);
-                    displayMessage("Account created, but could not save your username. Please try logging in or contact support.", 'error');
-                    hideLoading(true);
-                    return; 
-                }
-            }
+    const handleSignUp = async (e) => {
+      e.preventDefault();
+      clearMessage();
+      showLoading(true);
 
-            hideLoading(true);
-            
-            // Step 3: Handle redirection based on whether a session was created
-            if (data.session) {
-                // If the user is immediately signed in
-                sessionStorage.setItem('loggedIn', 'true'); 
-                window.location.href = MAIN_APP_URL;
-            } else {
-                // If the user needs to manually sign in 
-                toggleView(); // Switch back to login view
-                displayMessage("Success! Your account is created. Please sign in below.", 'success');
-                document.getElementById('signup-username').value = '';
-                document.getElementById('signup-password').value = '';
-            }
-        };
+      const username = document.getElementById('signup-username').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const email = username + PLACEHOLDER_DOMAIN;
 
+      if (username.length < 3) {
+        displayMessage("Username must be at least 3 characters long.");
+        hideLoading(true);
+        return;
+      }
 
-        /* ========================================================================= */
-        /* 3. INITIALIZATION AND EVENT LISTENERS                                     */
-        /* ========================================================================= */
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            // This function checks the session and only redirects if a session IS found.
-            // If the user is anonymous, they stay on this page.
-            checkSessionAndRedirect(); 
+      if (password.length < 6) {
+        displayMessage("Password must be at least 6 characters long.");
+        hideLoading(true);
+        return;
+      }
 
-            // Event Listeners
-            signInForm.addEventListener('submit', handleSignIn);
-            signUpForm.addEventListener('submit', handleSignUp);
-            toggleAuthButton.addEventListener('click', toggleView);
-        });
+      const { data, error } = await supabase.auth.signUp({ email, password });
 
-    </script>
+      if (error) {
+        console.error('Sign Up Error:', error);
+        displayMessage(error.message.includes('User already registered')
+          ? 'This username is already taken. Please choose another.'
+          : error.message);
+        hideLoading(true);
+        return;
+      }
+
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{ id: data.user.id, username: username }]);
+
+        if (profileError) {
+          console.error('Profile Creation Error:', profileError);
+          displayMessage("Account created, but could not save your username. Please try logging in or contact support.", 'error');
+          hideLoading(true);
+          return;
+        }
+      }
+
+      hideLoading(true);
+
+      if (data.session) {
+        sessionStorage.setItem('loggedIn', 'true');
+        window.location.href = MAIN_APP_URL;
+      } else {
+        toggleView();
+        displayMessage("Success! Your account is created. Please sign in below.", 'success');
+        document.getElementById('signup-username').value = '';
+        document.getElementById('signup-password').value = '';
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      checkSessionAndRedirect();
+      signInForm.addEventListener('submit', handleSignIn);
+      signUpForm.addEventListener('submit', handleSignUp);
+      toggleAuthButton.addEventListener('click', toggleView);
+    });
+  </script>
 </body>
 </html>
