@@ -322,7 +322,7 @@
             padding: 4px 7px 2px 9px !important; 
         }
         .theme-win98 .back-button { top: 10px; left: 10px; }
-        .theme-win98 .message img { display: none; }
+        /* Avatars are now correctly displayed by default message styles */
         .theme-win98 .message-content { border-radius: 0; padding: 2px 5px; }
         .theme-win98 .message.self .message-content { border-top-right-radius: 0; }
         .theme-win98 .message-content .username { color: var(--win98-blue); margin-bottom: 2px; }
@@ -461,8 +461,11 @@
             margin-bottom: 6px;
             align-items: flex-end;
         }
-        .theme-ios .message img {
-            display: none; /* iOS hides avatars in chat view */
+        .theme-ios .message.self img {
+            /* Keep standard self avatar styling if you want it to appear on the right */
+            margin-left: 12px;
+            margin-right: 0;
+            order: 2;
         }
         .theme-ios .message-content {
             padding: 8px 12px;
@@ -651,42 +654,239 @@
         .theme-msn .back-button:hover {
             background-color: #ffffff;
         }
+        
+        /* =======================================
+           6. DOS THEME OVERRIDES (.theme-dos)
+           ======================================= */
+        .theme-dos {
+            --primary-bg: #000000;
+            --content-bg: #000000;
+            --text-color: #00ff00; /* Bright Green */
+            --accent-blue: #00ffff; /* Cyan */
+            --accent-green: #00ff00;
+            --input-bg: #000000;
+            --input-text: #00ff00;
+            --message-bg-received: #000000;
+            --message-bg-sent: #000000;
+            --message-text-received: var(--text-color);
+            --message-text-sent: #ffffff; /* White text on black for sent to stand out slightly */
+            --radius: 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .theme-dos .chat-container {
+            border-radius: 0;
+            box-shadow: none;
+            border: 2px solid var(--text-color);
+            margin: 20px auto;
+            max-width: 700px;
+        }
+        .theme-dos .chat-header {
+            background-color: #000080; /* Blue Title Bar */
+            color: #ffffff; /* White text */
+            border-bottom: 2px solid var(--text-color);
+            padding: 4px 8px;
+            font-size: 1.1rem;
+            justify-content: flex-start;
+        }
+        .theme-dos .user-info, .theme-dos .message img, .theme-dos .verified-badge, .theme-dos .chat-header .text-xl {
+            display: none !important;
+        }
+        .theme-dos .chat-header > .text-xl {
+            display: block !important;
+            font-size: 1.1rem;
+        }
+        .theme-dos .chat-messages {
+            padding: 8px;
+            color: var(--text-color);
+            line-height: 1.2;
+        }
+        .theme-dos .message {
+            margin-bottom: 2px; /* Tight spacing */
+            align-items: flex-start;
+        }
+        .theme-dos .message-content {
+            background-color: transparent;
+            color: var(--text-color);
+            padding: 0;
+            border-radius: 0;
+            max-width: 100%;
+        }
+        .theme-dos .message.self .message-content {
+            background-color: transparent;
+            color: var(--message-text-sent);
+        }
+        .theme-dos .message-content .username {
+            font-weight: normal;
+            margin-bottom: 0;
+            color: var(--accent-blue);
+            display: inline;
+        }
+        .theme-dos .message.self .username {
+            color: var(--accent-green);
+        }
+        .theme-dos .message-content .timestamp {
+            display: none;
+        }
+        .theme-dos .chat-input {
+            border-top: 2px solid var(--text-color);
+            padding: 8px;
+            background-color: var(--input-bg);
+        }
+        .theme-dos .chat-input textarea {
+            border: 1px solid var(--text-color);
+            background-color: var(--input-bg);
+            color: var(--input-text);
+            border-radius: 0;
+            padding: 5px;
+            box-shadow: none;
+        }
+        .theme-dos .chat-input button {
+            background-color: #000080 !important;
+            color: #ffffff !important;
+            border-radius: 0 !important;
+            padding: 5px 10px !important;
+            border: 1px solid #ffffff;
+            font-weight: normal;
+        }
+        .theme-dos .back-button, .theme-dos #theme-selector {
+            background-color: #000080 !important;
+            color: #ffffff !important;
+            border-radius: 0 !important;
+            padding: 4px 8px !important;
+            border: 1px solid #ffffff;
+            font-weight: normal;
+            top: 10px;
+            left: 10px;
+        }
+        .theme-dos .mention {
+            color: var(--accent-blue);
+        }
+        
+        /* =======================================
+           7. WINDOWS XP BLISS THEME OVERRIDES (.theme-xp)
+           ======================================= */
+        .theme-xp {
+            --xp-blue: #3665a3; /* Classic Blue Title Bar */
+            --xp-green-bg: #d4e8c3; /* Light Green Message Area */
+            --xp-white: #ffffff;
+            --xp-button-bg: #e0e9f1;
 
-    </style>
-<script>
-function isUserSignedIn() {
-    // Replace this with actual authentication logic
-    return false; // Simulate anonymous user
+            --primary-bg: #3a6ea5; /* XP desktop blue */
+            --content-bg: var(--xp-white);
+            --text-color: #000000;
+            --input-bg: var(--xp-white);
+            --input-text: #000000;
+            --accent-blue: #0055b3; /* Deep XP blue */
+            --accent-green: #378e37; /* XP Send button green */
+            --radius: 4px;
+            --message-bg-received: #e6f1f9; /* Light blue received */
+            --message-bg-sent: #d5efc1; /* Light green sent */
+            --message-text-received: #000000;
+            --message-text-sent: #000000;
+            font-family: 'Tahoma', 'Verdana', sans-serif;
+        }
+        .theme-xp .chat-container {
+            border-radius: 8px;
+            border: 1px solid #8e8e8e;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .theme-xp .chat-header {
+            background: linear-gradient(to right, #4a8df4 0%, #3665a3 100%);
+            color: var(--xp-white);
+            border-bottom: 1px solid #8e8e8e;
+            border-top-left-radius: 7px;
+            border-top-right-radius: 7px;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+            font-size: 1.25rem;
+        }
+        .theme-xp .user-info {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc;
+            box-shadow: none;
+        }
+        .theme-xp .user-info span {
+            color: var(--xp-blue);
+        }
+        .theme-xp .chat-messages {
+            padding: 12px;
+            background-color: var(--xp-green-bg);
+        }
+        .theme-xp .chat-input {
+            border-top: 1px solid #d4d4d4;
+            padding: 8px;
+            background-color: var(--xp-button-bg);
+        }
+        .theme-xp .chat-input textarea {
+            border: 1px solid #7f9db9;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            background-color: var(--xp-white);
+            padding: 6px;
+        }
+        .theme-xp .chat-input button {
+            background: linear-gradient(to top, #7fa9e0 0%, #aed3e8 100%);
+            color: #000000;
+            border: 1px solid #003c74;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.7);
+            padding: 6px 14px;
+        }
+        .theme-xp .chat-input button:hover {
+            background: linear-gradient(to top, #659be6 0%, #88c8f0 100%);
+        }
+        
+        .theme-xp .message-content {
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+        }
+        .theme-xp .message.self .message-content {
+            border-radius: 12px;
+            border: 1px solid #99b685;
+        }
+        .theme-xp .message-content .username {
+            font-weight: bold;
+            color: var(--accent-blue);
+        }
+        .theme-xp .message.self .username {
+            color: var(--accent-green);
+        }
+        .theme-xp .message-content .timestamp {
+            color: #6a6a6a;
+            font-size: 0.7rem;
+        }
+        .theme-xp .back-button {
+            background: linear-gradient(to top, #7fa9e0 0%, #aed3e8 100%);
+            color: #000000;
+            border: 1px solid #003c74;
+            font-weight: bold;
+        }
+
+
+    
+.message.self:hover .delete-icon {
+  display: inline-block;
+}
+.delete-icon {
+  display: none;
+  cursor: pointer;
+  margin-left: 8px;
+  color: var(--accent-red);
 }
 
-function handleSendClick() {
-    if (!isUserSignedIn()) {
-        alert("You must be signed in to send messages.");
-        window.location.href = "auth.html";
-        return false;
+</style>
+<script>
+    // A check to ensure the user is logged in before allowing them to view the chat.
+    if (sessionStorage.getItem("loggedIn") !== "true") {
+      window.location.href = "auth.html";
     }
-    // Proceed with sending message
-    sendMessage();
-    return true;
-}
-
-function sendMessage() {
-    // Actual message sending logic here
-    console.log("Message sent.");
-}
-</script></head>
-<body>
-<script>
-  if (sessionStorage.getItem("loggedIn") !== "true") {
-    window.location.href = "auth.html";
-  }
 </script>
- class="theme-dark"&gt;
+<body class="theme-dark">
 <a class="back-button" href="index.html">← Back to Home</a>
 <div class="chat-container">
 <div class="chat-header">
 <div class="text-xl">Crooms Connect Chat</div>
-<!-- THEME SELECT DROPDOWN -->
 <select class="p-2 rounded-md bg-gray-700 text-white text-sm font-semibold transition duration-150" id="theme-selector">
 <option value="dark">Modern Dark</option>
 <option value="light">Light</option>
@@ -694,6 +894,8 @@ function sendMessage() {
 <option value="win7">Windows 7 Aero</option>
 <option value="ios">iOS iMessage</option>
 <option value="msn">MSN Messenger</option>
+<option value="dos">DOS Terminal</option>
+<option value="xp">Windows XP Bliss</option>
 </select>
 <div class="user-info" id="user-info" style="display: none;">
 <img alt="avatar" id="user-avatar" src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous"/>
@@ -726,7 +928,9 @@ function sendMessage() {
         else if (savedTheme === 'light') document.body.classList.add('theme-light');
         else if (savedTheme === 'win7') document.body.classList.add('theme-win7');
         else if (savedTheme === 'ios') document.body.classList.add('theme-ios');
-        else if (savedTheme === 'msn') document.body.classList.add('theme-msn'); // Added MSN theme check
+        else if (savedTheme === 'msn') document.body.classList.add('theme-msn');
+        else if (savedTheme === 'dos') document.body.classList.add('theme-dos'); // Added DOS theme check
+        else if (savedTheme === 'xp') document.body.classList.add('theme-xp'); // Added XP theme check
         else document.body.classList.add('theme-dark');
 
         // Update the selector value
@@ -764,7 +968,8 @@ function sendMessage() {
     const userNameSpan = document.getElementById('user-name');
     const userVerifiedImg = document.getElementById('user-verified');
 
-    let currentUser = null;
+    // Make currentUser accessible globally to the handleSendClick function
+    window.currentUser = null; 
     let currentUsername = 'Anonymous';
     let currentUserIsVerified = false;
 
@@ -807,6 +1012,8 @@ function sendMessage() {
         const { data: authData, error: authErr } = await supabase.auth.getUser();
         
         if (!authData?.user) {
+            // Update global state and redirect (redundant, but safety net for page load)
+            window.currentUser = null;
             window.location.href = "auth.html";
             return;
         }
@@ -818,7 +1025,8 @@ function sendMessage() {
             .eq("id", userId)
             .single();
 
-        currentUser = authData.user;
+        // Update global state
+        window.currentUser = authData.user;
         currentUsername = cleanUsername(profile?.username) || "Anonymous";
         currentUserIsVerified = !!profile?.is_verified;
         
@@ -843,7 +1051,8 @@ function sendMessage() {
 
     // async displayMessage to allow for verified badge lookup and theme-based styling
     async function displayMessage(msg) {
-        const isSelf = currentUser && msg.user_id === currentUser.id;
+        // Use the globally exposed currentUser for checks
+        const isSelf = window.currentUser && msg.user_id === window.currentUser.id; 
         const username = cleanUsername(msg.username) || "Anonymous";
         const avatarSrc = msg.avatar_url && msg.avatar_url.trim() !== ""
             ? msg.avatar_url
@@ -852,60 +1061,83 @@ function sendMessage() {
         
         // Determine theme-specific classes
         const theme = localStorage.getItem(themeKey) || 'dark';
-        const isIOS = theme === 'ios';
-        const isWin98 = theme === 'win98';
-        const isMSN = theme === 'msn';
+        const isDOS = theme === 'dos'; // Check for DOS
 
         div.className = `message ${isSelf ? 'self' : 'other'}`;
         div.dataset.userId = msg.user_id;
         div.dataset.timestamp = msg.timestamp; 
 
         const verified = await isUserVerified(msg.username);
-        const avatarStyle = 'display: block;';
+        // Only hide avatar inline for DOS, letting CSS rules for other themes apply, or for them to show by default.
+        const avatarStyle = (isDOS) ? 'display: none;' : 'display: block;'; 
         const timestampText = new Date(msg.timestamp).toLocaleTimeString();
         
-        // MSN theme shows the username (often with color) and message on one line, so we need the username/badge inside the bubble content.
-        // We ensure avatars are hidden for Win98 and iOS, and visible for others (including MSN).
-
-        div.innerHTML = `
-            <img src="${avatarSrc}" alt="avatar" style="${avatarStyle}">
-            <div class="message-content">
-                <div class="username">
-                    ${username}
-                    ${verified ? `<img src="verify.png" class="verified-badge" alt="verified" title="Verified">` : ""}
+        // In DOS theme, we want a simple [username] message format without bubbles, timestamps, or badges inside the message content div for purity.
+        if (isDOS) {
+            div.innerHTML = `
+                <div class="message-content">
+                    <span class="username">${username}</span>: <span class="text">${cleanMessageMentions(msg.message)}</span>
                 </div>
-                <div class="text">${cleanMessageMentions(msg.message)}</div>
-                <div class="timestamp">${timestampText}</div>
-            </div>
-        `;
+            `;
+        } else {
+            // All other themes use the bubble-style content
+            div.innerHTML = `
+                <img src="${avatarSrc}" alt="avatar" style="${avatarStyle}">
+                <div class="message-content">
+                    <div class="username">
+                        ${username}
+                        ${verified ? `<img src="verify.png" class="verified-badge" alt="verified" title="Verified">` : ""}
+                    </div>
+                    <div class="text">${cleanMessageMentions(msg.message)}</div>
+                    <div class="timestamp">${timestampText}</div>
+                </div>
+            `;
+        }
         
         chatBox.appendChild(div);
     }
 
-    // Render all messages (infinite scroll compatible)
-    async function renderMessages(isInitialLoad = false) {
-        const oldScrollHeight = chatBox.scrollHeight;
-        const oldScrollTop = chatBox.scrollTop;
-        const shouldScrollToBottom = isInitialLoad || oldScrollTop + chatBox.clientHeight >= oldScrollHeight - 20;
-
-        chatBox.innerHTML = '';
-chatBox.appendChild(loadingOlderDiv);
-const previousScrollHeight = chatBox.scrollHeight;
+    // Render all messages (with enhanced scroll logic for all scenarios)
+    async function renderMessages(isInitialLoad = false, isLoadingOlder = false, oldScrollHeight = 0, oldScrollTop = 0) {
+        const chatBoxHeight = chatBox.clientHeight;
         
+        // 1. Capture Scroll State
+        // Determine if user was at the bottom (within 20px tolerance)
+        const wasScrolledToBottom = oldScrollTop + chatBoxHeight >= oldScrollHeight - 20;
+        
+        // Calculate distance from bottom BEFORE clearing content (used for theme refresh restoration)
+        let distanceFromBottom = oldScrollHeight - (oldScrollTop + chatBoxHeight);
+        if (oldScrollHeight === 0) distanceFromBottom = 0;
+
+        // 2. Clear and Render
+        chatBox.innerHTML = '';
+        chatBox.appendChild(loadingOlderDiv);
+
+        // Await all message rendering to ensure DOM elements are created
         for (const msg of loadedMessages) {
             await displayMessage(msg);
         }
+        
+        // 3. Defer Scroll Adjustment (Fix for Glitches)
+        // Use setTimeout for all scroll adjustments to ensure they happen *after* the DOM reflow is complete.
+        setTimeout(() => {
+            const currentScrollHeight = chatBox.scrollHeight;
+            const currentChatBoxHeight = chatBox.clientHeight;
 
-        if (shouldScrollToBottom) {
-  setTimeout(() => {
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }, 0);
-} else if (!isInitialLoad && !loadingOlder) {
-  const newScrollHeight = chatBox.scrollHeight;
-  const diff = newScrollHeight - previousScrollHeight;
-  chatBox.scrollTop = oldScrollTop + diff;
-}
+            if (isInitialLoad || (wasScrolledToBottom && !isLoadingOlder)) {
+                // Scenario A: Initial Load, New Message (when user was at bottom)
+                chatBox.scrollTop = currentScrollHeight;
+            } else if (isLoadingOlder) {
+                // Scenario B: Loading Older Messages: Keep the visual position steady.
+                const diff = currentScrollHeight - oldScrollHeight;
+                chatBox.scrollTop = oldScrollTop + diff;
+            } else {
+                // Scenario C: Theme Change/Refresh when scrolled up: Maintain relative position from the bottom.
+                chatBox.scrollTop = currentScrollHeight - currentChatBoxHeight - distanceFromBottom;
+            }
+        }, 0);
     }
+
 
     async function fetchTotalMessageCount() {
         const { count } = await supabase
@@ -928,7 +1160,8 @@ const previousScrollHeight = chatBox.scrollHeight;
         if (loadedMessages.length < PAGE_SIZE) allOlderLoaded = true;
         
         loadingOlderDiv.style.display = allOlderLoaded ? 'none' : 'block';
-        await renderMessages(true);
+        // Call renderMessages for initial load
+        await renderMessages(true, false, 0, 0);
     }
 
     async function loadOlderMessages() {
@@ -936,7 +1169,9 @@ const previousScrollHeight = chatBox.scrollHeight;
         loadingOlder = true;
         loadingOlderDiv.style.display = '';
         
+        // Capture scroll state before load
         const oldScrollHeight = chatBox.scrollHeight; 
+        const oldScrollTop = chatBox.scrollTop;
         
         const messagesToLoad = PAGE_SIZE;
         const currentlyLoaded = loadedMessages.length;
@@ -960,12 +1195,9 @@ const previousScrollHeight = chatBox.scrollHeight;
             loadedMessages = [...data, ...loadedMessages];
             if (data.length < PAGE_SIZE) allOlderLoaded = true;
             
-            await renderMessages();
-
-            const newScrollHeight = chatBox.scrollHeight;
-            const diff = newScrollHeight - oldScrollHeight;
-            chatBox.scrollTop = diff;
-
+            // Call renderMessages with loadingOlder=true and captured scroll state
+            await renderMessages(false, true, oldScrollHeight, oldScrollTop);
+            
         } else {
             allOlderLoaded = true;
         }
@@ -978,24 +1210,30 @@ const previousScrollHeight = chatBox.scrollHeight;
             loadOlderMessages();
         }
     }
-
+    
+    // --- UPDATED sendMessage: THROWS ON ERROR ---
     async function sendMessage() {
         const message = input.value.trim();
-        if (!message || !currentUser) {
+        // Check for empty message
+        if (!message) {
             return;
         }
 
-        const { data: profile } = await supabase
+        // 1. Fetch profile
+        const { data: profile, error: profileErr } = await supabase
             .from('profiles')
             .select('username')
-            .eq('id', currentUser.id)
+            .eq('id', window.currentUser.id)
             .single();
+        
+        if (profileErr) throw new Error("Could not fetch profile for message.");
 
         const username = profile?.username || 'Anonymous'; 
-        const avatar_url = currentUser.user_metadata?.avatar_url || '';
-
+        const avatar_url = window.currentUser.user_metadata?.avatar_url || '';
+        
+        // 2. Insert message
         const { error: insertErr } = await supabase.from('messages').insert([{
-            user_id: currentUser.id,
+            user_id: window.currentUser.id,
             username,
             avatar_url,
             message,
@@ -1003,10 +1241,10 @@ const previousScrollHeight = chatBox.scrollHeight;
         }]);
 
         if (insertErr) {
-            console.error("Failed to insert message!", insertErr);
-            // Non-alert message box would be preferred here if this were a production app
+            throw new Error("Failed to insert message into database.");
         }
 
+        // 3. Clear input only on success
         input.value = '';
     }
 
@@ -1014,13 +1252,14 @@ const previousScrollHeight = chatBox.scrollHeight;
         supabase
             .channel('messages-channel')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async (payload) => {
+                const oldScrollHeight = chatBox.scrollHeight;
+                const oldScrollTop = chatBox.scrollTop;
+                
                 if (!loadedMessages.some(m => m.timestamp === payload.new.timestamp && m.user_id === payload.new.user_id)) {
                     loadedMessages.push(payload.new);
-                    await displayMessage(payload.new); 
+                    // Use robust scroll logic for new messages
                     totalMessageCount += 1;
-                    setTimeout(() => {
-                        chatBox.scrollTop = chatBox.scrollHeight;
-                    }, 0);
+                    await renderMessages(false, false, oldScrollHeight, oldScrollTop);
                 }
             })
             .subscribe();
@@ -1031,6 +1270,11 @@ const previousScrollHeight = chatBox.scrollHeight;
         
         clearVerifiedCache();
 
+        // Capture scroll state before refresh
+        const oldScrollHeight = chatBox.scrollHeight;
+        const oldScrollTop = chatBox.scrollTop;
+
+        // Ensure we load enough messages to cover the current view plus the page size
         const messagesToLoad = loadedMessages.length + PAGE_SIZE; 
         totalMessageCount = await fetchTotalMessageCount(); 
         
@@ -1052,15 +1296,50 @@ const previousScrollHeight = chatBox.scrollHeight;
         allOlderLoaded = (totalMessageCount - loadedMessages.length) <= 0;
         loadingOlderDiv.style.display = allOlderLoaded ? 'none' : 'block';
 
-        await renderMessages(); 
+        // Call renderMessages with captured state for theme refresh
+        await renderMessages(false, false, oldScrollHeight, oldScrollTop); 
         await updateGlobalAvatarAndName();
     }
 
-    sendBtn.addEventListener('click', sendMessage);
+    // === GLOBAL HANDLER: UPDATED WITH RELIABILITY LOCK ===
+    window.handleSendClick = async function() {
+        if (!window.currentUser) { 
+            alert("You must be signed in to send messages.");
+            window.location.href = "auth.html";
+            return false;
+        }
+
+        // 1. Check for empty message early
+        if (input.value.trim() === "") {
+            return false;
+        }
+        
+        // 2. Disable controls to prevent double submission
+        input.disabled = true;
+        sendBtn.disabled = true;
+
+        try {
+            await sendMessage(); // Calls the module's Supabase-enabled sendMessage
+            return true;
+        } catch (e) {
+            console.error("Send error:", e);
+            alert("Failed to send message: " + e.message);
+            return false;
+        } finally {
+            // 3. Re-enable controls and focus the input regardless of success/failure
+            input.disabled = false;
+            sendBtn.disabled = false;
+            input.focus(); 
+        }
+    }
+    // ===============================================
+
+    // Event listeners
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            sendMessage();
+            // Enter key also calls the robust global handler
+            window.handleSendClick();
         }
     });
 
@@ -1074,8 +1353,8 @@ const previousScrollHeight = chatBox.scrollHeight;
         subscribeToMessages();
         supabase.auth.onAuthStateChange(() => updateGlobalAvatarAndName());
 
-        // Refresh messages every 5 seconds to pick up new styling when theme changes
-        setInterval(fullRefreshMessages, 5000); 
+        // FIX: The periodic refresh has been removed to stop non-user-initiated scroll jumps.
+        // Theme changes will still trigger a refresh via handleThemeChange.
     });
 
     // --- DEMO: Ensure AJTech@croomsconnect.local is verified for badge demo
@@ -1093,6 +1372,18 @@ const previousScrollHeight = chatBox.scrollHeight;
                 .eq('username', 'AJTech@croomsconnect.local');
         }
     })();
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("chat-box").addEventListener("click", function(e) {
+    if (e.target.classList.contains("delete-icon")) {
+      const messageDiv = e.target.closest(".message");
+      if (messageDiv && messageDiv.classList.contains("self")) {
+        messageDiv.remove();
+      }
+    }
+  });
+});
 </script>
 </body>
 </html>
