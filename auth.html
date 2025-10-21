@@ -246,7 +246,7 @@ supabase.auth.getSession().then(({ data, error }) => {
                 
                 if (session) {
                     console.log("Active session found. Redirecting to main app.");
-                    sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'connect_chat.html';
+                    sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'connect.html';
                 }
             } catch(e) {
                 // Suppress errors during initial check if keys are bad, wait for user input
@@ -282,7 +282,7 @@ supabase.auth.getSession().then(({ data, error }) => {
                     : error.message);
             } else {
                 // Successful sign in, redirect to main app
-                sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'connect_chat.html';
+                sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'connect.html';
             }
         };
 
@@ -349,7 +349,7 @@ supabase.auth.getSession().then(({ data, error }) => {
             // Step 3: Handle redirection based on whether a session was created
             if (data.session) {
                 // If the user is immediately signed in (e.g., email confirmation is off)
-                sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'connect_chat.html';
+                sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'connect.html';
             } else {
                 // If the user needs to manually sign in
                 toggleView(); // Switch back to login view
