@@ -1,14 +1,18 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Crooms Connect</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <style>
 /* ------------------------------------------------------------------- */
 /* ROOT THEME VARIABLES (Default: DARK MODE)                           */
-/* ------------------------------------------------------------------- */
+/* ----------------------------------------------------------efihvfehivegrerfgufewk2efbwqdedvjewgfrwer2ihererewfjwehiewiherilrfwfowfhrfrh;--------- */
 :root {
 /* Dynamic Theme Variables */
 --primary-bg: #1a1b2f; /* Main App Background (Dark Blue/Gray) */
@@ -342,7 +346,7 @@ background: var(--content-bg); border-radius: var(--radius);
 padding: 40px 30px; max-width: 600px; width: 90%; max-height: 80vh;
 overflow-y: auto; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
 border: 2px solid var(--accent-red); position: relative;
-transform: scale(0.9); transition: transform 0.3s ease;
+transform: scale(0.9); transition: transform 0.3s ease, background-color 0.3s, color 0.3s, background-image 0.3s;
 }
 .modal-overlay.show .modal-content { transform: scale(1); }
 .close-button {
@@ -351,6 +355,67 @@ color: var(--text-color); font-size: 24px; cursor: pointer; line-height: 1;
 padding: 5px; opacity: 0.7; transition: opacity 0.2s, color 0.2s;
 }
 .close-button:hover { opacity: 1; color: var(--accent-red); }
+
+/* CALENDAR MODAL STYLES */
+.calendar-grid {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 20px;
+margin-top: 20px;
+}
+.calendar-month {
+background: var(--card-bg-subtle);
+border: 1px solid var(--border-color);
+border-radius: var(--radius);
+padding: 10px;
+text-align: center;
+}
+.calendar-month h3 {
+color: var(--accent-blue);
+margin-bottom: 10px;
+font-size: 18px;
+}
+.calendar-month .days {
+display: grid;
+grid-template-columns: repeat(7, 1fr);
+gap: 5px;
+}
+.calendar-month .day {
+padding: 5px;
+font-size: 14px;
+border-radius: 3px;
+}
+.calendar-month .day.today {
+background: var(--accent-yellow);
+color: var(--primary-bg);
+font-weight: bold;
+}
+.calendar-month .day.holiday {
+background: var(--accent-red);
+color: var(--primary-bg);
+}
+.calendar-month .day-header {
+font-weight: bold;
+color: var(--accent-green);
+}
+
+/* CALENDAR TOOLTIP STYLES */
+.calendar-tooltip {
+position: absolute;
+background: var(--content-bg);
+color: var(--text-color);
+border: 1px solid var(--border-color);
+border-radius: var(--radius);
+padding: 8px 12px;
+font-size: 14px;
+font-weight: bold;
+box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+z-index: 1001;
+pointer-events: none;
+display: none;
+max-width: 200px;
+word-wrap: break-word;
+}
 
 /* Close Tab Button */
 .close-tab-button {
@@ -473,19 +538,49 @@ font-size: 20px;
 margin: 0;
 font-size: 14px;
 }
+
+/* NEW: Added Cropper and Avatar Preview CSS from ACcountSetings.html */
+.cropper-container {
+  border-radius: 9999px !important; /* fully rounded */
+  overflow: hidden;
+  border: 2px solid var(--border-color); /* Use theme variable */
+  box-shadow: 0 3px 8px 0 rgba(0,0,0,0.07);
+  margin: 0 auto;
+  width: 260px;
+  height: 260px;
+  background: var(--primary-bg); /* Use theme variable */
+}
+.cropper-view-box, .cropper-face {
+  border-radius: 50% !important;
+}
+.avatar-preview {
+  width: 96px;
+  height: 96px;
+  border-radius: 9999px;
+  border: 3px solid var(--accent-green); /* Use theme variable */
+  object-fit: cover;
+  margin: 0 auto;
+}
+.faded {
+  opacity: 0.6;
+}
 </style>
 </head>
 <body id="app-body">
 <div class="header">
 <div class="flex items-center">
 <span class="title-text">CROOMS CONNECT</span>
-<span id="userIdDisplay" class="user-id-display">Local Theme Storage Active</span>
+<span class="user-id-display" id="userIdDisplay">Local Theme Storage Active</span>
 </div>
-<span>ALPHA</span>
+<img id="header-profile-picture" src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous" alt="Profile" 
+     style="width: 40px; height: 40px; border-radius: 50%; cursor: pointer; object-fit: cover; border: 2px solid var(--accent-blue);"
+     title="View My Posts">
 </div>
 <div class="left-box">
 <button data-tab="home">Home</button>
+<button data-tab="news">News</button>
 <button data-tab="study">Study Tools</button>
+<button data-tab="weather">Weather</button>
 <button data-tab="legal">Legal</button>
 <button data-tab="community">Community</button>
 <button data-tab="polls">Polls</button>
@@ -500,62 +595,76 @@ font-size: 14px;
 <p data-food="Boneless Wings">M – Boneless Wings</p>
 <p data-food="Orange Chicken">T – Orange Chicken</p>
 <p data-food="Baked Pasta">W – Baked Pasta</p>
-<p data-food="Burrito Bowl >T – Burrito Bowl</p>
-<p data-food="Nachos">F – Nachos</p>
+<p data-food="Burrito Bowl &gt;T – Burrito Bowl&lt;/p&gt;
+&lt;p data-food=" nachos"="">F – Nachos</p>
 </div>
 </div>
 <div class="tab-content active" id="home">
 <section>
-<button class="close-tab-button">&times;</button>
+<button class="close-tab-button">×</button>
 <h1>Welcome to Crooms Connect</h1>
 <p>Your student hub with resources, schedules, and tools.</p>
 <div class="card-grid">
-<div class="card"><span class="icon"> 📰 </span><h3>News</h3><p>Latest announcements from campus.</p></div>
-<div class="card">
+<div class="card" id="events-card">
 <span class="icon"> 📅 </span>
 <h3>Events</h3>
 <p>See what’s happening this week.</p>
 </div>
 </div>
-
+</section>
+</div>
+<div class="tab-content" id="news">
+<section>
+<button class="close-tab-button">×</button>
+<h1>News</h1>
+<p>Latest campus announcements and updates.</p>
+<div id="news-content">Loading news...</div>
 </section>
 </div>
 <div class="tab-content" id="study">
 <section>
-<button class="close-tab-button">&times;</button>
+<button class="close-tab-button">×</button>
 <h1>Study Tools</h1>
 <p>Helpful tools to keep you learning.</p>
 <div class="card-grid">
-<div class="card"><span class="icon"> 📝 </span><h3>Flashcards</h3><p>Review terms quickly.</p></div>
-<div class="card"><span class="icon"> ❓ </span><h3>Practice Quizzes</h3><p>Test your knowledge.</p></div>
+<div class="card" onclick="window.open('https://quizlet.com/study-guides/upload', '_blank')"><span class="icon"> 📝 </span><h3>Flashcards</h3><p>Review terms quickly.</p></div>
+<div class="card" onclick="window.open('https://minitoolai.com/ai-test-generator/', '_blank')"><span class="icon"> ❓ </span><h3>Practice Quizzes</h3><p>Test your knowledge.</p></div>
+<div class="card" id="study-timer-card"><span class="icon"> ⏱️ </span><h3>Study Timer</h3><p>Set timers for focused study sessions.</p></div>
 </div>
+</section>
+</div>
+<div class="tab-content" id="weather">
+<section>
+<button class="close-tab-button">×</button>
+<h1>Weather</h1>
+<p>Current weather forecast for Florida.</p>
+<div id="weather-content">Loading weather...</div>
 </section>
 </div>
 <div class="tab-content" id="community">
 <section>
-<button class="close-tab-button">&times;</button>
+<button class="close-tab-button">×</button>
 <h1>Community</h1>
 <p>Connect with classmates and teachers.</p>
 <div class="card-grid">
 <div class="card" id="clubs-card"><span class="icon"> 👥 </span><h3>Clubs</h3><p>Find and join school clubs.</p></div>
-<div class="card"><span class="icon"> 💬 </span><h3>Forums</p><p>Discuss topics with peers.</p></div>
+<div class="card"><span class="icon"> 💬 </span><h3>Forums<p><a href="connect.html">Discuss topics with peers.</a></p></h3></div>
 </div>
 </section>
 </div>
 <div class="tab-content" id="polls">
 <section>
-<button class="close-tab-button">&times;</button>
-<h1>Polls</h1>
+<button class="close-tab-button">×</button>
+<h1>Community Daily Poll</h1>
 <p>Vote on important topics.</p>
-<div class="card-grid">
-<div class="card"><span class="icon"> 🗳️ </span><h3>Current Poll</h3><p>Vote on this week’s topic.</p></div>
-<div class="card"><span class="icon"> 📊 </span><h3>Results</h3><p>See community votes.</p></div>
+<div class="space-y-6" id="polls-container">
 </div>
+<p class="text-center text-gray-500 mt-6" id="no-polls">Loading polls...</p>
 </section>
 </div>
 <div class="tab-content" id="games">
 <section>
-<button class="close-tab-button">&times;</button>
+<button class="close-tab-button">×</button>
 <h1>Games</h1>
 <p>Fun mini-games to enjoy during breaks.</p>
 <div class="card-grid">
@@ -566,68 +675,56 @@ font-size: 14px;
 </div>
 <div class="tab-content" id="settings">
 <section>
-<button class="close-tab-button">&times;</button>
-<h1>User Settings & Customization</h1>
+<button class="close-tab-button">×</button>
+<h1>User Settings &amp; Customization</h1>
 <p>Personalize your experience. Your selections are saved locally.</p>
 <div class="card-grid">
 <div class="card theme-selector-card">
 <span class="icon"> 🌓 </span>
 <h3>Appearance</h3>
 <p style="margin-bottom: 20px; font-size: 14px;">Toggle between Dark and Light mode.</p>
-
 <div class="flex flex-col space-y-4">
-<button id="dark-mode-button" class="theme-button">
+<button class="theme-button" id="dark-mode-button">
 <span class="icon"> 🌙 </span> Dark Mode
 </button>
-<button id="light-mode-button" class="theme-button">
+<button class="theme-button" id="light-mode-button">
 <span class="icon"> ☀️ </span> Light Mode
 </button>
 </div>
-<div id="messageBox" class="p-3 mt-4 text-center rounded-lg font-medium hidden" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
+<div class="p-3 mt-4 text-center rounded-lg font-medium hidden" id="messageBox" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
 </div>
-
 <div class="card period-names-card">
 <span class="icon"> 📚 </span>
 <h3>Period Names</h3>
 <p style="margin-bottom: 10px; font-size: 14px;">Personalize the names of your classes.</p>
-
 <form class="settings-form" id="period-names-form">
-<button type="submit" class="save-settings-button">Save Period Names</button>
+<button class="save-settings-button" type="submit">Save Period Names</button>
 </form>
-<div id="periodMessage" class="p-3 mt-4 text-center rounded-lg font-medium hidden" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
+<div class="p-3 mt-4 text-center rounded-lg font-medium hidden" id="periodMessage" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
 </div>
-
 <div class="card lunch-names-card">
 <span class="icon"> 🍔 </span>
 <h3>Lunch Periods</h3>
 <p style="margin-bottom: 10px; font-size: 14px;">Set which lunch you have for each schedule type.</p>
-
 <form class="settings-form" id="lunch-names-form">
 <label for="lunch-5th_Period_A">5th Period Lunch (Usually A Lunch)</label>
-<input type="text" id="lunch-5th_Period_A" name="5th Period A" value="A Lunch" placeholder="A Lunch">
-
+<input id="lunch-5th_Period_A" name="5th Period A" placeholder="A Lunch" type="text" value="A Lunch"/>
 <label for="lunch-5th_Period_B">5th Period Lunch (Usually B Lunch)</label>
-<input type="text" id="lunch-5th_Period_B" name="5th Period B" value="B Lunch" placeholder="B Lunch">
-
+<input id="lunch-5th_Period_B" name="5th Period B" placeholder="B Lunch" type="text" value="B Lunch"/>
 <label for="lunch-Homeroom_A">Homeroom Lunch (Wednesday A Lunch)</label>
-<input type="text" id="lunch-Homeroom_A" name="Homeroom A" value="A Lunch" placeholder="A Lunch">
-
+<input id="lunch-Homeroom_A" name="Homeroom A" placeholder="A Lunch" type="text" value="A Lunch"/>
 <label for="lunch-Homeroom_B">Homeroom Lunch (Wednesday B Lunch)</label>
-<input type="text" id="lunch-Homeroom_B" name="Homeroom B" value="B Lunch" placeholder="B Lunch">
-
-<button type="submit" class="save-settings-button">Save Lunch Periods</button>
+<input id="lunch-Homeroom_B" name="Homeroom B" placeholder="B Lunch" type="text" value="B Lunch"/>
+<button class="save-settings-button" type="submit">Save Lunch Periods</button>
 </form>
-<div id="lunchMessage" class="p-3 mt-4 text-center rounded-lg font-medium hidden" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
+<div class="p-3 mt-4 text-center rounded-lg font-medium hidden" id="lunchMessage" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
 </div>
-
 <div class="card" id="notifications-card" style="cursor: pointer;">
 <span class="icon"> 🔔 </span>
 <h3>Reminders</h3>
 <p>Set up alerts for important events.</p>
 <button id="test-notification-button" style="margin-top: 10px; background: var(--accent-blue); color: var(--primary-bg); border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold;">Test Slide-in</button>
 </div>
-
-
 <div class="card" id="account-card"><span class="icon"> 🔑 </span><h3>Account</h3><p>Privacy and security options.</p></div>
 <div class="card" id="display-card" style="cursor: pointer;"><span class="icon"> ⚙️ </span><h3>Display</h3><p>Adjust font size and layout.</p></div>
 </div>
@@ -635,11 +732,10 @@ font-size: 14px;
 </div>
 <div class="tab-content" id="legal">
 <section>
-<button class="close-tab-button">&times;</button>
+<button class="close-tab-button">×</button>
 <h1>Legal Disclaimer <span style="font-size: 14px; color: var(--text-color);"> (Last Updated: October 2nd, 2025)</span></h1>
-
 <div class="disclaimer-point">
-<strong>1. General Information & Accuracy</strong>
+<strong>1. General Information &amp; Accuracy</strong>
 <p>The information provided by Crooms Connect is for general informational purposes only. All information is provided in good faith;
 however, we make no representation or warranty of any kind regarding the accuracy, adequacy, validity, reliability, availability, or completeness of any information, including schedules or event times.</p>
 </div>
@@ -677,141 +773,198 @@ Your use of the platform and your reliance on any information is solely at your 
 By posting User-Generated Content, you grant Crooms Connect a worldwide, non-exclusive, royalty-free license to use, reproduce, and display that content on the platform.</p>
 </div>
 <div class="disclaimer-point">
-<strong>9. User Conduct & Termination</strong>
+<strong>9. User Conduct &amp; Termination</strong>
 <p>We reserve the right, but not the obligation, to monitor and remove any User-Generated Content that we deem inappropriate, illegal, or in violation of these terms.
 We may terminate or suspend access to our platform immediately, without prior notice or liability, for any reason, including without limitation if you breach this Disclaimer.</p>
 </div>
 </section>
 </div>
-
-<div id="reminder-modal" class="modal-overlay">
+<div class="modal-overlay" id="reminder-modal">
 <div class="modal-content">
-<button class="close-button" id="close-reminder-modal-button">&times;</button>
+<button class="close-button" id="close-reminder-modal-button">×</button>
 <h1>Set New Reminder</h1>
 <form class="settings-form" id="reminder-form">
 <label for="reminder-title">Title</label>
-<input type="text" id="reminder-title" required placeholder="e.g., Study for Math Test">
-
+<input id="reminder-title" placeholder="e.g., Study for Math Test" required="" type="text"/>
 <label for="reminder-date">Date</label>
-<input type="date" id="reminder-date" required>
-
+<input id="reminder-date" required="" type="date"/>
 <label for="reminder-time">Time</label>
-<input type="time" id="reminder-time" required>
-
-<button type="submit" class="save-settings-button" style="background: linear-gradient(45deg, var(--accent-blue), #2a8dff);">Create Reminder</button>
-
+<input id="reminder-time" required="" type="time"/>
+<button class="save-settings-button" style="background: linear-gradient(45deg, var(--accent-blue), #2a8dff);" type="submit">Create Reminder</button>
 <div id="reminder-list-container" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
 <h3 style="color: var(--accent-yellow); margin-bottom: 10px;">Scheduled Reminders</h3>
 <ul id="active-reminders-list"></ul>
 </div>
-<div id="reminder-message" class="p-3 mt-4 text-center rounded-lg font-medium hidden" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
+<div class="p-3 mt-4 text-center rounded-lg font-medium hidden" id="reminder-message" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
 </form>
 </div>
 </div>
-
-<div id="account-modal" class="modal-overlay">
+<div class="modal-overlay" id="account-modal">
 <div class="modal-content">
-<button class="close-button" id="close-account-modal-button">&times;</button>
+<button class="close-button" id="close-account-modal-button">×</button>
 <h1>Account Settings</h1>
 <form class="settings-form" id="account-form">
 <label for="username">Username</label>
-<input type="text" id="username" placeholder="New Username" />
-
+<input id="username" placeholder="New Username" type="text">
 <label for="password">Password</label>
-<input type="password" id="password" placeholder="New Password" />
+<input id="password" placeholder="New Password" type="password">
 
-<label for="profile-picture">Profile Picture</label>
-<input type="file" id="profile-picture" />
-
-<div id="confirmation-message" class="confirmation-message" style="display: none;"></div>
-
-<input type="submit" value="Save Changes" id="save-changes" />
-</form>
-</div>
+<label style="margin-top: 20px;">Profile Picture</label>
+<div id="current-avatar-section" class="flex flex-col items-center mb-2">
+    <img id="current-avatar" class="avatar-preview faded" src="" alt="Current Avatar" style="display:none;"/>
+    <p id="no-avatar-text" class="text-gray-400 text-sm" style="color: var(--text-color); opacity: 0.7;">No profile picture set</p>
 </div>
 
-<div id="display-modal" class="modal-overlay">
+<input id="fileInput" type="file" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" style="color: var(--text-color);">
+
+<div id="cropper-wrapper" class="cropper-container mt-3 mb-2" style="display:none; margin: 20px auto;">
+    <img id="cropper-image" alt="Crop Preview" style="max-width:100%;display:block;" />
+</div>
+
+<button type="button" id="uploadBtn" class="bg-blue-600 text-white px-8 py-2 rounded-full font-semibold transition hover:bg-blue-700 disabled:opacity-60 mb-1 w-full" style="margin-top: 15px; background-color: var(--accent-blue); color: var(--primary-bg); font-weight: bold; padding: 10px; border-radius: 10px; cursor: pointer;" disabled>Save / Upload Picture</button>
+
+<p id="status" class="text-center text-sm mt-2 h-5" style="color: var(--text-color); height: 1.25rem;"></p>
+<div class="confirmation-message" id="confirmation-message" style="display: none;"></div>
+<input id="save-changes" type="submit" value="Save Username/Password" class="save-settings-button" style="background: var(--accent-green); margin-top: 10px;">
+</input></input></form>
+</div>
+</div>
+<div class="modal-overlay" id="display-modal">
 <div class="modal-content">
-<button class="close-button" id="close-display-modal-button">&times;</button>
-<h1>Font & Layout Settings</h1>
+<button class="close-button" id="close-display-modal-button">×</button>
+<h1>Font &amp; Layout Settings</h1>
 <div class="settings-form">
 <div style="display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; align-items: flex-end;">
 <div style="flex: 1 1 200px;">
 <label for="font-size">Font Size:</label>
 <select id="font-size">
 <option value="14px">Small</option>
-<option value="16px" selected>Medium</option>
+<option selected="" value="16px">Medium</option>
 <option value="20px">Large</option>
 <option value="24px">Extra Large</option>
 </select>
 </div>
-
 <div style="flex: 1 1 200px;">
 <label for="font-color">Font Color:</label>
-<input type="color" id="font-color" value="#333333">
+<input id="font-color" type="color" value="#333333"/>
 </div>
-
 <div style="flex: 1 1 200px;">
 <label for="bg-upload">Upload Background Image:</label>
-<input type="file" id="bg-upload" accept="image/*" />
-</div>
-
+<input accept="image/*" id="bg-upload" type="file">
+</input></div>
 <div style="flex: 1 1 200px;">
 <button id="reset-display-settings" style="width: 100%; padding: 10px; font-size: 1rem; margin-top: 5px; cursor: pointer; background: var(--accent-red); color: var(--primary-bg); border: none; border-radius: 5px;">Reset Settings</button>
 </div>
 </div>
-
 <div style="background: rgba(0,0,0,0.03); padding: 20px; border-radius: 8px;">
 <h2>Example Section</h2>
 <p>This is sample text to demonstrate font size, font color, and background customization. Use the controls above to modify the appearance.</p>
 </div>
 </div>
-<div id="display-message" class="p-3 mt-4 text-center rounded-lg font-medium hidden" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
+<div class="p-3 mt-4 text-center rounded-lg font-medium hidden" id="display-message" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
 </div>
 </div>
-
-<div id="clubs-modal" class="modal-overlay">
+<div class="modal-overlay" id="clubs-modal">
 <div class="modal-content">
-<button class="close-button" id="close-clubs-modal-button">&times;</button>
+<button class="close-button" id="close-clubs-modal-button">×</button>
 <h1>School Clubs</h1>
 <div id="clubs-content">
-<!-- Clubs list and calendar will be populated here -->
 </div>
 </div>
 </div>
-
-<div id="trivia-modal" class="modal-overlay">
+<div class="modal-overlay" id="trivia-modal">
 <div class="modal-content">
-<button class="close-button" id="close-trivia-modal-button">&times;</button>
+<button class="close-button" id="close-trivia-modal-button">×</button>
 <h1>Daily Trivia</h1>
 <div id="trivia-content">
-<!-- Trivia question and options will be populated here -->
+</div>
+</div>
+</div>
+<div class="modal-overlay" id="puzzle-modal">
+<div class="modal-content">
+<button class="close-button" id="close-puzzle-modal-button">×</button>
+<h1>Sliding Puzzle</h1>
+<div id="puzzle-content">
+</div>
+</div>
+</div>
+<div class="modal-overlay" id="calendar-modal">
+<div class="modal-content">
+<button class="close-button" id="close-calendar-modal-button">×</button>
+<h1>Yearly Calendar</h1>
+<div id="calendar-content">
+</div>
+</div>
+</div>
+<div class="modal-overlay" id="study-timer-modal">
+<div class="modal-content">
+<button class="close-button" id="close-study-timer-modal-button">×</button>
+<h1>Study Timer</h1>
+<div id="study-timer-content">
+<label for="study-minutes">Set Minutes:</label>
+<input id="study-minutes" max="120" min="1" type="number" value="25"/>
+<br/><br/>
+<button id="start-study-timer">Start</button>
+<button disabled="" id="pause-study-timer">Pause</button>
+<button id="reset-study-timer">Reset</button>
+<br/><br/>
+<div id="study-timer-display" style="font-size: 48px; text-align: center;">00:00</div>
 </div>
 </div>
 </div>
 
-<div id="puzzle-modal" class="modal-overlay">
-<div class="modal-content">
-<button class="close-button" id="close-puzzle-modal-button">&times;</button>
-<h1>Sliding Puzzle</h1>
-<div id="puzzle-content">
-<!-- Level selection and puzzle grid will be populated here -->
-</div>
-</div>
+<div class="modal-overlay" id="my-posts-modal">
+    <div class="modal-content">
+        <button class="close-button" id="close-my-posts-modal-button">×</button>
+        <h1>My Posts</h1>
+
+        <details style="margin-bottom: 20px; background: var(--card-bg-subtle); border-radius: 10px; border: 1px solid var(--border-color);">
+            <summary style="padding: 10px 15px; cursor: pointer; font-weight: bold; color: var(--accent-yellow);">
+                Customize Appearance
+            </summary>
+            <form class="settings-form" id="my-posts-display-form" style="padding: 0 15px 15px 15px;">
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div style="flex: 1 1 150px;">
+                        <label for="my-posts-bg-color">Background Color:</label>
+                        <input type="color" id="my-posts-bg-color" value="#2b2d42" style="width: 100%; height: 40px; padding: 5px;">
+                    </div>
+                    <div style="flex: 1 1 150px;">
+                        <label for="my-posts-font-color">Font Color:</label>
+                        <input type="color" id="my-posts-font-color" value="#f8f9fa" style="width: 100%; height: 40px; padding: 5px;">
+                    </div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <label for="my-posts-bg-image">Upload Background Image:</label>
+                    <input type="file" id="my-posts-bg-image" accept="image/*" style="width: 100%;">
+                </div>
+                <button type="button" id="my-posts-reset-display" class="save-settings-button" style="background: var(--accent-red); box-shadow: 0 4px 8px rgba(239, 71, 111, 0.4); margin-top: 20px;">Reset Appearance</button>
+                <div class="p-3 mt-4 text-center rounded-lg font-medium hidden" id="my-posts-display-message" style="background-color: var(--primary-bg); color: var(--text-color);"></div>
+            </form>
+        </details>
+        <div id="my-posts-content" style="max-height: 50vh; overflow-y: auto; padding-top: 15px; border-top: 1px solid var(--border-color);">
+            <p>Loading your posts...</p>
+        </div>
+    </div>
 </div>
 
 <div id="in-app-notification">
 <h4><span>🔔</span> Reminder Fired</h4>
 <p id="notification-message">Your reminder message goes here.</p>
 </div>
-
-
 <footer>
 <p>© 2025 Crooms Connect</p>
 </footer>
-
 <img id="preview"/>
+<div class="calendar-tooltip" id="calendar-tooltip"></div>
 <script>
+// --- Supabase Client (NEW) ---
+// Using Supabase CDN
+const { createClient } = supabase; 
+const SUPABASE_URL = 'https://jxxnfsydjrflnephmfjm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4eG5mc3lkanJmbG5lcGhtZmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0NTA3NjUsImV4cCI6MjA3NTAyNjc2NX0.-IRbU1ER8lu7eNPoETgVQaFJ4Fp9VMowjzWfN7EZY6w';
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+let currentUser = null; // To store the user object
+
 // --- SCHEDULE DATA ---
 const defaultSchedules = {
 "Monday": [
@@ -916,6 +1069,284 @@ const closeTriviaModalButton = document.getElementById('close-trivia-modal-butto
 const puzzleCard = document.getElementById('puzzle-card');
 const puzzleModal = document.getElementById('puzzle-modal');
 const closePuzzleModalButton = document.getElementById('close-puzzle-modal-button');
+const calendarModal = document.getElementById('calendar-modal');
+const closeCalendarModalButton = document.getElementById('close-calendar-modal-button');
+const eventsCard = document.getElementById('events-card');
+const studyTimerCard = document.getElementById('study-timer-card');
+const studyTimerModal = document.getElementById('study-timer-modal');
+const closeStudyTimerModalButton = document.getElementById('close-study-timer-modal-button');
+const startStudyTimerButton = document.getElementById('start-study-timer');
+const pauseStudyTimerButton = document.getElementById('pause-study-timer');
+const resetStudyTimerButton = document.getElementById('reset-study-timer');
+const studyTimerDisplay = document.getElementById('study-timer-display');
+const studyMinutesInput = document.getElementById('study-minutes');
+
+// --- NEW DOM Elements for Auth/Posts ---
+const headerProfilePicture = document.getElementById('header-profile-picture');
+const myPostsModal = document.getElementById('my-posts-modal');
+const closeMyPostsModalButton = document.getElementById('close-my-posts-modal-button');
+const myPostsContent = document.getElementById('my-posts-content');
+
+// --- NEW DOM Elements for "My Posts" Customization (Supabase) ---
+const myPostsModalContent = myPostsModal.querySelector('.modal-content');
+const myPostsBgColorInput = document.getElementById('my-posts-bg-color');
+const myPostsFontColorInput = document.getElementById('my-posts-font-color');
+const myPostsBgImageInput = document.getElementById('my-posts-bg-image');
+const myPostsResetButton = document.getElementById('my-posts-reset-display');
+const myPostsDisplayMessage = document.getElementById('my-posts-display-message');
+
+
+// --- NEW: Profile Picture Uploader Vars ---
+let cropper = null;
+let oldAvatarPath = null;
+// These DOM elements will be selected when the modal is opened
+let fileInput, cropperWrapper, cropperImg, uploadBtn, currentAvatar, noAvatarText, status;
+
+
+// --- NEW AUTH FUNCTION ---
+async function loadUserSession() {
+    const { data: authData, error: authErr } = await supabaseClient.auth.getUser();
+
+    if (!authData?.user) {
+        console.log("No user logged in. Showing anonymous avatar.");
+        headerProfilePicture.src = "https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous";
+        document.getElementById('userIdDisplay').textContent = "Not Logged In";
+        currentUser = null;
+        return;
+    }
+
+    currentUser = authData.user; // Store user globally
+    const userId = authData.user.id;
+    const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("username")
+        .eq("id", userId)
+        .single();
+
+    const currentUsername = (profile?.username || "Anonymous").replace(/@croomsconnect\.local$/i, '');
+    const customAvatar = authData.user.user_metadata?.avatar_url;
+
+    headerProfilePicture.src = customAvatar && customAvatar.trim() !== ""
+        ? customAvatar
+        : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(currentUsername)}`;
+    
+    document.getElementById('userIdDisplay').textContent = `Logged in as: ${currentUsername}`;
+}
+
+// --- NEW "MY POSTS" DISPLAY SETTINGS FUNCTIONS (Supabase) ---
+const applyMyPostsDisplaySettings = (settings) => {
+    myPostsModalContent.style.backgroundColor = settings.bg_color || '';
+    myPostsModalContent.style.color = settings.font_color || '';
+
+    if (settings.bg_image_url) {
+        myPostsModalContent.style.backgroundImage = `url(${settings.bg_image_url})`;
+        myPostsModalContent.style.backgroundSize = 'cover';
+        myPostsModalContent.style.backgroundPosition = 'center';
+    } else {
+        myPostsModalContent.style.backgroundImage = '';
+    }
+};
+
+const saveMyPostsDisplaySettings = async (settings) => {
+    if (!currentUser) return;
+
+    const { error } = await supabaseClient
+        .from('user_post_styles')
+        .upsert({ 
+            id: currentUser.id, 
+            ...settings,
+            updated_at: new Date() 
+        });
+
+    if (error) {
+        console.error('Error saving settings:', error);
+        showMessageBox(myPostsDisplayMessage, `Error: ${error.message}`, 'error');
+    } else {
+        showMessageBox(myPostsDisplayMessage, 'Appearance updated!', 'success');
+        const { data } = await supabaseClient.from('user_post_styles').select().single();
+        if(data) applyMyPostsDisplaySettings(data);
+    }
+};
+
+const resetMyPostsDisplaySettings = async () => {
+    if (!currentUser) return;
+
+    // First delete the record from Supabase
+    const { error } = await supabaseClient
+        .from('user_post_styles')
+        .delete()
+        .eq('id', currentUser.id);
+
+    if (error) {
+        console.error('Error resetting settings:', error);
+        showMessageBox(myPostsDisplayMessage, `Error: ${error.message}`, 'error');
+        return;
+    }
+
+    // Then apply empty settings to clear styles
+    applyMyPostsDisplaySettings({});
+    
+    // Reset form inputs to default
+    myPostsBgColorInput.value = '#2b2d42';
+    myPostsFontColorInput.value = '#f8f9fa';
+    myPostsBgImageInput.value = '';
+    
+    showMessageBox(myPostsDisplayMessage, 'Appearance settings reset!', 'success');
+};
+
+
+// --- MODIFIED "MY POSTS" MODAL FUNCTIONS (Supabase) ---
+const showMyPostsModal = async () => {
+    if (!currentUser) {
+        alert("Please log in to customize and see your posts.");
+        return;
+    }
+    
+    // --- Load and apply custom display settings from Supabase ---
+    const { data: settings, error: settingsError } = await supabaseClient
+        .from('user_post_styles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
+
+    if (settings) {
+        applyMyPostsDisplaySettings(settings);
+        // Set form inputs to reflect saved settings or defaults
+        myPostsBgColorInput.value = settings.bg_color || '#2b2d42';
+        myPostsFontColorInput.value = settings.font_color || '#f8f9fa';
+    } else {
+         // Apply default styles if no settings found
+        applyMyPostsDisplaySettings({});
+        myPostsBgColorInput.value = '#2b2d42';
+        myPostsFontColorInput.value = '#f8f9fa';
+    }
+     myPostsBgImageInput.value = ''; // Always clear file input
+    
+
+    myPostsContent.innerHTML = "<p>Loading your posts...</p>";
+    myPostsModal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+
+    const { data: messages, error } = await supabaseClient
+        .from('messages')
+        .select('message, timestamp')
+        .eq('user_id', currentUser.id)
+        .order('timestamp', { ascending: false })
+        .limit(50);
+
+    if (error) {
+        myPostsContent.innerHTML = `<p style="color: var(--accent-red);">Error loading posts: ${error.message}</p>`;
+        return;
+    }
+
+    if (!messages || messages.length === 0) {
+        myPostsContent.innerHTML = "<p>You haven't posted anything yet.</p>";
+        return;
+    }
+
+    let html = '';
+    messages.forEach(msg => {
+        const postDate = new Date(msg.timestamp).toLocaleString();
+        html += `
+            <div style="background: var(--card-bg-subtle); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; margin-bottom: 10px; word-wrap: break-word;">
+                <div style="font-size: 0.85rem; color: var(--accent-yellow); margin-bottom: 5px;">${postDate}</div>
+                <div>${msg.message}</div> 
+            </div>
+        `;
+    });
+    myPostsContent.innerHTML = html;
+};
+
+const hideMyPostsModal = () => {
+    myPostsModal.classList.remove('show');
+    document.body.style.overflow = '';
+    applyMyPostsDisplaySettings({}); 
+    myPostsDisplayMessage.classList.add('hidden');
+};
+
+// --- STUDY TIMER STATE VARIABLES ---
+let studyTimerInterval = null;
+let studyTimeLeft = 0;
+
+// Study Timer Functions
+function updateStudyTimerDisplay() {
+  const minutes = Math.floor(studyTimeLeft / 60);
+  const seconds = studyTimeLeft % 60;
+  studyTimerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function startStudyTimer() {
+  const minutes = parseInt(studyMinutesInput.value) || 25;
+  studyTimeLeft = minutes * 60;
+  updateStudyTimerDisplay();
+  if (studyTimerInterval) clearInterval(studyTimerInterval);
+  studyTimerInterval = setInterval(() => {
+    studyTimeLeft--;
+    updateStudyTimerDisplay();
+    if (studyTimeLeft <= 0) {
+      clearInterval(studyTimerInterval);
+      studyTimerInterval = null;
+      alert("Time's up! Take a break.");
+      studyTimeLeft = 0;
+      updateStudyTimerDisplay();
+      startStudyTimerButton.disabled = false;
+      pauseStudyTimerButton.disabled = true;
+      resetStudyTimerButton.disabled = true;
+    }
+  }, 1000);
+  startStudyTimerButton.disabled = true;
+  pauseStudyTimerButton.disabled = false;
+  resetStudyTimerButton.disabled = false;
+}
+
+function pauseStudyTimer() {
+  if (studyTimerInterval) {
+    clearInterval(studyTimerInterval);
+    studyTimerInterval = null;
+  }
+  startStudyTimerButton.disabled = false;
+  pauseStudyTimerButton.disabled = true;
+}
+
+function resetStudyTimer() {
+  if (studyTimerInterval) {
+    clearInterval(studyTimerInterval);
+    studyTimerInterval = null;
+  }
+  studyTimeLeft = 0;
+  updateStudyTimerDisplay();
+  startStudyTimerButton.disabled = false;
+  pauseStudyTimerButton.disabled = true;
+  resetStudyTimerButton.disabled = true;
+}
+
+const showStudyTimerModal = () => {
+  studyTimerModal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+};
+
+const hideStudyTimerModal = () => {
+  studyTimerModal.classList.remove('show');
+  document.body.style.overflow = '';
+  pauseStudyTimer();
+};
+
+// Sample events data
+const events = [
+{ date: '2025-01-01', title: 'New Year\'s Day' },
+{ date: '2025-01-20', title: 'Martin Luther King Jr. Day' },
+{ date: '2025-02-14', title: 'Valentine\'s Day' },
+{ date: '2025-02-17', title: 'Presidents\' Day' },
+{ date: '2025-03-17', title: 'St. Patrick\'s Day' },
+{ date: '2025-04-01', title: 'April Fools\' Day' },
+{ date: '2025-05-26', title: 'Memorial Day' },
+{ date: '2025-07-04', title: 'Independence Day' },
+{ date: '2025-09-01', title: 'Labor Day' },
+{ date: '2025-10-31', title: 'Halloween' },
+{ date: '2025-10-14', title: 'PSAT/SAT Q2 starts' },
+{ date: '2025-11-27', title: 'Thanksgiving' },
+{ date: '2025-12-18', title: 'End of Q2' }
+];
 
 // --- PUZZLE CONSTANTS ---
 const PUZZLE_LEVELS = [3, 4, 5]; // Grid sizes: 3x3, 4x4, 5x5
@@ -926,11 +1357,38 @@ let puzzleGrid = [];
 let emptyTile = { row: 2, col: 2 }; // For 3x3, starts at bottom-right
 
 const clubsData = [
-{ name: "Chess Club", description: "Play chess and improve strategy.", meetingDay: "Tuesday", time: "3:30 PM - 4:30 PM" },
-{ name: "Art Club", description: "Express creativity through painting and drawing.", meetingDay: "Wednesday", time: "2:00 PM - 3:00 PM" },
-{ name: "Debate Club", description: "Practice public speaking and argumentation.", meetingDay: "Thursday", time: "3:00 PM - 4:00 PM" },
-{ name: "Science Club", description: "Explore experiments and discoveries.", meetingDay: "Friday", time: "2:30 PM - 3:30 PM" }
+{ name: "Amine Club", description: "Meets in 1-201", meetingDay: "Monday", time: "2:30 PM - 4:00 PM" },
+{ name: "Art Club", description: "Meets in 1-114", meetingDay: "Tuesday", time: "2:30 PM - 3:30 PM" },
+{ name: "Board Game Club", description: "Meets in 1-113", meetingDay: "Wednesday", time: "2:30 PM - 3:45 PM" },
+{ name: "Book Club", description: "Meets in 1-115", meetingDay: "Every first Monday of every month", time: "2:30 PM - 4:00 PM" },
+{ name: "Chem Lab Crew", description: "Meets in 1-221", meetingDay: "Thursday", time: "2:30 PM - 3:45 PM" },
+{ name: "Chess Club", description: "Meets in 2-111", meetingDay: "Monday", time: "2:30 PM - 3:30 PM" },
+{ name: "Club SWAG", description: "Meets in 1-211", meetingDay: "Wednesday", time: "After school" },
+{ name: "Cinema Club", description: "Meets in 1-209", meetingDay: "Friday", time: "2:30 PM - 4:30 PM" },
+{ name: "Computer Science", description: "Meets in 1-224", meetingDay: "Tuesday", time: "2:30 PM - 3:30 PM" },
+{ name: "DnD Club", description: "Meets in 1-132", meetingDay: "Mondays", time: "2:30 PM - 4:30 PM" },
+{ name: "eSports", description: "Meets in 1-212", meetingDay: "Fridays", time: "2:30 PM - 4:00 PM" },
+{ name: "H.E.A.L", description: "Meets in 1-126", meetingDay: "Twice a month", time: "2:40 PM - 4:00 PM" },
+{ name: "Paleontology Club", description: "Meets in 1-232", meetingDay: "Tuesdays", time: "2:30 PM - 3:30 PM" },
+{ name: "Pride Panthers", description: "Meets in 1-113", meetingDay: "Fridays", time: "2:20 PM - 3:45 PM" },
+{ name: "Robotics", description: "Meets in 1-113", meetingDay: "Thursday", time: "2:30 PM - 4:00 PM" },
+{ name: "Spanish Club", description: "Meets in 1-209", meetingDay: "Friday", time: "" }
 ];
+
+const newsData = [
+{ title: "Campus Library Expansion Announced", description: "Details on the new library wing opening next semester.", link: "https://example.com/news1" },
+{ title: "Student Art Exhibition This Weekend", description: "Showcase of student artwork in the main hall.", link: "https://example.com/news2" },
+{ title: "New Cafeteria Menu Options", description: "Introducing healthier and diverse meal choices.", link: "https://example.com/news3" }
+];
+
+const renderNews = () => {
+let html = '<h2>Latest News</h2><ul>';
+newsData.forEach(news => {
+html += `<li><strong><a href="${news.link}" target="_blank">${news.title}</a></strong>: ${news.description}</li>`;
+});
+html += '</ul>';
+document.getElementById('news-content').innerHTML = html;
+};
 
 const renderClubs = () => {
 let html = '<h2>Club List</h2><ul>';
@@ -1166,6 +1624,102 @@ document.body.style.overflow = 'hidden';
 const hidePuzzleModal = () => {
 puzzleModal.classList.remove('show');
 document.body.style.overflow = '';
+};
+const showCalendarModal = () => {
+renderCalendar();
+calendarModal.classList.add('show');
+document.body.style.overflow = 'hidden';
+};
+const hideCalendarModal = () => {
+calendarModal.classList.remove('show');
+document.body.style.overflow = '';
+};
+const renderCalendar = () => {
+const now = new Date();
+const year = now.getFullYear();
+const eventMap = new Map();
+events.forEach(event => eventMap.set(event.date, event.title));
+let html = `<h2>${year} Calendar</h2>`;
+html += '<div class="calendar-grid">';
+for (let month = 0; month < 12; month++) {
+const monthName = new Date(year, month).toLocaleString('default', { month: 'long' });
+html += `<div class="calendar-month"><h3>${monthName}</h3><div class="days">`;
+const firstDay = new Date(year, month, 1).getDay();
+const daysInMonth = new Date(year, month + 1, 0).getDate();
+for (let i = 0; i < firstDay; i++) {
+html += '<div class="day"></div>';
+}
+for (let day = 1; day <= daysInMonth; day++) {
+const date = new Date(year, month, day);
+const dayOfWeek = date.getDay();
+let className = 'day';
+if (day === now.getDate() && month === now.getMonth()) {
+className += ' today';
+}
+if (dayOfWeek === 0 || dayOfWeek === 6) {
+className += ' holiday';
+}
+const dateStr = date.toISOString().split('T')[0];
+const eventTitle = eventMap.get(dateStr);
+if (eventTitle) {
+className += ' event-day';
+}
+let dataAttr = eventTitle ? ` data-event-title="${eventTitle}"` : '';
+html += `<div class="${className}"${dataAttr}>${day}</div>`;
+}
+html += '</div></div>';
+}
+html += '</div>';
+document.getElementById('calendar-content').innerHTML = html;
+
+// Add event listeners for tooltips
+document.querySelectorAll('.event-day').forEach(day => {
+day.addEventListener('mouseenter', (e) => {
+const title = e.target.getAttribute('data-event-title');
+if (title) {
+const tooltip = document.getElementById('calendar-tooltip');
+tooltip.textContent = title;
+const rect = e.target.getBoundingClientRect();
+tooltip.style.left = (rect.right + 10) + 'px';
+tooltip.style.top = rect.top + 'px';
+tooltip.style.display = 'block';
+}
+});
+day.addEventListener('mouseleave', () => {
+const tooltip = document.getElementById('calendar-tooltip');
+tooltip.style.display = 'none';
+});
+});
+};
+
+// --- WEATHER UTILITIES ---
+
+const fetchWeather = async () => {
+try {
+const response = await fetch('https://wttr.in/Orlando?format=j1');
+const data = await response.json();
+const current = data.current_condition[0];
+const temp = current.temp_F;
+const condition = current.weatherDesc[0].value;
+const feels = current.FeelsLikeF;
+const humidity = current.humidity;
+const wind = current.windspeedMiles;
+document.getElementById('weather-content').innerHTML = `
+<div class="card-grid">
+<div class="card">
+<span class="icon">🌤️</span>
+<h3>Current Weather in Florida</h3>
+<p><strong>Temperature:</strong> ${temp}°F</p>
+<p><strong>Condition:</strong> ${condition}</p>
+<p><strong>Feels Like:</strong> ${feels}°F</p>
+<p><strong>Humidity:</strong> ${humidity}%</p>
+<p><strong>Wind Speed:</strong> ${wind} mph</p>
+</div>
+</div>
+`;
+} catch (e) {
+document.getElementById('weather-content').innerHTML = '<p>Unable to load weather. Please try again later.</p>';
+}
 };
 
 // --- DISPLAY SETTINGS UTILITIES ---
@@ -1745,13 +2299,243 @@ reminderModal.classList.remove('show');
 document.body.style.overflow = '';
 };
 
+
+// --- NEW: Profile Uploader Functions ---
+
+/**
+ * Initializes the profile uploader state when the account modal is opened.
+ */
+function initProfileUploader() {
+    if (!currentUser) return; // Should be logged in to see modal
+
+    // Select elements *inside* the modal
+    fileInput = document.getElementById('fileInput');
+    cropperWrapper = document.getElementById('cropper-wrapper');
+    cropperImg = document.getElementById('cropper-image');
+    uploadBtn = document.getElementById('uploadBtn');
+    currentAvatar = document.getElementById('current-avatar');
+    noAvatarText = document.getElementById('no-avatar-text');
+    status = document.getElementById('status');
+
+    // Detach old listeners to prevent duplicates
+    fileInput.removeEventListener('change', handleFileChange);
+    uploadBtn.removeEventListener('click', handleUpload);
+    
+    // Attach new listeners
+    fileInput.addEventListener('change', handleFileChange);
+    uploadBtn.addEventListener('click', handleUpload);
+
+    const avatarUrl = currentUser.user_metadata?.avatar_url;
+
+    if (avatarUrl) {
+        currentAvatar.src = avatarUrl;
+        currentAvatar.style.display = '';
+        noAvatarText.style.display = 'none';
+
+        // Parse the storage path from the public URL
+        try {
+            const url = new URL(avatarUrl);
+            const parts = url.pathname.split('/');
+            const idx = parts.indexOf('profile-pictures'); // Bucket name
+            if (idx !== -1) {
+                oldAvatarPath = parts.slice(idx + 1).join('/'); 
+            } else {
+                oldAvatarPath = null;
+            }
+        } catch (e) {
+            oldAvatarPath = null;
+        }
+    } else {
+        currentAvatar.style.display = 'none';
+        noAvatarText.style.display = '';
+        oldAvatarPath = null;
+    }
+
+    // Reset cropper state
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
+    cropperWrapper.style.display = 'none';
+    fileInput.value = "";
+    uploadBtn.disabled = true;
+    if (status) status.textContent = "";
+}
+
+/**
+ * Handles the file input change event to load the cropper.
+ */
+function handleFileChange(e) {
+    const file = e.target.files[0];
+    if (!file) {
+        cropperWrapper.style.display = 'none';
+        uploadBtn.disabled = true;
+        return;
+    }
+    if (!file.type.startsWith("image/")) {
+        status.textContent = "Only image files are allowed.";
+        fileInput.value = "";
+        cropperWrapper.style.display = 'none';
+        uploadBtn.disabled = true;
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        status.textContent = "File too large (max 5 MB).";
+        fileInput.value = "";
+        cropperWrapper.style.display = 'none';
+        uploadBtn.disabled = true;
+        return;
+    }
+    status.textContent = "";
+
+    const url = URL.createObjectURL(file);
+    cropperImg.src = url;
+    cropperWrapper.style.display = '';
+    uploadBtn.disabled = false;
+
+    cropperImg.onload = () => {
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(cropperImg, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: 'move',
+            background: false,
+            guides: false,
+            autoCropArea: 1,
+            cropBoxResizable: false,
+            cropBoxMovable: false,
+            movable: true,
+            zoomable: true,
+            minContainerWidth: 260,
+            minContainerHeight: 260,
+        });
+    };
+}
+
+/**
+ * Handles the upload button click event.
+ */
+async function handleUpload() {
+    if (!cropper || !currentUser) return;
+    status.textContent = "Processing image...";
+    uploadBtn.disabled = true;
+
+    cropper.getCroppedCanvas({ width: 300, height: 300, imageSmoothingQuality: 'high' })
+        .toBlob(async (blob) => {
+            if (!blob) {
+                status.textContent = "Failed to crop image.";
+                uploadBtn.disabled = false;
+                return;
+            }
+
+            // 1. Delete old avatar
+            if (oldAvatarPath) {
+                try {
+                    const { error: removeError } = await supabaseClient.storage
+                        .from("profile-pictures")
+                        .remove([oldAvatarPath]);
+                    if (removeError) {
+                        console.warn("Failed to delete old avatar:", removeError.message);
+                    }
+                } catch (err) {
+                    console.warn("Error while deleting old avatar:", err);
+                }
+            }
+
+            // 2. Upload new avatar
+            const fileName = `profile-${currentUser.id}-${Date.now()}.png`;
+            status.textContent = "Uploading...";
+            const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                .from("profile-pictures")
+                .upload(fileName, blob, { upsert: true });
+
+            if (uploadError) {
+                status.textContent = "Upload failed: " + uploadError.message;
+                uploadBtn.disabled = false;
+                return;
+            }
+
+            // 3. Get public URL
+            const { data: publicUrlData } = supabaseClient.storage
+                .from("profile-pictures")
+                .getPublicUrl(fileName);
+
+            const publicUrl = publicUrlData?.publicUrl;
+            if (!publicUrl) {
+                status.textContent = "Could not retrieve image URL.";
+                uploadBtn.disabled = false;
+                return;
+            }
+
+            // 4. Save to auth metadata (this updates what header-profile-picture reads)
+            const { data: authUpdateData, error: authUpdateError } = await supabaseClient.auth.updateUser({
+                data: { avatar_url: publicUrl }
+            });
+            
+            if(authUpdateError) {
+                    status.textContent = "Upload succeeded, but failed to update auth user: " + authUpdateError.message;
+                    uploadBtn.disabled = false;
+                    return;
+            }
+            
+            // 5. Save to "profiles" table (to keep in sync)
+            const { error: profileUpdateError } = await supabaseClient
+                .from("profiles") // Using "profiles" table from ConnectIndex.html
+                .update({ avatar_url: publicUrl }) // Assuming it has an 'avatar_url' column
+                .eq("id", currentUser.id);
+
+            if (profileUpdateError) {
+                status.textContent = "Auth updated, but profile table save failed.";
+                console.warn("Profile table update error:", profileUpdateError.message);
+                // Not fatal, as the auth user is updated
+            } else {
+                status.textContent = "Profile picture updated!";
+            }
+
+            // 6. Update UI
+            currentAvatar.src = publicUrl;
+            currentAvatar.style.display = '';
+            noAvatarText.style.display = 'none';
+            cropperWrapper.style.display = 'none';
+            fileInput.value = "";
+            uploadBtn.disabled = true;
+
+            oldAvatarPath = fileName; // Cache new path
+            
+            // Manually update the global currentUser object and header image
+            if (authUpdateData.user) {
+                currentUser = authUpdateData.user;
+            }
+            headerProfilePicture.src = publicUrl;
+
+        }, "image/png", 0.95);
+}
+
+
+// --- MODIFIED: Modal Show/Hide Functions ---
+
 const showAccountModal = () => {
-accountModal.classList.add('show');
-document.body.style.overflow = 'hidden';
+    // Check if user is logged in
+    if (!currentUser) {
+        alert("Please log in to manage your account.");
+        return;
+    }
+    accountModal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    
+    // NEW: Initialize the profile picture uploader logic
+    initProfileUploader(); 
 };
+
 const hideAccountModal = () => {
-accountModal.classList.remove('show');
-document.body.style.overflow = '';
+    accountModal.classList.remove('show');
+    document.body.style.overflow = '';
+    
+    // NEW: Destroy cropper instance to free resources
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
 };
 
 const showDisplayModal = () => {
@@ -1766,6 +2550,9 @@ document.body.style.overflow = '';
 
 // --- DOM READY AND LISTENERS ---
 document.addEventListener('DOMContentLoaded', () => {
+
+// --- NEW: Load user session ---
+loadUserSession();
 
 // 0. Load Custom Names and Populate Forms
 loadPeriodNames();
@@ -1799,12 +2586,22 @@ updateLunchDisplay();
 document.querySelectorAll(".left-box button").forEach(button => {
 button.addEventListener("click", () => {
 const target = button.getAttribute("data-tab");
+if (target === "polls") {
+window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSe5TOOGpEZc-IXcdIIieZpPeYvS4lcNZBjwruKpQlkJFpj8qg/viewform?usp=header";
+return;
+}
 document.querySelectorAll(".left-box button").forEach(btn => btn.classList.remove("active"));
 button.classList.add("active");
 tabs.forEach(tab => {
 tab.classList.remove("active");
 if (tab.id === target) {
 tab.classList.add("active");
+if (tab.id === 'weather') {
+fetchWeather();
+}
+if (tab.id === 'news') {
+renderNews();
+}
 }
 });
 });
@@ -1880,17 +2677,19 @@ if (e.target === reminderModal) { hideReminderModal(); }
 });
 if (reminderForm) reminderForm.addEventListener('submit', handleReminderSubmit);
 
-// 9. Account Modal Logic
-if (accountCard) accountCard.addEventListener('click', showAccountModal);
-if (closeAccountModalButton) closeAccountModalButton.addEventListener('click', hideAccountModal);
+// 9. Account Modal Logic (MODIFIED)
+if (accountCard) accountCard.addEventListener('click', showAccountModal); // Uses new function
+if (closeAccountModalButton) closeAccountModalButton.addEventListener('click', hideAccountModal); // Uses new function
 if (accountModal) accountModal.addEventListener('click', (e) => {
-if (e.target === accountModal) { hideAccountModal(); }
+if (e.target === accountModal) { hideAccountModal(); } // Uses new function
 });
 if (accountForm) accountForm.addEventListener('submit', (e) => {
 e.preventDefault();
+// This form now only saves username/password
+// The profile picture is saved by its own button
 // Placeholder: show confirmation message
 confirmationMessage.style.display = 'block';
-confirmationMessage.textContent = 'Changes saved!';
+confirmationMessage.textContent = 'Username/Password save logic goes here!';
 confirmationMessage.style.color = 'var(--accent-green)';
 setTimeout(() => {
 confirmationMessage.style.display = 'none';
@@ -1925,6 +2724,26 @@ if (closePuzzleModalButton) closePuzzleModalButton.addEventListener('click', hid
 if (puzzleModal) puzzleModal.addEventListener('click', (e) => {
 if (e.target === puzzleModal) { hidePuzzleModal(); }
 });
+// 14. Calendar Modal Logic
+if (eventsCard) eventsCard.addEventListener('click', showCalendarModal);
+if (closeCalendarModalButton) closeCalendarModalButton.addEventListener('click', hideCalendarModal);
+if (calendarModal) calendarModal.addEventListener('click', (e) => {
+if (e.target === calendarModal) { hideCalendarModal(); }
+});
+
+// 15. Study Timer Modal Logic
+if (studyTimerCard) studyTimerCard.addEventListener('click', showStudyTimerModal);
+if (closeStudyTimerModalButton) closeStudyTimerModalButton.addEventListener('click', hideStudyTimerModal);
+if (studyTimerModal) studyTimerModal.addEventListener('click', (e) => {
+  if (e.target === studyTimerModal) { hideStudyTimerModal(); }
+});
+startStudyTimerButton.addEventListener('click', startStudyTimer);
+pauseStudyTimerButton.addEventListener('click', pauseStudyTimer);
+resetStudyTimerButton.addEventListener('click', resetStudyTimer);
+
+// Initially disable pause and reset
+pauseStudyTimerButton.disabled = true;
+resetStudyTimerButton.disabled = true;
 
 // Font size change
 document.getElementById('font-size').addEventListener('change', (e) => {
@@ -1960,43 +2779,55 @@ reader.readAsDataURL(file);
 }
 });
 
-// Drag functionality for middle card (Events card)
-const middleCard = document.querySelector('#home .card-grid .card:nth-child(2)');
-let isDragging = false;
-let hasDragged = false;
-let dragOffsetX, dragOffsetY;
-
-middleCard.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    hasDragged = false;
-    dragOffsetX = e.clientX - middleCard.offsetLeft;
-    dragOffsetY = e.clientY - middleCard.offsetTop;
-    middleCard.style.position = 'absolute';
-    middleCard.style.zIndex = '1000';
-    e.preventDefault();
+// --- "My Posts" Modal Listeners (Supabase) ---
+if (headerProfilePicture) headerProfilePicture.addEventListener('click', showMyPostsModal);
+if (closeMyPostsModalButton) closeMyPostsModalButton.addEventListener('click', hideMyPostsModal);
+if (myPostsModal) myPostsModal.addEventListener('click', (e) => {
+    if (e.target === myPostsModal) { hideMyPostsModal(); }
 });
 
-document.addEventListener('mousemove', (e) => {
-    if (isDragging) {
-        hasDragged = true;
-        middleCard.style.left = (e.clientX - dragOffsetX) + 'px';
-        middleCard.style.top = (e.clientY - dragOffsetY) + 'px';
+// --- "My Posts" Customization Listeners (Supabase) ---
+if (myPostsResetButton) myPostsResetButton.addEventListener('click', resetMyPostsDisplaySettings);
+
+if (myPostsBgColorInput) myPostsBgColorInput.addEventListener('change', (e) => {
+    saveMyPostsDisplaySettings({ bg_color: e.target.value });
+});
+
+if (myPostsFontColorInput) myPostsFontColorInput.addEventListener('change', (e) => {
+    saveMyPostsDisplaySettings({ font_color: e.target.value });
+});
+
+if (myPostsBgImageInput) myPostsBgImageInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file || !currentUser) return;
+
+    const filePath = `${currentUser.id}/${Date.now()}_${file.name}`;
+    showMessageBox(myPostsDisplayMessage, 'Uploading image...', 'success');
+
+    const { error: uploadError } = await supabaseClient.storage
+        .from('post_backgrounds')
+        .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: true 
+        });
+
+    if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        showMessageBox(myPostsDisplayMessage, `Upload Error: ${uploadError.message}`, 'error');
+        return;
+    }
+
+    const { data: urlData } = supabaseClient.storage
+        .from('post_backgrounds')
+        .getPublicUrl(filePath);
+
+    if (urlData) {
+        await saveMyPostsDisplaySettings({ bg_image_url: urlData.publicUrl });
     }
 });
 
-document.addEventListener('mouseup', () => {
-    isDragging = false;
-});
 
-middleCard.addEventListener('click', () => {
-    if (!hasDragged) {
-        window.location.href = 'events.html';
-    }
-});
 });
 </script>
 </body>
 </html>
-
-
-
