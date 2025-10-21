@@ -2974,6 +2974,21 @@
     100% { opacity: 0; }
 }
 </style>
+
+<script>
+  const { createClient } = supabase;
+  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  async function enforceAuth() {
+    const { data: authData } = await supabaseClient.auth.getUser();
+    if (!authData.user) {
+      window.location.href = "auth.html";
+    }
+  }
+
+  enforceAuth();
+</script>
+
 </body>
 </html>
 
