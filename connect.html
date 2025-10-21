@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Connect Chat (Multi-Theme Demo)</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com">
+</script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <style>
@@ -18,6 +18,7 @@
             --text-color: #f8f9fa;
             --accent-blue: #4cc9f0;
             --accent-green: #80ed99;
+            --accent-red: #f75c7b;
             --radius: 12px;
             --input-bg: #f8f9fa;
             --input-text: #1a1b2f;
@@ -25,6 +26,9 @@
             --message-bg-sent: #4cc9f0;
             --message-text-received: var(--text-color);
             --message-text-sent: #1a1b2f;
+            --toolbar-bg: #3a3b5a;
+            --toolbar-icon-color: #f8f9fa;
+            --toolbar-icon-hover-bg: rgba(255,255,255,0.1);
         }
         body {
             background-color: var(--primary-bg);
@@ -45,6 +49,7 @@
             height: 80vh;
             position: relative;
             transition: all 0.3s;
+            overflow: hidden; /* Added to contain profile view */
         }
         .chat-header {
             padding: 16px;
@@ -55,6 +60,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
+            gap: 10px;
         }
         .user-info {
             display: flex;
@@ -88,10 +95,12 @@
             border-top: 1px solid #444;
             padding: 12px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             gap: 8px;
+            flex-shrink: 0;
         }
-        .chat-input textarea {
+        #chat-input-editor {
             flex: 1;
             resize: none;
             border-radius: 8px;
@@ -99,6 +108,23 @@
             font-size: 1rem;
             background-color: var(--input-bg);
             color: var(--input-text);
+            border: 2px solid transparent;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+            min-height: 40px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        #chat-input-editor:empty:before {
+            content: attr(placeholder);
+            color: #9ca3af;
+            pointer-events: none;
+        }
+        .chat-input-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            width: 100%;
         }
         .chat-input button {
             background-color: var(--accent-blue);
@@ -106,27 +132,37 @@
             font-weight: bold;
             padding: 10px 16px;
             border-radius: 8px;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            flex-shrink: 0;
+            align-self: flex-end;
         }
         .chat-input button:hover {
             background-color: #6ce0ff;
+        }
+        .chat-input button:active {
+            transform: scale(0.96);
         }
         .message {
             display: flex;
             align-items: flex-start;
             margin-bottom: 16px;
+            position: relative;
         }
         .message.self {
             justify-content: flex-end;
         }
-        .message img {
+        .message .avatar-link {
+             display: block;
+             cursor: pointer;
+        }
+        .message .avatar {
             width: 40px;
             height: 40px;
             border-radius: 50%;
             margin-right: 12px;
             flex-shrink: 0;
         }
-        .message.self img {
+        .message.self .avatar-link {
             order: 2;
             margin-left: 12px;
             margin-right: 0;
@@ -137,6 +173,16 @@
             padding: 10px 14px;
             border-radius: 10px;
             max-width: 70%;
+            word-wrap: break-word;
+        }
+        .message-content img {
+            display: block;
+            max-width: 100%;
+            max-height: 450px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-top: 10px;
+            cursor: zoom-in; /* Indicates image is clickable */
         }
         .message.self .message-content {
             background-color: var(--message-bg-sent);
@@ -162,7 +208,7 @@
         }
         .message.self .timestamp {
             text-align: right;
-            color: rgba(0,0,0,0.6); /* Dark text color for readability on light blue bubble */
+            color: rgba(0,0,0,0.6);
         }
         .back-button {
             position: absolute;
@@ -173,22 +219,25 @@
             padding: 8px 14px;
             border-radius: 8px;
             font-weight: bold;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease, transform 0.1s ease;
             z-index: 20;
         }
         .back-button:hover {
             background-color: #a0f0b0;
+        }
+        .back-button:active {
+            transform: scale(0.96);
         }
         .mention {
             color: var(--accent-blue);
             font-weight: bold;
         }
         .verified-badge {
-            width: 18px;
-            height: 18px;
-            margin-left: 2px;
-            vertical-align: middle;
+            font-size: 0.9em;
+            margin-left: 4px;
+            vertical-align: baseline;
             display: inline-block;
+            line-height: 1;
         }
         #loading-older {
             color: #aaa;
@@ -197,6 +246,280 @@
             margin-bottom: 12px;
             margin-top: 2px;
         }
+
+        .rich-text-toolbar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 8px 0;
+            background-color: var(--toolbar-bg);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            width: 100%;
+        }
+        .rich-text-toolbar button {
+            background: none;
+            border: none;
+            color: var(--toolbar-icon-color);
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .rich-text-toolbar button:hover {
+            background-color: var(--toolbar-icon-hover-bg);
+        }
+        .rich-text-toolbar button.active {
+            background-color: var(--accent-blue);
+            color: var(--message-text-sent);
+        }
+
+        .message-content a { color: var(--accent-blue); text-decoration: underline; }
+        .message-content ul, .message-content ol {
+            padding-inline-start: 25px;
+            margin-block: 0.5em;
+        }
+        .message-content ul { list-style-type: disc; }
+        .message-content ol { list-style-type: decimal; }
+        .message-content li { margin-bottom: 5px; }
+
+        /* =======================================
+           MODERATOR TOOLS (ENHANCED)
+           ======================================= */
+        .mod-tools {
+            position: absolute;
+            top: 2px;
+            right: -12px;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .message:hover .mod-tools {
+            opacity: 1;
+        }
+        .message.self .mod-tools {
+            left: -12px;
+            right: auto;
+        }
+        .mod-tools-toggle {
+            background: var(--content-bg);
+            color: var(--text-color);
+            border: 1px solid var(--toolbar-bg);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        .mod-tools-toggle:hover {
+             background: var(--toolbar-bg);
+        }
+        .mod-tools-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 32px;
+            background-color: var(--content-bg);
+            border: 1px solid var(--toolbar-bg);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            width: 180px;
+            padding: 8px;
+            z-index: 10;
+        }
+        .message.self .mod-tools-menu {
+            left: 0;
+            right: auto;
+        }
+        .mod-tools-menu.visible {
+            display: block;
+        }
+        .mod-tools-menu button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 8px 12px;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            text-align: left;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        .mod-tools-menu button .fa-fw {
+            width: 1.25em;
+        }
+        .mod-tools-menu button:hover {
+            background-color: var(--toolbar-icon-hover-bg);
+        }
+        .mod-tools-menu button[data-action="delete"],
+        .mod-tools-menu button[data-action="ban"] {
+            color: var(--accent-red);
+        }
+        .mod-tools-menu button[data-action="pardon"] {
+            color: var(--accent-green);
+        }
+
+        /* =======================================
+           USER PROFILE VIEW (NEW)
+           ======================================= */
+        .user-profile-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--primary-bg);
+            z-index: 200;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+        }
+        .user-profile-view.visible {
+            transform: translateX(0);
+        }
+        .user-profile-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 16px;
+            background-color: var(--content-bg);
+            border-bottom: 1px solid #444;
+            flex-shrink: 0;
+        }
+        .user-profile-header .back {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .user-profile-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .user-profile-header h2 {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .user-profile-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .user-profile-messages .message {
+             max-width: 100%; /* Ensure messages don't overflow */
+        }
+        .user-profile-messages .message-content {
+             max-width: 100%;
+        }
+
+
+        /* =======================================
+           FIREWORKS (ENHANCED)
+           ======================================= */
+        #fireworks-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .firework-particle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 1;
+            animation: firework-fly 1s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+        }
+        @keyframes firework-fly {
+            0% { transform: translateY(0); opacity: 1; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-100px); opacity: 0; }
+        }
+        .firework-explosion {
+            position: absolute;
+            opacity: 0;
+            animation: explosion-fade-in 0.1s forwards;
+        }
+        @keyframes explosion-fade-in {
+            to { opacity: 1; }
+        }
+        .firework-explosion .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            opacity: 1;
+            transform-origin: 50% 50%;
+            border-radius: 50%;
+            animation: explode 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+        .firework-explosion .particle::before {
+            content: '';
+            position: absolute;
+            left: -2px;
+            top: -2px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            opacity: 0.5;
+            filter: blur(2px);
+            background-color: inherit;
+        }
+        @keyframes explode {
+            0% {
+                transform: translate(0, 0);
+                opacity: 1;
+            }
+            100% {
+                transform: var(--transform-end);
+                opacity: 0;
+            }
+        }
+        
+        /* =======================================
+           TOAST NOTIFICATION (NEW)
+           ======================================= */
+        #toast-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translate(-50%, 150%);
+            padding: 12px 20px;
+            background-color: var(--content-bg);
+            color: var(--text-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        #toast-notification.show {
+            transform: translate(-50%, 0);
+        }
+        #toast-notification .icon {
+            font-size: 1.2rem;
+        }
+        #toast-notification.success .icon { color: var(--accent-green); }
+        #toast-notification.error .icon { color: var(--accent-red); }
+
 
         /* =======================================
            1. LIGHT THEME OVERRIDES (.theme-light)
@@ -213,6 +536,9 @@
             --message-bg-sent: #007bff;
             --message-text-received: var(--text-color);
             --message-text-sent: #ffffff;
+            --toolbar-bg: #e9ecef;
+            --toolbar-icon-color: #212529;
+            --toolbar-icon-hover-bg: rgba(0,0,0,0.05);
         }
         .theme-light .chat-container {
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -228,7 +554,11 @@
             border-top: 1px solid #dee2e6;
         }
         .theme-light .message.self .message-content {
-            border-top-right-radius: 10px; /* Reset modern corner */
+            border-top-right-radius: 10px;
+        }
+        .theme-light .rich-text-toolbar button.active {
+            background-color: var(--accent-blue);
+            color: #ffffff;
         }
 
         /* =======================================
@@ -243,15 +573,18 @@
             --win98-highlight: #fefefe;
             --win98-dark-shadow: #000000;
 
-            --primary-bg: #008080; /* Teal desktop */
+            --primary-bg: #008080;
             --content-bg: var(--win98-gray);
             --text-color: var(--win98-black);
             --input-bg: var(--win98-white);
             --input-text: var(--win98-black);
             --message-bg-received: var(--win98-gray);
-            --message-bg-sent: #008080; /* Teal for sent */
+            --message-bg-sent: #008080;
             --message-text-received: var(--win98-black);
             --message-text-sent: var(--win98-white);
+            --toolbar-bg: var(--win98-gray);
+            --toolbar-icon-color: var(--win98-black);
+            --toolbar-icon-hover-bg: rgba(0,0,0,0.1);
             
             font-family: 'MS Sans Serif', 'Tahoma', sans-serif;
             font-size: 11px;
@@ -277,11 +610,10 @@
             color: var(--win98-white);
         }
         .theme-win98 .user-info span, .theme-win98 .user-info img {
-            display: none; /* Hide in Win98 title bar */
+            display: none;
         }
         .theme-win98 .chat-messages {
             padding: 8px;
-            /* Sunken box for chat history */
             border-top: 1px solid var(--win98-dark-gray);
             border-left: 1px solid var(--win98-dark-gray);
             border-right: 1px solid var(--win98-highlight);
@@ -292,7 +624,7 @@
             border-top: none;
             padding: 4px;
         }
-        .theme-win98 .chat-input textarea {
+        .theme-win98 #chat-input-editor {
             border-radius: 0;
             border-top: 1px solid var(--win98-dark-gray);
             border-left: 1px solid var(--win98-dark-gray);
@@ -300,7 +632,7 @@
             border-bottom: 1px solid var(--win98-highlight);
             padding: 3px;
         }
-        .theme-win98 button, .theme-win98 .back-button, .theme-win98 #theme-selector {
+        .theme-win98 button, .theme-win98 .back-button, .theme-win98 #theme-selector, .theme-win98 .rich-text-toolbar button, .theme-win98 #mod-menu-btn {
             background-color: var(--win98-gray) !important;
             color: var(--win98-black) !important;
             border-radius: 0 !important;
@@ -314,7 +646,7 @@
             border-right: 1px solid var(--win98-dark-gray);
             border-bottom: 1px solid var(--win98-dark-gray);
         }
-        .theme-win98 button:active, .theme-win98 .back-button:active {
+        .theme-win98 button:active, .theme-win98 .back-button:active, .theme-win98 .rich-text-toolbar button:active, .theme-win98 #mod-menu-btn:active {
             border-top: 1px solid var(--win98-dark-gray) !important;
             border-left: 1px solid var(--win98-dark-gray) !important;
             border-right: 1px solid var(--win98-highlight) !important;
@@ -322,12 +654,27 @@
             padding: 4px 7px 2px 9px !important; 
         }
         .theme-win98 .back-button { top: 10px; left: 10px; }
-        /* Avatars are now correctly displayed by default message styles */
         .theme-win98 .message-content { border-radius: 0; padding: 2px 5px; }
         .theme-win98 .message.self .message-content { border-top-right-radius: 0; }
         .theme-win98 .message-content .username { color: var(--win98-blue); margin-bottom: 2px; }
         .theme-win98 .message-content .timestamp { color: var(--win98-dark-gray); font-size: 9px; }
         .theme-win98 .verified-badge { filter: grayscale(1); }
+        .theme-win98 .rich-text-toolbar {
+            border: 1px solid var(--win98-dark-gray);
+            border-top: 1px solid var(--win98-highlight);
+            border-left: 1px solid var(--win98-highlight);
+            background-color: var(--win98-gray);
+            border-radius: 0;
+            padding: 4px;
+        }
+        .theme-win98 .rich-text-toolbar button.active {
+            background-color: var(--win98-gray);
+            border-top: 1px solid var(--win98-dark-gray) !important;
+            border-left: 1px solid var(--win98-dark-gray) !important;
+            border-right: 1px solid var(--win98-highlight) !important;
+            border-bottom: 1px solid var(--win98-highlight) !important;
+            padding: 4px 7px 2px 9px !important; 
+        }
 
         /* =======================================
            3. WINDOWS 7 AERO THEME OVERRIDES (.theme-win7)
@@ -339,7 +686,7 @@
             --win7-glass-bg: rgba(255, 255, 255, 0.3);
             --win7-glow: rgba(0, 110, 192, 0.7);
 
-            --primary-bg: #80c0ff; /* Light, bright desktop color */
+            --primary-bg: #80c0ff;
             --content-bg: var(--win7-glass-bg);
             --text-color: var(--win7-dark-blue);
             --input-bg: #ffffff;
@@ -351,12 +698,15 @@
             --message-bg-sent: var(--win7-light-blue);
             --message-text-received: #000000;
             --message-text-sent: #000000;
+            --toolbar-bg: rgba(255, 255, 255, 0.7);
+            --toolbar-icon-color: #000000;
+            --toolbar-icon-hover-bg: rgba(0, 110, 192, 0.2);
             font-family: 'Segoe UI', 'Tahoma', sans-serif;
         }
         .theme-win7 .chat-container {
             background-color: var(--win7-glass-bg);
             border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); /* Big shadow effect */
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
         }
@@ -394,8 +744,18 @@
         }
         .theme-win7 .message.self .message-content {
             border-top-right-radius: 8px;
-            border-top-left-radius: 8px; /* Standard rounding */
+            border-top-left-radius: 8px;
             border-bottom-right-radius: 8px;
+        }
+        .theme-win7 .rich-text-toolbar {
+            background-color: var(--toolbar-bg);
+            border: 1px solid rgba(255,255,255,0.5);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .theme-win7 .rich-text-toolbar button.active {
+            background-color: var(--accent-blue);
+            color: #ffffff;
+            box-shadow: 0 0 5px var(--win7-glow);
         }
 
         /* =======================================
@@ -407,13 +767,16 @@
             --text-color: #000000;
             --input-bg: #ffffff;
             --input-text: #000000;
-            --accent-blue: #007aff; /* Apple Blue */
-            --accent-green: #34c759; /* Apple Green */
+            --accent-blue: #007aff;
+            --accent-green: #34c759;
             --radius: 20px;
             --message-bg-received: #e5e5ea;
             --message-bg-sent: var(--accent-green);
             --message-text-received: #000000;
             --message-text-sent: #ffffff;
+            --toolbar-bg: #e5e5ea;
+            --toolbar-icon-color: var(--accent-blue);
+            --toolbar-icon-hover-bg: rgba(0, 122, 255, 0.1);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji';
         }
         .theme-ios .chat-container {
@@ -431,7 +794,7 @@
             justify-content: center;
         }
         .theme-ios .user-info {
-            display: none !important; /* Hide user status in iOS header style */
+            display: none !important;
         }
         .theme-ios .chat-messages {
             padding: 10px;
@@ -442,7 +805,7 @@
             border-top: 1px solid #c8c7cc;
             padding: 8px 10px;
         }
-        .theme-ios .chat-input textarea {
+        .theme-ios #chat-input-editor {
             border-radius: 20px;
             border: 1px solid #d1d1d6;
             background-color: #ffffff;
@@ -461,8 +824,7 @@
             margin-bottom: 6px;
             align-items: flex-end;
         }
-        .theme-ios .message.self img {
-            /* Keep standard self avatar styling if you want it to appear on the right */
+        .theme-ios .message.self .avatar-link {
             margin-left: 12px;
             margin-right: 0;
             order: 2;
@@ -473,21 +835,19 @@
             font-size: 0.95rem;
             color: var(--message-text-received);
             background-color: var(--message-bg-received);
-            /* Standard Bubble shape */
             border-radius: 20px 20px 20px 5px; 
             box-shadow: 0 1px 0 rgba(0,0,0,0.08);
         }
         .theme-ios .message.self .message-content {
             color: var(--message-text-sent);
-            background-color: var(--message-bg-sent);
-            /* Sent Bubble shape (Green/Blue) */
+            background-color: var(--accent-green);
             border-radius: 20px 20px 5px 20px;
         }
         .theme-ios .message-content .username {
-            display: none; /* No usernames in iMessage bubbles */
+            display: none;
         }
         .theme-ios .message-content .timestamp {
-            display: none; /* Timestamps usually appear on scroll/tap */
+            display: none;
         }
         .theme-ios .back-button {
             top: 10px;
@@ -501,6 +861,18 @@
         .theme-ios .back-button:hover {
             background-color: transparent;
             color: var(--accent-blue);
+        }
+        .theme-ios .rich-text-toolbar {
+            background-color: var(--toolbar-bg);
+            border-radius: 12px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .theme-ios .rich-text-toolbar button {
+            color: var(--toolbar-icon-color);
+        }
+        .theme-ios .rich-text-toolbar button.active {
+            background-color: var(--accent-blue);
+            color: #ffffff;
         }
 
         /* =======================================
@@ -517,26 +889,28 @@
             --msn-message-bg-received: #e0f2ff;
             --msn-message-bg-sent: var(--msn-green);
 
-            --primary-bg: var(--msn-light-bg); /* Background desktop */
+            --primary-bg: var(--msn-light-bg);
             --content-bg: var(--msn-window-bg);
             --text-color: var(--msn-text);
             --input-bg: var(--msn-window-bg);
             --input-text: var(--msn-text);
             --accent-blue: var(--msn-blue);
             --accent-green: var(--msn-green);
-            --radius: 4px; /* Slightly boxier, but still rounded */
+            --radius: 4px;
             --message-bg-received: var(--msn-message-bg-received);
             --message-bg-sent: var(--msn-message-bg-sent);
             --message-text-received: var(--msn-text);
             --message-text-sent: #ffffff;
+            --toolbar-bg: #e0f2ff;
+            --toolbar-icon-color: #333333;
+            --toolbar-icon-hover-bg: rgba(0,0,0,0.05);
             font-family: 'Tahoma', 'Arial', sans-serif;
         }
-
         .theme-msn .chat-container {
             border-radius: 6px;
             border: 1px solid #7cb1df;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            max-height: 80vh; /* Fixed height for classic look */
+            max-height: 80vh;
         }
         .theme-msn .chat-header {
             background: var(--msn-header-bg);
@@ -555,7 +929,7 @@
             padding: 4px 8px;
             border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            order: -1; /* Place user info first */
+            order: -1;
         }
         .theme-msn .user-info img {
             width: 24px;
@@ -571,38 +945,35 @@
             border: 1px solid var(--msn-input-border);
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
         }
-        
         .theme-msn .chat-messages {
             padding: 10px;
             background-color: var(--msn-window-bg);
         }
         .theme-msn .message {
             margin-bottom: 8px;
-            align-items: flex-end; /* MSN style often has avatar on bottom of bubble stack */
+            align-items: flex-end;
         }
-        .theme-msn .message img {
+        .theme-msn .message .avatar {
             width: 32px;
             height: 32px;
             margin-right: 8px;
         }
-        .theme-msn .message.self img {
+        .theme-msn .message.self .avatar-link {
             margin-left: 8px;
             margin-right: 0;
         }
-
-        /* Message Bubbles */
         .theme-msn .message-content {
             padding: 6px 10px;
             max-width: 80%;
             font-size: 0.85rem;
-            border-radius: 12px 12px 12px 4px; /* MSN has rounded ends, pointy corner on opposite bottom */
+            border-radius: 12px 12px 12px 4px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
             border: 1px solid rgba(0,0,0,0.1);
         }
         .theme-msn .message.self .message-content {
             background-color: var(--msn-message-bg-sent);
             color: var(--message-text-sent);
-            border-radius: 12px 12px 4px 12px; /* Pointy corner on self side */
+            border-radius: 12px 12px 4px 12px;
             border: 1px solid #458d03;
         }
         .theme-msn .message-content .username {
@@ -611,7 +982,7 @@
             color: var(--msn-blue);
         }
         .theme-msn .message.self .username {
-            color: #ffffff; /* User name blends into green background */
+            color: #ffffff;
         }
         .theme-msn .message-content .timestamp {
             font-size: 0.65rem;
@@ -620,13 +991,12 @@
         .theme-msn .message.self .timestamp {
             color: rgba(255,255,255,0.7);
         }
-
         .theme-msn .chat-input {
             border-top: 1px solid #ccc;
             background-color: #f0f0f0;
             padding: 8px;
         }
-        .theme-msn .chat-input textarea {
+        .theme-msn #chat-input-editor {
             border-radius: 4px;
             border: 1px solid var(--msn-input-border);
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
@@ -654,22 +1024,50 @@
         .theme-msn .back-button:hover {
             background-color: #ffffff;
         }
-        
+        .theme-msn .rich-text-toolbar {
+            background: linear-gradient(to top, #c7e5fc 0%, #e8f5ff 100%);
+            border: 1px solid #7cb1df;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+            padding: 4px;
+        }
+        .theme-msn .rich-text-toolbar button {
+            background: linear-gradient(to bottom, #fcfcfc 0%, #e0e0e0 100%);
+            color: #333333;
+            border: 1px solid #8ba8c3;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            border-radius: 3px;
+            padding: 5px;
+            width: 30px;
+            height: 30px;
+        }
+        .theme-msn .rich-text-toolbar button:hover {
+            background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
+        }
+        .theme-msn .rich-text-toolbar button.active {
+            background: linear-gradient(to bottom, #d5e9f8 0%, #a4cced 100%);
+            border: 1px solid #5a8bc3;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+        }
+
         /* =======================================
            6. DOS THEME OVERRIDES (.theme-dos)
            ======================================= */
         .theme-dos {
             --primary-bg: #000000;
             --content-bg: #000000;
-            --text-color: #00ff00; /* Bright Green */
-            --accent-blue: #00ffff; /* Cyan */
+            --text-color: #00ff00;
+            --accent-blue: #00ffff;
             --accent-green: #00ff00;
             --input-bg: #000000;
             --input-text: #00ff00;
             --message-bg-received: #000000;
             --message-bg-sent: #000000;
             --message-text-received: var(--text-color);
-            --message-text-sent: #ffffff; /* White text on black for sent to stand out slightly */
+            --message-text-sent: #ffffff;
+            --toolbar-bg: #000000;
+            --toolbar-icon-color: #00ff00;
+            --toolbar-icon-hover-bg: rgba(0,255,0,0.2);
             --radius: 0;
             font-family: 'Consolas', 'Courier New', monospace;
             font-size: 14px;
@@ -682,14 +1080,14 @@
             max-width: 700px;
         }
         .theme-dos .chat-header {
-            background-color: #000080; /* Blue Title Bar */
-            color: #ffffff; /* White text */
+            background-color: #000080;
+            color: #ffffff;
             border-bottom: 2px solid var(--text-color);
             padding: 4px 8px;
             font-size: 1.1rem;
             justify-content: flex-start;
         }
-        .theme-dos .user-info, .theme-dos .message img, .theme-dos .verified-badge, .theme-dos .chat-header .text-xl {
+        .theme-dos .user-info, .theme-dos .message .avatar, .theme-dos .verified-badge, .theme-dos .chat-header .text-xl {
             display: none !important;
         }
         .theme-dos .chat-header > .text-xl {
@@ -702,7 +1100,7 @@
             line-height: 1.2;
         }
         .theme-dos .message {
-            margin-bottom: 2px; /* Tight spacing */
+            margin-bottom: 2px;
             align-items: flex-start;
         }
         .theme-dos .message-content {
@@ -733,7 +1131,7 @@
             padding: 8px;
             background-color: var(--input-bg);
         }
-        .theme-dos .chat-input textarea {
+        .theme-dos #chat-input-editor {
             border: 1px solid var(--text-color);
             background-color: var(--input-bg);
             color: var(--input-text);
@@ -762,28 +1160,53 @@
         .theme-dos .mention {
             color: var(--accent-blue);
         }
+        .theme-dos .rich-text-toolbar {
+            background-color: var(--toolbar-bg);
+            border: 1px solid var(--text-color);
+            border-radius: 0;
+            padding: 4px;
+        }
+        .theme-dos .rich-text-toolbar button {
+            background-color: #000000;
+            color: var(--toolbar-icon-color);
+            border: 1px solid var(--text-color);
+            border-radius: 0;
+            font-size: 1.1rem;
+            width: 32px;
+            height: 32px;
+        }
+        .theme-dos .rich-text-toolbar button:hover {
+            background-color: rgba(0,255,0,0.1);
+        }
+        .theme-dos .rich-text-toolbar button.active {
+            background-color: #00ff00;
+            color: #000000;
+        }
         
         /* =======================================
            7. WINDOWS XP BLISS THEME OVERRIDES (.theme-xp)
            ======================================= */
         .theme-xp {
-            --xp-blue: #3665a3; /* Classic Blue Title Bar */
-            --xp-green-bg: #d4e8c3; /* Light Green Message Area */
+            --xp-blue: #3665a3;
+            --xp-green-bg: #d4e8c3;
             --xp-white: #ffffff;
             --xp-button-bg: #e0e9f1;
 
-            --primary-bg: #3a6ea5; /* XP desktop blue */
+            --primary-bg: #3a6ea5;
             --content-bg: var(--xp-white);
             --text-color: #000000;
             --input-bg: var(--xp-white);
             --input-text: #000000;
-            --accent-blue: #0055b3; /* Deep XP blue */
-            --accent-green: #378e37; /* XP Send button green */
+            --accent-blue: #0055b3;
+            --accent-green: #378e37;
             --radius: 4px;
-            --message-bg-received: #e6f1f9; /* Light blue received */
-            --message-bg-sent: #d5efc1; /* Light green sent */
+            --message-bg-received: #e6f1f9;
+            --message-bg-sent: #d5efc1;
             --message-text-received: #000000;
             --message-text-sent: #000000;
+            --toolbar-bg: #e0e9f1;
+            --toolbar-icon-color: #333333;
+            --toolbar-icon-hover-bg: rgba(0,0,0,0.05);
             font-family: 'Tahoma', 'Verdana', sans-serif;
         }
         .theme-xp .chat-container {
@@ -817,7 +1240,7 @@
             padding: 8px;
             background-color: var(--xp-button-bg);
         }
-        .theme-xp .chat-input textarea {
+        .theme-xp #chat-input-editor {
             border: 1px solid #7f9db9;
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
             background-color: var(--xp-white);
@@ -834,7 +1257,6 @@
         .theme-xp .chat-input button:hover {
             background: linear-gradient(to top, #659be6 0%, #88c8f0 100%);
         }
-        
         .theme-xp .message-content {
             border-radius: 12px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.15);
@@ -862,55 +1284,680 @@
             border: 1px solid #003c74;
             font-weight: bold;
         }
-
-
+        .theme-xp .rich-text-toolbar {
+            background-color: var(--toolbar-bg);
+            border: 1px solid #7f9db9;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            padding: 4px;
+        }
+        .theme-xp .rich-text-toolbar button {
+            background: linear-gradient(to top, #e0e9f1 0%, #c4d7ed 100%);
+            border: 1px solid #7f9db9;
+            color: #333333;
+            border-radius: 3px;
+            padding: 5px;
+            width: 30px;
+            height: 30px;
+        }
+        .theme-xp .rich-text-toolbar button:hover {
+            background: linear-gradient(to top, #e6eff7 0%, #d0e0f3 100%);
+        }
+        .theme-xp .rich-text-toolbar button.active {
+            background: linear-gradient(to top, #c4d7ed 0%, #a7c0e0 100%);
+            border: 1px solid #003c74;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+        }
     
-.message.self:hover .delete-icon {
-  display: inline-block;
-}
-.delete-icon {
-  display: none;
-  cursor: pointer;
-  margin-left: 8px;
-  color: var(--accent-red);
-}
+        /* =======================================
+        8. XEROX STAR GUI THEME (.theme-xerox)
+        ======================================= */
+        .theme-xerox {
+            --primary-bg: #dcdcdc;
+            --content-bg: #ffffff;
+            --text-color: #000000;
+            --input-bg: #ffffff;
+            --input-text: #000000;
+            --accent-blue: #003366;
+            --accent-green: #006600;
+            --radius: 0;
+            --message-bg-received: #f0f0f0;
+            --message-bg-sent: #e0e0e0;
+            --message-text-received: #000000;
+            --message-text-sent: #000000;
+            --toolbar-bg: #e0e0e0;
+            --toolbar-icon-color: #000000;
+            --toolbar-icon-hover-bg: rgba(0,0,0,0.1);
+            font-family: "Courier New", Courier, monospace;
+            font-size: 14px;
+            transition: all 1.5s ease;
+        }
+        .theme-xerox .chat-container {
+            border: 2px solid #000;
+            box-shadow: none;
+        }
+        .theme-xerox .chat-header {
+            background-color: #003366;
+            color: #ffffff;
+            padding: 6px 10px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .theme-xerox .user-info {
+            background-color: #ffffff;
+            border: 1px solid #000;
+            padding: 4px 8px;
+        }
+        .theme-xerox .chat-messages {
+            background-color: #f8f8f8;
+            padding: 10px;
+        }
+        .theme-xerox .chat-input {
+            background-color: #ffffff;
+            border-top: 2px solid #000;
+            padding: 8px;
+        }
+        .theme-xerox #chat-input-editor {
+            border: 1px solid #000;
+            background-color: #ffffff;
+            color: #000000;
+        }
+        .theme-xerox .chat-input button {
+            background-color: #003366;
+            color: #ffffff;
+            border: 1px solid #000;
+        }
+        .theme-xerox .message-content {
+            border: 1px solid #000;
+            padding: 6px 10px;
+            background-color: #f0f0f0;
+        }
+        .theme-xerox .message.self .message-content {
+            background-color: #e0e0e0;
+        }
+        .theme-xerox .message-content .username {
+            font-weight: bold;
+            color: #003366;
+        }
+        .theme-xerox .message.self .username {
+            color: #006600;
+        }
+        .theme-xerox .message-content .timestamp {
+            font-size: 0.75rem;
+            color: #666666;
+        }
+        .theme-xerox .rich-text-toolbar {
+            background-color: var(--toolbar-bg);
+            border: 1px solid #000;
+            border-radius: 0;
+            padding: 4px;
+        }
+        .theme-xerox .rich-text-toolbar button {
+            background-color: #dcdcdc;
+            color: #000000;
+            border: 1px solid #000;
+            border-radius: 0;
+            font-size: 1rem;
+            width: 30px;
+            height: 30px;
+        }
+        .theme-xerox .rich-text-toolbar button:hover {
+            background-color: #f0f0f0;
+        }
+        .theme-xerox .rich-text-toolbar button.active {
+            background-color: #003366;
+            color: #ffffff;
+        }
+        
+        /* =======================================
+           9. AOL INSTANT MESSENGER (AIM) THEME
+           ======================================= */
+        .theme-aim {
+            --aim-yellow: #FFC107;
+            --aim-orange: #FF9800;
+            --aim-blue: #007bff;
+            --aim-border: #333;
+            --aim-bg: #FFFFFF;
 
+            --primary-bg: #d3d3d3;
+            --content-bg: var(--aim-bg);
+            --text-color: #000000;
+            --input-bg: var(--aim-bg);
+            --input-text: #000000;
+            --accent-blue: var(--aim-blue);
+            --message-bg-received: var(--aim-bg);
+            --message-bg-sent: var(--aim-blue);
+            --message-text-received: #000000;
+            --message-text-sent: #FFFFFF;
+            --toolbar-bg: #f0f0f0;
+            --toolbar-icon-color: #000000;
+            --toolbar-icon-hover-bg: #e0e0e0;
+
+            font-family: 'Arial', 'Tahoma', sans-serif;
+            font-size: 14px;
+        }
+        .theme-aim .chat-container {
+            border: 2px solid var(--aim-border);
+            border-radius: 4px;
+            box-shadow: 5px 5px 10px rgba(0,0,0,0.3);
+        }
+        .theme-aim .chat-header {
+            background: linear-gradient(to right, var(--aim-yellow), var(--aim-orange));
+            color: #000000;
+            font-size: 1.1rem;
+            padding: 4px 10px;
+            border-bottom: 2px solid var(--aim-border);
+            text-shadow: 1px 1px 1px rgba(255,255,255,0.3);
+        }
+        .theme-aim .chat-header .text-xl {
+            content: "Chat with Crooms Connect";
+        }
+        .theme-aim .user-info, 
+        .theme-aim .verified-badge,
+        .theme-aim #custom-theme-settings {
+            display: none !important;
+        }
+        .theme-aim .chat-messages {
+            background-color: var(--aim-bg);
+            padding: 10px;
+        }
+        .theme-aim .message .avatar {
+            display: none;
+        }
+        .theme-aim .message {
+            margin-bottom: 8px;
+        }
+        .theme-aim .message-content {
+            border: 1px solid #000;
+            border-radius: 5px;
+            padding: 6px 10px;
+            max-width: 80%;
+            background: var(--message-bg-received);
+        }
+        .theme-aim .message.self .message-content {
+            background: var(--message-bg-sent);
+            border-color: #0056b3;
+        }
+        .theme-aim .message-content .username {
+            font-weight: bold;
+            color: #000000;
+        }
+        .theme-aim .message.self .message-content .username {
+            color: #FFFFFF;
+        }
+        .theme-aim .message-content .timestamp {
+            font-size: 0.7rem;
+            color: #666;
+            text-align: left;
+        }
+        .theme-aim .message.self .message-content .timestamp {
+            color: rgba(255,255,255,0.8);
+            text-align: left;
+        }
+        .theme-aim .chat-input {
+            background-color: #f0f0f0;
+            border-top: 1px solid #888;
+            padding: 8px;
+        }
+        .theme-aim #chat-input-editor {
+            border: 1px solid #888;
+            border-radius: 3px;
+        }
+        .theme-aim .chat-input button {
+            background-color: var(--aim-blue);
+            color: #FFFFFF;
+            font-weight: bold;
+            border-radius: 3px;
+            border: 1px solid #000;
+            border-style: outset;
+            padding: 5px 12px;
+        }
+        .theme-aim .chat-input button:active {
+            border-style: inset;
+        }
+        .theme-aim .rich-text-toolbar {
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 4px;
+        }
+        .theme-aim .chat-messages::-webkit-scrollbar {
+            width: 16px;
+        }
+        .theme-aim .chat-messages::-webkit-scrollbar-track {
+            background: #e0e0e0;
+        }
+        .theme-aim .chat-messages::-webkit-scrollbar-thumb {
+            background-color: #b0b0b0;
+            border: 1px solid #888;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        .chat-container {
+            height: 100vh !important;
+            width: 100vw !important;
+            margin: 0 auto !important;
+            border-radius: 0 !important;
+        }
+        .theme-xp .chat-container,
+        .theme-msn .chat-container,
+        .theme-win7 .chat-container {
+            background-color: rgba(255, 255, 255, 0.3) !important;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .theme-xp {
+            background-image: url('https://uploads.onecompiler.io/43yf5pts7/43z8mrsa2/windows_xp_original-wallpaper-3840x2160.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        .theme-msn {
+            background-image: url('https://uploads.onecompiler.io/43yf5pts7/43z8mrsa2/IMG_0303.JPG');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        .theme-win7 {
+            background-image: url('https://uploads.onecompiler.io/43yf5pts7/43z8mrsa2/IMG_0304.JPG');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        .theme-xp .chat-container,
+        .theme-msn .chat-container,
+        .theme-win7 .chat-container {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        /* =======================================
+           10. UI/UX ENHANCEMENTS & ANIMATIONS
+           ======================================= */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background-color: var(--accent-blue);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+        .theme-win98 .chat-messages::-webkit-scrollbar { display: none; }
+
+        .message {
+            animation: fadeIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #chat-input-editor:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 8px rgba(var(--accent-blue), 0.5);
+        }
+        .theme-win98 #chat-input-editor:focus,
+        .theme-dos #chat-input-editor:focus,
+        .theme-aim #chat-input-editor:focus {
+            box-shadow: none;
+        }
+
+        #loading-older {
+            position: relative;
+            color: transparent;
+            height: 30px;
+            width: 100%;
+        }
+        #loading-older::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 24px;
+            height: 24px;
+            margin-left: -12px;
+            margin-top: -12px;
+            border: 3px solid rgba(170, 170, 170, 0.3);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .scroll-to-bottom-btn {
+            position: absolute;
+            bottom: 95px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: var(--accent-blue);
+            color: var(--input-text);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 100;
+            transition: transform 0.2s, opacity 0.2s;
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+        }
+        .scroll-to-bottom-btn.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: var(--message-bg-received);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            align-self: flex-start;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #999;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: bounce 1.2s infinite;
+        }
+        .typing-indicator span:nth-of-type(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-of-type(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+        
+        /* =======================================
+           11. CUSTOM THEME
+           ======================================= */
+        .theme-custom {
+            --primary-bg: #1a1b2f;
+            --content-bg: rgba(43, 45, 66, 0.85);
+            --text-color: #f8f9fa;
+            --accent-blue: #4cc9f0;
+            --accent-green: #80ed99;
+            --accent-red: #f75c7b;
+            --radius: 12px;
+            --input-bg: rgba(248, 249, 250, 0.9);
+            --input-text: #1a1b2f;
+            --message-bg-received: rgba(58, 59, 90, 0.9);
+            --message-bg-sent: rgba(76, 201, 240, 0.9);
+            --message-text-received: var(--text-color);
+            --message-text-sent: #1a1b2f;
+            --toolbar-bg: rgba(58, 59, 90, 0.85);
+            --toolbar-icon-color: #f8f9fa;
+            --toolbar-icon-hover-bg: rgba(255,255,255,0.1);
+        }
+        .theme-custom .chat-container {
+            background-color: var(--content-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* =======================================
+           12. IMAGE LIGHTBOX & MOD MENU (NEW)
+           ======================================= */
+        .image-modal-overlay, .mod-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: zoom-out;
+        }
+        .image-modal-overlay.visible, .mod-menu-overlay.visible {
+            display: flex;
+        }
+        .image-modal-content {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .modal-close-btn:hover {
+            transform: scale(1.1);
+            color: var(--accent-red);
+        }
+        .mod-menu-content {
+            background-color: var(--content-bg);
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            color: var(--text-color);
+            width: 90%;
+            max-width: 450px; /* Increased width */
+            cursor: default;
+        }
+        .mod-menu-content h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--toolbar-bg);
+            padding-bottom: 0.5rem;
+        }
+        .mod-menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--toolbar-bg);
+        }
+         .mod-menu-item:last-child {
+            border-bottom: none;
+        }
+        .mod-menu-item p {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        .mod-menu-item small {
+            opacity: 0.7;
+            display: block;
+            margin-top: 4px;
+        }
+        .mod-menu-item button {
+            background-color: var(--accent-blue);
+            color: var(--input-text);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: bold;
+            flex-shrink: 0;
+            margin-left: 1rem;
+        }
+        #mod-menu-btn {
+            background: none;
+            border: none;
+            color: var(--toolbar-icon-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        #mod-menu-btn:hover {
+            background-color: var(--toolbar-icon-hover-bg);
+        }
+
+
+        /* Desktop Layout Refinements */
+        @media (min-width: 801px) {
+            body, html {
+                height: auto;
+            }
+            .chat-container {
+                height: 85vh !important;
+                max-height: 900px;
+                width: 100% !important;
+                max-width: 800px !important;
+                margin: 40px auto !important;
+                border-radius: var(--radius) !important;
+            }
+            .back-button {
+                position: fixed;
+            }
+            .theme-win98 .chat-container, 
+            .theme-dos .chat-container, 
+            .theme-xerox .chat-container {
+                border-radius: 0 !important;
+            }
+            .theme-ios .chat-container,
+            .theme-custom .chat-container {
+                 border-radius: var(--radius) !important;
+            }
+            .theme-aim .chat-container {
+                border-radius: 4px !important;
+            }
+        }
 </style>
-<script>
-    // A check to ensure the user is logged in before allowing them to view the chat.
-    if (sessionStorage.getItem("loggedIn") !== "true") {
-      window.location.href = "auth.html";
-    }
-</script>
 <body class="theme-dark">
 <a class="back-button" href="index.html">← Back to Home</a>
 <div class="chat-container">
-<div class="chat-header">
-<div class="text-xl">Crooms Connect Chat</div>
-<select class="p-2 rounded-md bg-gray-700 text-white text-sm font-semibold transition duration-150" id="theme-selector">
-<option value="dark">Modern Dark</option>
-<option value="light">Light</option>
-<option value="win98">Windows 98</option>
-<option value="win7">Windows 7 Aero</option>
-<option value="ios">iOS iMessage</option>
-<option value="msn">MSN Messenger</option>
-<option value="dos">DOS Terminal</option>
-<option value="xp">Windows XP Bliss</option>
-</select>
-<div class="user-info" id="user-info" style="display: none;">
-<img alt="avatar" id="user-avatar" src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous"/>
-<span id="user-name">Loading...</span>
-<img alt="verified" class="verified-badge" id="user-verified" src="verify.png" style="display:none;" title="Verified"/>
+    <div id="scroll-to-bottom" class="scroll-to-bottom-btn">
+        <i class="fas fa-arrow-down"></i>
+    </div>
+    <div class="chat-header">
+        <div class="text-xl">Crooms Connect Chat</div>
+        <div class="flex items-center gap-2">
+            <button id="mod-menu-btn" style="display: none;" title="Mod Menu"><i class="fas fa-user-shield"></i></button>
+            <select class="p-2 rounded-md bg-gray-700 text-white text-sm font-semibold transition duration-150" id="theme-selector">
+                <option value="dark">Modern Dark</option>
+                <option value="light">Light</option>
+                <option value="aim">AOL Instant Messenger</option>
+                <option value="win98">Windows 98</option>
+                <option value="win7">Windows 7 Aero</option>
+                <option value="ios">iOS iMessage</option>
+                <option value="msn">MSN</option>
+                <option value="dos">DOS Terminal</option>
+                <option value="xp">Windows XP Bliss</option>
+                <option value="xerox">Xerox Star GUI</option>
+                <option value="custom">Custom</option>
+            </select>
+            <div id="custom-theme-settings" style="display: none; font-size: 0.8rem; align-items: center; gap: 5px;" class="text-sm">
+                <label for="background-uploader" style="cursor: pointer; font-weight: normal;">Custom BG:</label>
+                <input type="file" id="background-uploader" accept="image/*" style="max-width: 120px;">
+            </div>
+            <div class="user-info" id="user-info" style="display: none;">
+                <img alt="avatar" id="user-avatar" src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous"/>
+                <span id="user-name">Loading...</span>
+                <span class="verified-badge" id="user-verified" style="display:none;" title="Verified">✅</span>
+            </div>
+        </div>
+    </div>
+    <div class="chat-messages" id="chat-box">
+        <div id="loading-older" style="display:none">Loading...</div>
+    </div>
+    <div class="chat-input">
+        <div class="rich-text-toolbar" id="rich-text-toolbar">
+            <button data-format="bold" title="Bold"><i class="fas fa-bold"></i></button>
+            <button data-format="italic" title="Italic"><i class="fas fa-italic"></i></button>
+            <button data-format="underline" title="Underline"><i class="fas fa-underline"></i></button>
+            <button data-format="createLink" title="Link"><i class="fas fa-link"></i></button>
+            <button data-format="insertUnorderedList" title="Bulleted List"><i class="fas fa-list-ul"></i></button>
+            <button data-format="insertOrderedList" title="Numbered List"><i class="fas fa-list-ol"></i></button>
+        </div>
+        <div class="chat-input-row">
+            <div id="chat-input-editor" contenteditable="true" placeholder="Type your message or paste an image..."></div>
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    <!-- USER PROFILE VIEW (NEW) -->
+    <div class="user-profile-view" id="user-profile-view">
+        <div class="user-profile-header">
+            <button class="back" id="profile-back-btn"><i class="fas fa-arrow-left"></i></button>
+            <img id="profile-view-avatar" src="" alt="avatar">
+            <h2 id="profile-view-username">User Profile</h2>
+        </div>
+        <div class="user-profile-messages" id="user-profile-messages">
+            <!-- Messages will be loaded here -->
+        </div>
+    </div>
 </div>
+
+<!-- IMAGE LIGHTBOX MODAL (NEW) -->
+<div id="image-modal" class="image-modal-overlay">
+    <span id="image-modal-close" class="modal-close-btn">&times;</span>
+    <img id="image-modal-content" class="image-modal-content" src="" alt="Full view image">
 </div>
-<div class="chat-messages" id="chat-box">
-<div id="loading-older" style="display:none">Loading...</div>
+
+<!-- MOD MENU MODAL (ENHANCED) -->
+<div id="mod-menu-modal" class="mod-menu-overlay">
+     <div class="mod-menu-content">
+        <span id="mod-menu-close" class="modal-close-btn">&times;</span>
+        <h2>Moderator Menu</h2>
+        <div class="mod-menu-item">
+            <div>
+                <p>Test Daily Fireworks</p>
+                <small>Triggers the firework animation for 30 seconds.</small>
+            </div>
+            <button id="firework-test-btn">Run Test</button>
+        </div>
+        <div class="mod-menu-item">
+            <div>
+                <p>Update My Message PFPs</p>
+                <small>Updates all your past messages to use your current profile picture.</small>
+            </div>
+            <button id="update-pfps-btn">Sync</button>
+        </div>
+    </div>
 </div>
-<div class="chat-input">
-<textarea id="chat-input" placeholder="Type your message..." rows="2"></textarea>
-<button id="send-button" onclick="handleSendClick()">Send</button>
+
+<!-- TOAST NOTIFICATION (NEW) -->
+<div id="toast-notification">
+    <span class="icon"></span>
+    <span class="message"></span>
 </div>
-</div>
+
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
@@ -918,41 +1965,67 @@
     const themeSelector = document.getElementById('theme-selector');
     const themeKey = 'chatTheme';
 
-    function setSavedTheme() {
-        // Default changed to 'dark' for consistency
+    function setSavedTheme(initialLoad = false) {
         const savedTheme = localStorage.getItem(themeKey) || 'dark'; 
         document.body.className = ''; 
         
-        // Add the theme class
-        if (savedTheme === 'win98') document.body.classList.add('theme-win98');
+        document.body.style.backgroundImage = '';
+        document.body.style.backgroundSize = '';
+        document.body.style.backgroundPosition = '';
+        document.body.style.backgroundAttachment = '';
+
+        const customSettings = document.getElementById('custom-theme-settings');
+        if (customSettings) {
+            customSettings.style.display = (savedTheme === 'custom') ? 'flex' : 'none';
+        }
+
+        if (savedTheme === 'custom') {
+            document.body.classList.add('theme-custom');
+            const customBg = localStorage.getItem('customBackgroundImage');
+            if (customBg) {
+                document.body.style.backgroundImage = `url(${customBg})`;
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundPosition = 'center';
+                document.body.style.backgroundAttachment = 'fixed';
+            }
+        }
+        else if (savedTheme === 'aim') document.body.classList.add('theme-aim');
+        else if (savedTheme === 'win98') document.body.classList.add('theme-win98');
         else if (savedTheme === 'light') document.body.classList.add('theme-light');
         else if (savedTheme === 'win7') document.body.classList.add('theme-win7');
         else if (savedTheme === 'ios') document.body.classList.add('theme-ios');
         else if (savedTheme === 'msn') document.body.classList.add('theme-msn');
-        else if (savedTheme === 'dos') document.body.classList.add('theme-dos'); // Added DOS theme check
-        else if (savedTheme === 'xp') document.body.classList.add('theme-xp'); // Added XP theme check
+        else if (savedTheme === 'dos') document.body.classList.add('theme-dos');
+        else if (savedTheme === 'xp') document.body.classList.add('theme-xp');
+        else if (savedTheme === 'xerox') document.body.classList.add('theme-xerox');
         else document.body.classList.add('theme-dark');
 
-        // Update the selector value
         if (themeSelector.querySelector(`option[value="${savedTheme}"]`)) {
              themeSelector.value = savedTheme;
         } else {
-             themeSelector.value = 'dark'; // Fallback
+             themeSelector.value = 'dark';
+        }
+        if (!initialLoad) {
+            clearVerifiedCache();
+            updateGlobalAvatarAndName();
         }
     }
 
     function handleThemeChange() {
+        const scrollable = document.querySelector('.chat-messages');
+        const scrollOffsetFromBottom = scrollable.scrollHeight - scrollable.scrollTop;
+
         const newTheme = themeSelector.value;
         localStorage.setItem(themeKey, newTheme);
-        setSavedTheme();
-        fullRefreshMessages(); 
+        setSavedTheme(); 
+        
+        renderMessages(false, false, 0, 0, true).then(() => {
+            requestAnimationFrame(() => {
+                scrollable.scrollTop = scrollable.scrollHeight - scrollOffsetFromBottom;
+            });
+        });
     }
     // ===================================
-
-    // === REPLACED DEBUG LOGGING FUNCTION ===
-    function debugLog(...args) {
-        console.log('DEBUG:', ...args);
-    }
 
     // Supabase Configuration 
     const SUPABASE_URL = 'https://jxxnfsydjrflnephmfjm.supabase.co';
@@ -961,14 +2034,28 @@
 
     const chatBox = document.getElementById('chat-box');
     const loadingOlderDiv = document.getElementById('loading-older');
-    const input = document.getElementById('chat-input');
+    const editor = document.getElementById('chat-input-editor');
     const sendBtn = document.getElementById('send-button');
     const userInfoDiv = document.getElementById('user-info');
     const userAvatarImg = document.getElementById('user-avatar');
     const userNameSpan = document.getElementById('user-name');
     const userVerifiedImg = document.getElementById('user-verified');
+    const scrollToBottomBtn = document.getElementById('scroll-to-bottom');
+    const richTextToolbar = document.getElementById('rich-text-toolbar');
+    
+    // Modal & New UI elements
+    const imageModal = document.getElementById('image-modal');
+    const imageModalContent = document.getElementById('image-modal-content');
+    const imageModalClose = document.getElementById('image-modal-close');
+    const modMenuBtn = document.getElementById('mod-menu-btn');
+    const modMenuModal = document.getElementById('mod-menu-modal');
+    const modMenuClose = document.getElementById('mod-menu-close');
+    const fireworkTestBtn = document.getElementById('firework-test-btn');
+    const updatePfpsBtn = document.getElementById('update-pfps-btn');
+    const userProfileView = document.getElementById('user-profile-view');
+    const profileBackBtn = document.getElementById('profile-back-btn');
+    const toast = document.getElementById('toast-notification');
 
-    // Make currentUser accessible globally to the handleSendClick function
     window.currentUser = null; 
     let currentUsername = 'Anonymous';
     let currentUserIsVerified = false;
@@ -980,22 +2067,30 @@
     let allOlderLoaded = false;
     let totalMessageCount = null; 
 
-    // --- CACHE FOR PROFILE VERIFICATION ---
     const verifiedCache = {};
     function clearVerifiedCache() {
         for (const key in verifiedCache) {
             delete verifiedCache[key];
         }
     }
+    
+    let typingIndicator;
+    function createTypingIndicator() {
+        const indicator = document.createElement('div');
+        indicator.id = 'typing-indicator';
+        indicator.className = 'typing-indicator';
+        indicator.style.display = 'none';
+        indicator.innerHTML = `<span></span><span></span><span></span>`;
+        chatBox.appendChild(indicator);
+        return indicator;
+    }
 
-    // Clean username helper
     function cleanUsername(name) {
         if (!name) return "Anonymous";
         if (typeof name !== 'string') return name;
         return name.replace(/@croomsconnect\.local$/i, '');
     }
 
-    // Async check if a username is verified (with caching)
     async function isUserVerified(username) {
         if (verifiedCache.hasOwnProperty(username)) return verifiedCache[username];
         const { data, error } = await supabase
@@ -1012,7 +2107,6 @@
         const { data: authData, error: authErr } = await supabase.auth.getUser();
         
         if (!authData?.user) {
-            // Update global state and redirect (redundant, but safety net for page load)
             window.currentUser = null;
             window.location.href = "auth.html";
             return;
@@ -1025,7 +2119,6 @@
             .eq("id", userId)
             .single();
 
-        // Update global state
         window.currentUser = authData.user;
         currentUsername = cleanUsername(profile?.username) || "Anonymous";
         currentUserIsVerified = !!profile?.is_verified;
@@ -1037,6 +2130,8 @@
         userNameSpan.textContent = currentUsername;
         userVerifiedImg.style.display = currentUserIsVerified ? "" : "none";
         userInfoDiv.style.display = 'flex';
+        
+        modMenuBtn.style.display = currentUserIsVerified ? 'flex' : 'none';
     }
 
     function cleanMessageMentions(text) {
@@ -1048,10 +2143,23 @@
             return `<span class="mention">@${clean}</span>`;
         });
     }
+    
+    /**
+    * Displays a short-lived notification at the bottom of the screen.
+    * @param {string} message - The text to display.
+    * @param {('success'|'error')} type - The type of notification.
+    */
+    function showToast(message, type = 'success') {
+        toast.className = type;
+        toast.querySelector('.icon').innerHTML = type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-circle"></i>';
+        toast.querySelector('.message').textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
 
-    // async displayMessage to allow for verified badge lookup and theme-based styling
-    async function displayMessage(msg) {
-        // Use the globally exposed currentUser for checks
+    async function displayMessage(msg, container = chatBox) {
         const isSelf = window.currentUser && msg.user_id === window.currentUser.id; 
         const username = cleanUsername(msg.username) || "Anonymous";
         const avatarSrc = msg.avatar_url && msg.avatar_url.trim() !== ""
@@ -1059,85 +2167,93 @@
             : `https://api.dicebear.com/6.x/thumbs/svg?seed=${encodeURIComponent(username)}`;
         const div = document.createElement('div');
         
-        // Determine theme-specific classes
         const theme = localStorage.getItem(themeKey) || 'dark';
-        const isDOS = theme === 'dos'; // Check for DOS
+        const isDOS = theme === 'dos';
+        const isAIM = theme === 'aim';
 
         div.className = `message ${isSelf ? 'self' : 'other'}`;
+        div.dataset.messageId = msg.id;
         div.dataset.userId = msg.user_id;
+        div.dataset.username = username; // Store username for later
         div.dataset.timestamp = msg.timestamp; 
 
         const verified = await isUserVerified(msg.username);
-        // Only hide avatar inline for DOS, letting CSS rules for other themes apply, or for them to show by default.
-        const avatarStyle = (isDOS) ? 'display: none;' : 'display: block;'; 
-        const timestampText = new Date(msg.timestamp).toLocaleTimeString();
         
-        // In DOS theme, we want a simple [username] message format without bubbles, timestamps, or badges inside the message content div for purity.
-        if (isDOS) {
-            div.innerHTML = `
-                <div class="message-content">
-                    <span class="username">${username}</span>: <span class="text">${cleanMessageMentions(msg.message)}</span>
+        const dateOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+        const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+        const formattedDate = new Date(msg.timestamp).toLocaleDateString('en-US', dateOptions);
+        const formattedTime = new Date(msg.timestamp).toLocaleTimeString('en-US', timeOptions);
+        const timestampText = `${formattedDate} – ${formattedTime}`;
+        
+        const formattedMessage = cleanMessageMentions(msg.message);
+
+        let modToolsHtml = '';
+        if (currentUserIsVerified) {
+            modToolsHtml = `
+                <div class="mod-tools">
+                    <button class="mod-tools-toggle"><i class="fas fa-ellipsis-v"></i></button>
+                    <div class="mod-tools-menu">
+                        <button data-action="delete" data-message-id="${msg.id}"><i class="fas fa-trash fa-fw"></i> Delete Message</button>
+                        <button data-action="timeout-10m" data-user-id="${msg.user_id}"><i class="fas fa-clock fa-fw"></i> Timeout 10m</button>
+                        <button data-action="timeout-1h" data-user-id="${msg.user_id}"><i class="fas fa-hourglass-half fa-fw"></i> Timeout 1h</button>
+                        <button data-action="ban" data-user-id="${msg.user_id}"><i class="fas fa-gavel fa-fw"></i> Ban User</button>
+                        <button data-action="pardon" data-user-id="${msg.user_id}"><i class="fas fa-hand-holding-heart fa-fw"></i> Pardon User</button>
+                    </div>
                 </div>
             `;
+        }
+        
+        const avatarHtml = `<a class="avatar-link" data-user-id="${msg.user_id}" data-username="${username}" data-avatar-url="${avatarSrc}"><img src="${avatarSrc}" class="avatar" alt="avatar"></a>`;
+
+
+        if (isDOS) {
+            div.innerHTML = `<div class="message-content"><span class="username">${username}</span>: <span class="text">${formattedMessage}</span></div>`;
+        } else if (isAIM) {
+             div.innerHTML = `<div class="message-content"><div class="username">${username}</div><div class="text">${formattedMessage}</div><div class="timestamp">${timestampText}</div></div>`;
         } else {
-            // All other themes use the bubble-style content
             div.innerHTML = `
-                <img src="${avatarSrc}" alt="avatar" style="${avatarStyle}">
+                ${avatarHtml}
                 <div class="message-content">
                     <div class="username">
                         ${username}
-                        ${verified ? `<img src="verify.png" class="verified-badge" alt="verified" title="Verified">` : ""}
+                        ${verified ? `<span class="verified-badge" title="Verified">✅</span>` : ""}
                     </div>
-                    <div class="text">${cleanMessageMentions(msg.message)}</div>
+                    <div class="text">${formattedMessage}</div>
                     <div class="timestamp">${timestampText}</div>
                 </div>
+                ${modToolsHtml}
             `;
         }
         
-        chatBox.appendChild(div);
-    }
-
-    // Render all messages (with enhanced scroll logic for all scenarios)
-    async function renderMessages(isInitialLoad = false, isLoadingOlder = false, oldScrollHeight = 0, oldScrollTop = 0) {
-        const chatBoxHeight = chatBox.clientHeight;
-        
-        // 1. Capture Scroll State
-        // Determine if user was at the bottom (within 20px tolerance)
-        const wasScrolledToBottom = oldScrollTop + chatBoxHeight >= oldScrollHeight - 20;
-        
-        // Calculate distance from bottom BEFORE clearing content (used for theme refresh restoration)
-        let distanceFromBottom = oldScrollHeight - (oldScrollTop + chatBoxHeight);
-        if (oldScrollHeight === 0) distanceFromBottom = 0;
-
-        // 2. Clear and Render
-        chatBox.innerHTML = '';
-        chatBox.appendChild(loadingOlderDiv);
-
-        // Await all message rendering to ensure DOM elements are created
-        for (const msg of loadedMessages) {
-            await displayMessage(msg);
+        if (container === chatBox) {
+            container.insertBefore(div, typingIndicator); 
+        } else {
+            container.appendChild(div);
         }
-        
-        // 3. Defer Scroll Adjustment (Fix for Glitches)
-        // Use setTimeout for all scroll adjustments to ensure they happen *after* the DOM reflow is complete.
-        setTimeout(() => {
-            const currentScrollHeight = chatBox.scrollHeight;
-            const currentChatBoxHeight = chatBox.clientHeight;
-
-            if (isInitialLoad || (wasScrolledToBottom && !isLoadingOlder)) {
-                // Scenario A: Initial Load, New Message (when user was at bottom)
-                chatBox.scrollTop = currentScrollHeight;
-            } else if (isLoadingOlder) {
-                // Scenario B: Loading Older Messages: Keep the visual position steady.
-                const diff = currentScrollHeight - oldScrollHeight;
-                chatBox.scrollTop = oldScrollTop + diff;
-            } else {
-                // Scenario C: Theme Change/Refresh when scrolled up: Maintain relative position from the bottom.
-                chatBox.scrollTop = currentScrollHeight - currentChatBoxHeight - distanceFromBottom;
-            }
-        }, 0);
     }
 
+    async function renderMessages(isInitialLoad = false, isLoadingOlder = false, oldScrollHeight = 0, oldScrollTop = 0, keepScrollPosition = false) {
+        return new Promise(async (resolve) => {
+            let wasScrolledToBottom = (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight) < 20;
+
+            chatBox.querySelectorAll('.message').forEach(el => el.remove());
+            chatBox.prepend(loadingOlderDiv);
+
+            for (const msg of loadedMessages) {
+                await displayMessage(msg);
+            }
+            
+            setTimeout(() => {
+                const currentScrollHeight = chatBox.scrollHeight;
+                if (isInitialLoad || wasScrolledToBottom && !keepScrollPosition) {
+                    chatBox.scrollTop = currentScrollHeight;
+                } else if (isLoadingOlder) {
+                    chatBox.scrollTop = oldScrollTop + (currentScrollHeight - oldScrollHeight);
+                }
+                resolve();
+            }, 0);
+        });
+    }
 
     async function fetchTotalMessageCount() {
         const { count } = await supabase
@@ -1152,7 +2268,7 @@
         const end = totalMessageCount - 1;
         const { data } = await supabase
             .from('messages')
-            .select('user_id, username, avatar_url, message, timestamp')
+            .select('id, user_id, username, avatar_url, message, timestamp')
             .order('timestamp', { ascending: true })
             .range(start, end);
 
@@ -1160,8 +2276,7 @@
         if (loadedMessages.length < PAGE_SIZE) allOlderLoaded = true;
         
         loadingOlderDiv.style.display = allOlderLoaded ? 'none' : 'block';
-        // Call renderMessages for initial load
-        await renderMessages(true, false, 0, 0);
+        await renderMessages(true);
     }
 
     async function loadOlderMessages() {
@@ -1169,7 +2284,6 @@
         loadingOlder = true;
         loadingOlderDiv.style.display = '';
         
-        // Capture scroll state before load
         const oldScrollHeight = chatBox.scrollHeight; 
         const oldScrollTop = chatBox.scrollTop;
         
@@ -1187,179 +2301,490 @@
         
         const { data } = await supabase
             .from('messages')
-            .select('user_id, username, avatar_url, message, timestamp')
+            .select('id, user_id, username, avatar_url, message, timestamp')
             .order('timestamp', { ascending: true })
             .range(start, end);
         
         if (data && data.length > 0) {
             loadedMessages = [...data, ...loadedMessages];
             if (data.length < PAGE_SIZE) allOlderLoaded = true;
-            
-            // Call renderMessages with loadingOlder=true and captured scroll state
             await renderMessages(false, true, oldScrollHeight, oldScrollTop);
-            
         } else {
             allOlderLoaded = true;
         }
         loadingOlder = false;
-        loadingOlderDiv.style.display = 'none';
+        loadingOlderDiv.style.display = allOlderLoaded ? 'none' : 'block';
     }
 
     function handleScroll() {
         if (chatBox.scrollTop < 100 && !loadingOlder && !allOlderLoaded) {
             loadOlderMessages();
         }
+        const isScrolledUp = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight > 200;
+        scrollToBottomBtn.classList.toggle('visible', isScrolledUp);
     }
     
-    // --- UPDATED sendMessage: THROWS ON ERROR ---
+    function sanitizeHTML(html) {
+        const allowedTags = ['strong', 'b', 'em', 'i', 'u', 'a', 'ul', 'ol', 'li', 'br', 'div', 'p', 'span', 'img'];
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const allElements = doc.body.querySelectorAll('*');
+        
+        allElements.forEach(el => {
+            if (!allowedTags.includes(el.tagName.toLowerCase())) {
+                el.outerHTML = el.innerHTML;
+            }
+            if (el.tagName.toLowerCase() === 'a') {
+                const href = el.getAttribute('href');
+                if (!href || (!href.startsWith('http:') && !href.startsWith('https:'))) {
+                    el.removeAttribute('href');
+                }
+            }
+            if (el.tagName.toLowerCase() === 'img') {
+                const src = el.getAttribute('src');
+                if (!src || !src.startsWith('data:image/')) {
+                    el.remove();
+                } else {
+                    const safeStyle = `max-width: 100%; border-radius: 8px; vertical-align: middle;`;
+                    el.setAttribute('style', safeStyle);
+                    el.classList.add('message-image');
+                }
+            }
+        });
+        return doc.body.innerHTML;
+    }
+    
     async function sendMessage() {
-        const message = input.value.trim();
-        // Check for empty message
-        if (!message) {
-            return;
-        }
+        const rawMessage = editor.innerHTML;
+        const message = sanitizeHTML(rawMessage).trim();
+        if (!message || message === '<br>') return null;
 
-        // 1. Fetch profile
+        editor.innerHTML = ''; // Clear editor immediately for better UX
+
         const { data: profile, error: profileErr } = await supabase
             .from('profiles')
             .select('username')
             .eq('id', window.currentUser.id)
             .single();
-        
         if (profileErr) throw new Error("Could not fetch profile for message.");
 
-        const username = profile?.username || 'Anonymous'; 
+        const username = profile?.username || 'Anonymous';
         const avatar_url = window.currentUser.user_metadata?.avatar_url || '';
-        
-        // 2. Insert message
-        const { error: insertErr } = await supabase.from('messages').insert([{
-            user_id: window.currentUser.id,
-            username,
-            avatar_url,
-            message,
-            timestamp: new Date().toISOString()
-        }]);
+
+        // Insert and immediately get the new row back
+        const { data: newMessage, error: insertErr } = await supabase
+            .from('messages')
+            .insert([{
+                user_id: window.currentUser.id,
+                username,
+                avatar_url,
+                message,
+            }])
+            .select()
+            .single();
 
         if (insertErr) {
+            editor.innerHTML = rawMessage; // Restore content on failure
             throw new Error("Failed to insert message into database.");
         }
-
-        // 3. Clear input only on success
-        input.value = '';
+        
+        return newMessage;
     }
 
     function subscribeToMessages() {
-        supabase
-            .channel('messages-channel')
+        const channel = supabase.channel('messages-channel');
+        channel
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async (payload) => {
-                const oldScrollHeight = chatBox.scrollHeight;
-                const oldScrollTop = chatBox.scrollTop;
+                // Prevent duplicating the message we just added locally
+                if (loadedMessages.some(m => m.id === payload.new.id)) {
+                    return;
+                }
                 
-                if (!loadedMessages.some(m => m.timestamp === payload.new.timestamp && m.user_id === payload.new.user_id)) {
-                    loadedMessages.push(payload.new);
-                    // Use robust scroll logic for new messages
-                    totalMessageCount += 1;
-                    await renderMessages(false, false, oldScrollHeight, oldScrollTop);
+                const wasScrolledToBottom = (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight) < 50;
+
+                loadedMessages.push(payload.new);
+                totalMessageCount += 1;
+                await displayMessage(payload.new);
+                
+                // Only auto-scroll if user was already at the bottom
+                if (wasScrolledToBottom) {
+                    chatBox.scrollTop = chatBox.scrollHeight;
                 }
             })
+            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, (payload) => {
+                 const messageId = payload.old.id;
+                 const messageElement = document.querySelector(`.message[data-message-id="${messageId}"]`);
+                 if (messageElement) {
+                     messageElement.remove();
+                     loadedMessages = loadedMessages.filter(m => m.id !== messageId);
+                 }
+            })
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, (payload) => {
+                 // Real-time PFP update for messages table
+                 const updatedMessage = payload.new;
+                 const messageElements = document.querySelectorAll(`.message[data-user-id="${updatedMessage.user_id}"]`);
+                 messageElements.forEach(msgEl => {
+                    const avatarImg = msgEl.querySelector('.avatar');
+                    if (avatarImg && avatarImg.src !== updatedMessage.avatar_url) {
+                        avatarImg.src = updatedMessage.avatar_url;
+                    }
+                 });
+            })
             .subscribe();
+        
+        return channel;
     }
 
-    async function fullRefreshMessages() {
-        if (loadingOlder) return; 
+    let channel = null; // To hold the channel subscription
+    
+    function formatTimeDiff(ms) {
+        if (ms <= 0) return "0 seconds";
+        let seconds = Math.floor(ms / 1000);
+        let minutes = Math.floor(seconds / 60);
+        let hours = Math.floor(minutes / 60);
+
+        seconds %= 60;
+        minutes %= 60;
+
+        let result = [];
+        if (hours > 0) result.push(`${hours} hour(s)`);
+        if (minutes > 0) result.push(`${minutes} minute(s)`);
+        if (seconds > 0) result.push(`${seconds} second(s)`);
         
-        clearVerifiedCache();
+        return result.join(', ');
+    }
 
-        // Capture scroll state before refresh
-        const oldScrollHeight = chatBox.scrollHeight;
-        const oldScrollTop = chatBox.scrollTop;
-
-        // Ensure we load enough messages to cover the current view plus the page size
-        const messagesToLoad = loadedMessages.length + PAGE_SIZE; 
-        totalMessageCount = await fetchTotalMessageCount(); 
+    async function handleSendClick() {
+        if (!window.currentUser) { 
+            showToast("You must be signed in to send messages.", 'error');
+            return;
+        }
         
-        const start = Math.max(0, totalMessageCount - messagesToLoad);
-        const end = totalMessageCount - 1;
+        const { data: sanction, error: sanctionError } = await supabase
+            .from('sanctions')
+            .select('action_type, expires_at')
+            .eq('user_id', window.currentUser.id)
+            .or('expires_at.is.null,expires_at.gt.now()')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
 
-        const { data, error } = await supabase
-            .from('messages')
-            .select('user_id, username, avatar_url, message, timestamp')
-            .order('timestamp', { ascending: true })
-            .range(start, end);
-
-        if (error) {
-            console.error("Error during refresh fetch:", error);
+        if (sanction) {
+            if (sanction.action_type === 'BAN') {
+                showToast('You are permanently banned and cannot send messages.', 'error');
+            } else if (sanction.action_type === 'TIMEOUT') {
+                const remainingTime = new Date(sanction.expires_at) - new Date();
+                showToast(`You are timed out. Please wait ${formatTimeDiff(remainingTime)}.`, 'error');
+            }
             return;
         }
 
-        loadedMessages = data || [];
-        allOlderLoaded = (totalMessageCount - loadedMessages.length) <= 0;
-        loadingOlderDiv.style.display = allOlderLoaded ? 'none' : 'block';
-
-        // Call renderMessages with captured state for theme refresh
-        await renderMessages(false, false, oldScrollHeight, oldScrollTop); 
-        await updateGlobalAvatarAndName();
-    }
-
-    // === GLOBAL HANDLER: UPDATED WITH RELIABILITY LOCK ===
-    window.handleSendClick = async function() {
-        if (!window.currentUser) { 
-            alert("You must be signed in to send messages.");
-            window.location.href = "auth.html";
-            return false;
-        }
-
-        // 1. Check for empty message early
-        if (input.value.trim() === "") {
-            return false;
-        }
+        if (editor.innerHTML.trim() === "" || editor.innerHTML.trim() === "<br>") return;
         
-        // 2. Disable controls to prevent double submission
-        input.disabled = true;
+        editor.setAttribute('contenteditable', 'false');
         sendBtn.disabled = true;
 
         try {
-            await sendMessage(); // Calls the module's Supabase-enabled sendMessage
-            return true;
+            const newMessage = await sendMessage();
+            if (newMessage) {
+                loadedMessages.push(newMessage);
+                await displayMessage(newMessage);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
         } catch (e) {
             console.error("Send error:", e);
-            alert("Failed to send message: " + e.message);
-            return false;
+            showToast("Failed to send message: " + e.message, 'error');
         } finally {
-            // 3. Re-enable controls and focus the input regardless of success/failure
-            input.disabled = false;
+            editor.setAttribute('contenteditable', 'true');
             sendBtn.disabled = false;
-            input.focus(); 
+            editor.focus(); 
         }
     }
-    // ===============================================
 
-    // Event listeners
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            // Enter key also calls the robust global handler
-            window.handleSendClick();
+    async function deleteMessageAsMod(messageId) {
+        const messageEl = document.querySelector(`.message[data-message-id="${messageId}"]`);
+        const username = messageEl ? messageEl.dataset.username : 'this user';
+        if (!confirm(`Are you sure you want to delete this message from ${username}?`)) return;
+
+        const { error } = await supabase.from('messages').delete().eq('id', messageId);
+        if (error) {
+            showToast("Failed to delete message: " + error.message, 'error');
+        } else {
+            showToast("Message deleted successfully.", 'success');
+        }
+    }
+    
+    async function applySanction(targetUserId, actionType, durationMinutes = null) {
+        const messageEl = document.querySelector(`.message[data-user-id="${targetUserId}"]`);
+        const username = messageEl ? messageEl.dataset.username : 'this user';
+        let confirmMessage = `Are you sure you want to ${actionType.toLowerCase()} ${username}?`;
+        if (durationMinutes) {
+             confirmMessage = `Are you sure you want to time out ${username} for ${durationMinutes} minutes?`;
+        }
+        if (!confirm(confirmMessage)) return;
+
+        let expires_at = null;
+        if (actionType === 'TIMEOUT' && durationMinutes) {
+            expires_at = new Date(Date.now() + durationMinutes * 60 * 1000).toISOString();
+        }
+
+        await pardonUser(targetUserId, false);
+
+        const { error } = await supabase.from('sanctions').insert({
+            user_id: targetUserId,
+            moderator_id: window.currentUser.id,
+            action_type: actionType,
+            expires_at: expires_at,
+        });
+
+        if (error) {
+            showToast(`Failed to ${actionType.toLowerCase()} user: ` + error.message, 'error');
+        } else {
+            showToast(`User ${username} has been ${actionType.toLowerCase()}ed.`, 'success');
+        }
+    }
+
+    async function pardonUser(targetUserId, useConfirm = true) {
+        const messageEl = document.querySelector(`.message[data-user-id="${targetUserId}"]`);
+        const username = messageEl ? messageEl.dataset.username : 'this user';
+        if (useConfirm && !confirm(`Are you sure you want to pardon ${username} and remove all bans/timeouts?`)) return;
+        
+        const { error } = await supabase.from('sanctions').delete().eq('user_id', targetUserId);
+        if (error) {
+            showToast("Failed to pardon user: " + error.message, 'error');
+        } else if(useConfirm) {
+            showToast(`${username} has been pardoned.`, 'success');
+        }
+    }
+    
+    async function updatePastMessagesAvatar(userId, newAvatarUrl) {
+        if (!userId || !newAvatarUrl) {
+            showToast("User ID or Avatar URL is missing.", 'error');
+            return;
+        }
+
+        showToast("Syncing your profile picture to past messages... This may take a moment.", 'success');
+        
+        const { error } = await supabase
+            .from('messages')
+            .update({ avatar_url: newAvatarUrl })
+            .eq('user_id', userId);
+
+        if (error) {
+            showToast("Failed to sync profile pictures: " + error.message, 'error');
+        } else {
+            showToast("Profile picture sync complete!", 'success');
+        }
+    }
+
+
+    richTextToolbar.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        const button = e.target.closest('button');
+        if (button) {
+            const format = button.dataset.format;
+            let value = null;
+            if (format === 'createLink') {
+                value = prompt('Enter URL:');
+                if (!value) return;
+            }
+            document.execCommand(format, false, value);
+            editor.focus();
         }
     });
 
     chatBox.addEventListener('scroll', handleScroll);
     themeSelector.addEventListener('change', handleThemeChange);
+    scrollToBottomBtn.addEventListener('click', () => {
+        chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+    });
+    
+    chatBox.addEventListener('click', (e) => {
+        // MOD TOOLS
+        const toggle = e.target.closest('.mod-tools-toggle');
+        if (toggle) {
+            document.querySelectorAll('.mod-tools-menu.visible').forEach(m => m.classList.remove('visible'));
+            const menu = toggle.nextElementSibling;
+            menu.classList.toggle('visible');
+            e.stopPropagation();
+            return;
+        }
 
-    document.addEventListener('DOMContentLoaded', async () => {
-        setSavedTheme(); 
-        await updateGlobalAvatarAndName();
-        await loadInitialMessages();
-        subscribeToMessages();
-        supabase.auth.onAuthStateChange(() => updateGlobalAvatarAndName());
+        const actionButton = e.target.closest('.mod-tools-menu button');
+        if (actionButton) {
+            const { action, messageId, userId } = actionButton.dataset;
+            switch(action) {
+                case 'delete': deleteMessageAsMod(messageId); break;
+                case 'timeout-10m': applySanction(userId, 'TIMEOUT', 10); break;
+                case 'timeout-1h': applySanction(userId, 'TIMEOUT', 60); break;
+                case 'ban': applySanction(userId, 'BAN'); break;
+                case 'pardon': pardonUser(userId); break;
+            }
+            actionButton.parentElement.classList.remove('visible');
+            return;
+        }
 
-        // FIX: The periodic refresh has been removed to stop non-user-initiated scroll jumps.
-        // Theme changes will still trigger a refresh via handleThemeChange.
+        // IMAGE LIGHTBOX
+        if (e.target.tagName === 'IMG' && e.target.closest('.message-content')) {
+            imageModalContent.src = e.target.src;
+            imageModal.classList.add('visible');
+            return;
+        }
+        
+        // USER PROFILE VIEW
+        const avatarLink = e.target.closest('.avatar-link');
+        if (avatarLink) {
+            e.preventDefault();
+            const { userId, username, avatarUrl } = avatarLink.dataset;
+            showUserProfile(userId, username, avatarUrl);
+            return;
+        }
+
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.mod-tools')) {
+            document.querySelectorAll('.mod-tools-menu.visible').forEach(menu => menu.classList.remove('visible'));
+        }
+    });
+    
+    async function showUserProfile(userId, username, avatarUrl) {
+        const profileMsgContainer = document.getElementById('user-profile-messages');
+        document.getElementById('profile-view-avatar').src = avatarUrl;
+        document.getElementById('profile-view-username').textContent = `${username}'s Posts`;
+        profileMsgContainer.innerHTML = '<div id="loading-older" style="display: block;"></div>';
+        userProfileView.classList.add('visible');
+
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('user_id', userId)
+            .order('timestamp', { ascending: false });
+
+        profileMsgContainer.innerHTML = '';
+        if (error || !data) {
+            profileMsgContainer.innerHTML = `<p>Could not load messages for ${username}.</p>`;
+            return;
+        }
+        if (data.length === 0) {
+             profileMsgContainer.innerHTML = `<p>${username} hasn't sent any messages yet.</p>`;
+             return;
+        }
+
+        for (const msg of data) {
+            await displayMessage(msg, profileMsgContainer);
+        }
+    }
+
+
+    // MODAL/VIEW CLOSE LISTENERS
+    function closeModalOnClick(modal) {
+        modal.classList.remove('visible');
+    }
+    imageModal.addEventListener('click', (e) => {
+        if (e.target === imageModal || e.target === imageModalClose) {
+             closeModalOnClick(imageModal);
+        }
+    });
+    modMenuModal.addEventListener('click', (e) => {
+        if (e.target === modMenuModal || e.target === modMenuClose) {
+             closeModalOnClick(modMenuModal);
+        }
+    });
+    modMenuBtn.addEventListener('click', () => {
+        modMenuModal.classList.add('visible');
+    });
+    fireworkTestBtn.addEventListener('click', () => {
+        runFireworkShow();
+        closeModalOnClick(modMenuModal);
+    });
+    updatePfpsBtn.addEventListener('click', () => {
+        if (currentUser && currentUser.user_metadata?.avatar_url) {
+             updatePastMessagesAvatar(currentUser.id, currentUser.user_metadata.avatar_url);
+        } else {
+            showToast("Cannot sync: No custom profile picture found.", "error");
+        }
+        closeModalOnClick(modMenuModal);
+    });
+    profileBackBtn.addEventListener('click', () => {
+        userProfileView.classList.remove('visible');
     });
 
-    // --- DEMO: Ensure AJTech@croomsconnect.local is verified for badge demo
+    document.addEventListener('DOMContentLoaded', async () => {
+        sendBtn.addEventListener('click', handleSendClick);
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendClick();
+            } else if (e.key === 'Enter' && e.shiftKey) {
+                document.execCommand('insertLineBreak');
+                e.preventDefault();
+            }
+        });
+
+        editor.addEventListener('paste', (e) => {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (const item of items) {
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            document.execCommand('insertHTML', false, `<img src="${event.target.result}" class="message-image" style="display: block; max-width: 100%; border-radius: 8px;" alt="pasted image">`);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                    return;
+                }
+            }
+        });
+
+        const bgUploader = document.getElementById('background-uploader');
+        if (bgUploader) {
+            bgUploader.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const bgDataUrl = event.target.result;
+                        localStorage.setItem('customBackgroundImage', bgDataUrl);
+                        if (document.body.classList.contains('theme-custom')) {
+                            document.body.style.backgroundImage = `url(${bgDataUrl})`;
+                            document.body.style.backgroundSize = 'cover';
+                            document.body.style.backgroundPosition = 'center';
+                            document.body.style.backgroundAttachment = 'fixed';
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        setSavedTheme(true); 
+        typingIndicator = createTypingIndicator();
+        await updateGlobalAvatarAndName();
+        await loadInitialMessages();
+        channel = subscribeToMessages();
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            await updateGlobalAvatarAndName();
+        });
+
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible') {
+                console.log("Tab is visible again. Re-syncing...");
+                if (channel) {
+                    supabase.removeChannel(channel);
+                }
+                await updateGlobalAvatarAndName();
+                await loadInitialMessages(); 
+                channel = subscribeToMessages(); 
+            }
+        });
+
+        scheduleDailyEvent();
+    });
+
     (async function ensureAJTechVerified() {
-        // This function ensures the demo badge works by setting the verification status.
         const { data } = await supabase
             .from('profiles')
             .select('is_verified')
@@ -1373,17 +2798,182 @@
         }
     })();
 </script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("chat-box").addEventListener("click", function(e) {
-    if (e.target.classList.contains("delete-icon")) {
-      const messageDiv = e.target.closest(".message");
-      if (messageDiv && messageDiv.classList.contains("self")) {
-        messageDiv.remove();
-      }
+<script id="daily-event-script">
+    function scheduleDailyEvent() {
+        const now = new Date();
+        const targetHour = 14; 
+        const targetMinute = 20;
+
+        let eventTime = new Date();
+        eventTime.setHours(targetHour, targetMinute, 0, 0);
+
+        if (now > eventTime) {
+            eventTime.setDate(eventTime.getDate() + 1);
+        }
+
+        const delay = eventTime.getTime() - now.getTime();
+        console.log(`Fireworks scheduled in ${delay / 1000 / 60} minutes.`);
+
+        setTimeout(() => {
+            runFireworkShow();
+            setInterval(runFireworkShow, 24 * 60 * 60 * 1000);
+        }, delay);
     }
-  });
-});
+
+    function runFireworkShow() {
+        const dimOverlay = document.createElement('div');
+        dimOverlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.7); z-index: 9998;
+            transition: opacity 1s ease-in-out; opacity: 0;
+        `;
+        document.body.appendChild(dimOverlay);
+        setTimeout(() => { dimOverlay.style.opacity = '1'; }, 10);
+
+        const fireworksContainer = document.createElement('div');
+        fireworksContainer.id = 'fireworks-container';
+        document.body.appendChild(fireworksContainer);
+        
+        const launchCount = 15;
+        for (let i = 0; i < launchCount; i++) {
+            setTimeout(createFirework, Math.random() * 25000);
+        }
+
+        setTimeout(() => {
+            dimOverlay.style.opacity = '0';
+            setTimeout(() => {
+                 const oldContainer = document.getElementById('fireworks-container');
+                 if(oldContainer) oldContainer.remove();
+                 dimOverlay.remove();
+            }, 1000);
+        }, 30000);
+    }
+    
+    function createFirework() {
+        const container = document.getElementById('fireworks-container');
+        if (!container) return;
+
+        const rocket = document.createElement('div');
+        rocket.className = 'firework-particle';
+        container.appendChild(rocket);
+
+        const startX = Math.random() * 80 + 10;
+        const startY = 100;
+        const endY = Math.random() * 50 + 10;
+        const hue = Math.random() * 360;
+        
+        rocket.style.left = `${startX}vw`;
+        rocket.style.bottom = '0px';
+        rocket.style.backgroundColor = `hsl(${hue}, 100%, 70%)`;
+        rocket.style.width = '3px';
+        rocket.style.height = '3px';
+
+        const flightTime = Math.random() * 1.5 + 1;
+        rocket.style.transition = `transform ${flightTime}s cubic-bezier(0.5, 0, 1, 0.5), opacity ${flightTime}s ease-in`;
+        
+        requestAnimationFrame(() => {
+            rocket.style.transform = `translateY(-${startY - endY}vh)`;
+            rocket.style.opacity = '0';
+        });
+
+        setTimeout(() => {
+            rocket.remove();
+            createExplosion(startX, endY, hue);
+        }, flightTime * 1000);
+    }
+
+    function createExplosion(x, y, hue) {
+        const container = document.getElementById('fireworks-container');
+        if (!container) return;
+        
+        const explosion = document.createElement('div');
+        explosion.className = 'firework-explosion';
+        explosion.style.left = `${x}vw`;
+        explosion.style.top = `${y}vh`;
+        container.appendChild(explosion);
+        
+        const particleCount = Math.random() * 50 + 50;
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 150 + 50;
+            const gravity = 1.8;
+            const endX = Math.cos(angle) * speed;
+            const endY = Math.sin(angle) * speed;
+
+            particle.style.backgroundColor = `hsl(${hue + (Math.random() * 60 - 30)}, 100%, 70%)`;
+            particle.style.setProperty('--transform-end', `translate(${endX}px, ${endY}px)`);
+
+            const keyframes = `
+                @keyframes explode-${i} {
+                    0% { transform: translate(0, 0); opacity: 1; }
+                    100% { transform: translate(${endX}px, ${endY + 150}px); opacity: 0; }
+                }
+            `;
+            // A more robust way to add dynamic keyframes
+            if (document.styleSheets.length > 0) {
+                const styleSheet = document.styleSheets[document.styleSheets.length - 1];
+                try {
+                    styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+                } catch(e) {
+                    console.warn("Could not insert keyframe rule:", e);
+                }
+            }
+
+
+            particle.style.animation = `explode-${i} ${Math.random() * 0.8 + 0.8}s cubic-bezier(0.1, 0.5, 0.1, 1) forwards`;
+
+            explosion.appendChild(particle);
+        }
+
+        setTimeout(() => explosion.remove(), 2000);
+    }
 </script>
+
+<style>
+.secret-theme {
+    background-color: rgba(0, 255, 0, 0.2);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.secret-theme .chat-container,
+.secret-theme .message-box,
+.secret-theme .dropdown {
+    background-color: rgba(0, 255, 0, 0.3);
+    border: 1px solid rgba(0, 255, 0, 0.5);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.green-cloud-transition {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(0,255,0,0.6) 0%, transparent 70%);
+    animation: sweepCloud 1s ease-out forwards;
+    z-index: 9999;
+}
+
+@keyframes sweepCloud {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 0; }
+}
+
+.green-cloud-transition.fade-out {
+    animation: fadeOutCloud 1s ease-in forwards;
+}
+
+@keyframes fadeOutCloud {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+</style>
 </body>
 </html>
+
