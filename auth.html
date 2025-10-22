@@ -274,43 +274,6 @@ supabase.auth.getSession().then(({ data, error }) => {
             
             hideLoading(false);
 
-            if (error) {
-                console.error('Sign In Error:', error);
-                // Customize error message for username flow
-                displayMessage(error.message.includes('Invalid login credentials') 
-                    ? 'Invalid username or password.' 
-                    : error.message);
-            } else {
-                // Successful sign in, redirect to main app
-                sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'connect.html';
-            }
-        };
-
-        /**
-         * Handles the sign-up process and profile creation.
-         */
-        const handleSignUp = async (e) => {
-            e.preventDefault();
-            clearMessage();
-            showLoading(true);
-
-            const username = document.getElementById('signup-username').value.trim();
-            const password = document.getElementById('signup-password').value;
-            
-            // Construct the dummy email address for Supabase Auth
-            const email = username + PLACEHOLDER_DOMAIN;
-            
-            // Basic client-side validation
-            if (username.length < 3) {
-                 displayMessage("Username must be at least 3 characters long.");
-                 hideLoading(true);
-                 return;
-            }
-            if (password.length < 6) {
-                 displayMessage("Password must be at least 6 characters long.");
-                 hideLoading(true);
-                 return;
-            }
 
             // Step 1: Create the Auth User using the dummy email
             const { data, error } = await supabase.auth.signUp({ 
