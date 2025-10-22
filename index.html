@@ -572,9 +572,17 @@ font-size: 14px;
 <span class="title-text">CROOMS CONNECT</span>
 <span class="user-id-display" id="userIdDisplay">Local Theme Storage Active</span>
 </div>
+<div class="flex items-center space-x-2">
 <img id="header-profile-picture" src="https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous" alt="Profile" 
      style="width: 40px; height: 40px; border-radius: 50%; cursor: pointer; object-fit: cover; border: 2px solid var(--accent-blue);"
      title="View My Posts">
+<a id="header-signin-button" href="auth41.html" 
+   style="display: none; background-color: var(--accent-blue); color: var(--primary-bg); font-weight: bold; padding: 8px 16px; border-radius: 10px; text-decoration: none; font-size: 14px; transition: all 0.3s;"
+   onmouseover="this.style.backgroundColor='var(--accent-green)'; this.style.transform='translateY(-2px)';" 
+   onmouseout="this.style.backgroundColor='var(--accent-blue)'; this.style.transform='none';">
+   SIGN IN
+</a>
+</div>
 </div>
 <div class="left-box">
 <button data-tab="home">Home</button>
@@ -1083,6 +1091,7 @@ const studyMinutesInput = document.getElementById('study-minutes');
 
 // --- NEW DOM Elements for Auth/Posts ---
 const headerProfilePicture = document.getElementById('header-profile-picture');
+const headerSignInButton = document.getElementById('header-signin-button'); // <-- ADDED
 const myPostsModal = document.getElementById('my-posts-modal');
 const closeMyPostsModalButton = document.getElementById('close-my-posts-modal-button');
 const myPostsContent = document.getElementById('my-posts-content');
@@ -1103,17 +1112,22 @@ let oldAvatarPath = null;
 let fileInput, cropperWrapper, cropperImg, uploadBtn, currentAvatar, noAvatarText, status;
 
 
-// --- NEW AUTH FUNCTION ---
+// --- MODIFIED AUTH FUNCTION ---
 async function loadUserSession() {
     const { data: authData, error: authErr } = await supabaseClient.auth.getUser();
 
     if (!authData?.user) {
-        console.log("No user logged in. Showing anonymous avatar.");
-        headerProfilePicture.src = "https://api.dicebear.com/6.x/thumbs/svg?seed=Anonymous";
+        console.log("No user logged in. Showing Sign In button.");
+        headerProfilePicture.style.display = 'none'; // <-- HIDE PIC
+        if (headerSignInButton) headerSignInButton.style.display = 'block'; // <-- SHOW BUTTON
         document.getElementById('userIdDisplay').textContent = "Not Logged In";
         currentUser = null;
         return;
     }
+
+    // User is logged in
+    headerProfilePicture.style.display = 'block'; // <-- SHOW PIC
+    if (headerSignInButton) headerSignInButton.style.display = 'none'; // <-- HIDE BUTTON
 
     currentUser = authData.user; // Store user globally
     const userId = authData.user.id;
@@ -1198,7 +1212,8 @@ const resetMyPostsDisplaySettings = async () => {
 // --- MODIFIED "MY POSTS" MODAL FUNCTIONS (Supabase) ---
 const showMyPostsModal = async () => {
     if (!currentUser) {
-        alert("Please log in to customize and see your posts.");
+        // This should not be reachable if the button is hidden, but as a fallback:
+        alert("Please log in to see your posts.");
         return;
     }
     
