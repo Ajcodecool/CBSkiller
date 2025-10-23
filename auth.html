@@ -246,7 +246,7 @@ supabase.auth.getSession().then(({ data, error }) => {
                 
                 if (session) {
                     console.log("Active session found. Redirecting to main app.");
-                    sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'connect.html';
+                    sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'index.html';
                 }
             } catch(e) {
                 // Suppress errors during initial check if keys are bad, wait for user input
@@ -274,6 +274,43 @@ supabase.auth.getSession().then(({ data, error }) => {
             
             hideLoading(false);
 
+            if (error) {
+                console.error('Sign In Error:', error);
+                // Customize error message for username flow
+                displayMessage(error.message.includes('Invalid login credentials') 
+                    ? 'Invalid username or password.' 
+                    : error.message);
+            } else {
+                // Successful sign in, redirect to main app
+                sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'index.html';
+            }
+        };
+
+        /**
+         * Handles the sign-up process and profile creation.
+         */
+        const handleSignUp = async (e) => {
+            e.preventDefault();
+            clearMessage();
+            showLoading(true);
+
+            const username = document.getElementById('signup-username').value.trim();
+            const password = document.getElementById('signup-password').value;
+            
+            // Construct the dummy email address for Supabase Auth
+            const email = username + PLACEHOLDER_DOMAIN;
+            
+            // Basic client-side validation
+            if (username.length < 3) {
+                 displayMessage("Username must be at least 3 characters long.");
+                 hideLoading(true);
+                 return;
+            }
+            if (password.length < 6) {
+                 displayMessage("Password must be at least 6 characters long.");
+                 hideLoading(true);
+                 return;
+            }
 
             // Step 1: Create the Auth User using the dummy email
             const { data, error } = await supabase.auth.signUp({ 
@@ -312,7 +349,7 @@ supabase.auth.getSession().then(({ data, error }) => {
             // Step 3: Handle redirection based on whether a session was created
             if (data.session) {
                 // If the user is immediately signed in (e.g., email confirmation is off)
-                sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'connect.html';
+                sessionStorage.setItem('loggedIn', 'true'); window.location.href = 'index.html';
             } else {
                 // If the user needs to manually sign in
                 toggleView(); // Switch back to login view
@@ -386,3 +423,4 @@ supabase.auth.getSession().then(({ data, error }) => {
 
 </body>
 </html>
+
